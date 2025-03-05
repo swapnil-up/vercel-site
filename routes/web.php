@@ -14,7 +14,7 @@ Route::get('/', function () {
 Route::get('/articles/{slug}', function ($slug) {
 
     $client = new Client();
-    $response = $client->get('https://raw.githubusercontent.com/vercel-site/main/articles/' . $slug . '.md');
+    $response = $client->get('https://raw.githubusercontent.com/swapnil-up/vercel-site/main/articles/' . $slug . '.md');
     $content = $response->getBody()->getContents();
 
 
