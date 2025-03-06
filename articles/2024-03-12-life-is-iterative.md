@@ -1,0 +1,32 @@
+---
+title:  "Life is iterative"
+date:   2024-03-12 
+categories: musings
+---
+Life, barring tragedy, has about 60 solid years for me. It’s easy to forget that. Everything that I work on, I can over time improve. There’s magic there that I usually forget. Anything you can do, doesn’t need to be finished in one sitting, or done in only the ‘perfect’ way. This is a trap for never really starting and the solution is to live iteratively. Everything is one experience that you can come back to improve on the next iteration. 
+
+It’s easy to believe that the first time you need to do something, you need to find the best, most optimized way to go about it. If you want a better body you need to get the 5 time IFBB pro bodybuilder’s routine. To learn to code, you need to find the best resources and the most optimal path to reach the goal. And in believing these, we miss out on the only thing that matters: action. Actually sitting your butt down on the chair and writing out the words. If you understand that life is iterative, you can find a lever to get you unstuck.
+
+Social Media has created the anxiousness that leads to this chase for optimality. All these tiktok reels of 20 year old millionaires and instagram videos of amazing works of art. The video of their first service job, and their stickman drawing is buried under their dazzling masterpieces. This isn’t throwing shade at them mind you, they’ve worked long and hard enough to reach greatness, they can flaunt all they want. But for the average user, the digital world that shows that everyone around them is achieving so much creates anxiety within. 
+
+The answer then is to build on your dreams iteratively. Movies have us believing there’s this one seismic event that triggers a montage of self-improvement after which we live forever happy after. But that just isn’t true for most people, the average age of a forbes founder is 50 something. Everything is glamorized and the end product is shown but the journey is speedrun-ed. In twenty years these first works will amount to just one second of the highlight reel for those watching. Adopting the ‘I’m in this for the long haul’ is the way to go. 
+
+Let’s take the idea of starting this blog. Yesterday’s post was on a page that doesn’t even load, you could only open it through the homepage header. The content seems to be in .md and that makes all of my careful 7 lines of CSS moot for readability. But here I am writing another post, and fixing just a little bit of the site today as well. And on it will go as long as I can go. There probably won’t be any readers for another year, there won’t be followers of the niche blog for a couple more, and I might not be able to pass the critical threshold to reach the mainstream ever. So why worry if this isn’t perfect. Just a little improvement everyday and it’s likely that I’ll be able to get this up to snuff someday. 
+
+Long blog problems aside, knowing life is iterative means that you can make it a game to find a new spot to improve on every time. That maybe adding a new feature, or finding out a new macro. All the greats had their own workflows that were tailored to them. They all have their little nuggets of wisdom that they gained over the years by working on their craft. That’s something you gain only when you do the work. If you are, then doing the work anyway with an attitude of play would of course be better than feeling anxious that you might’ve missed out on the most optimal way.
+
+There’s a stoic quote that goes, ‘The man who is putting the finishing touches on his life everyday is never short on time.’ That fits into this idea of an iterative life, because in each iteration your only focus is on doing what you are right now to the best of your abilities. And the next day put the next finishing touch. This allows you to not have regrets because each iteration is still done. You just add and build on top of what already exists.
+
+Iteration allows you to enjoy momentum. If you think of each step as a chain that leads you to an end goal, instead of just a series of individual, isolated steps then you’re able to feel meaning by working on things. The video you clicked is not just a video, but one of many that builds into volumes. That speech is the first of many to reach greatness. Not all of it is great but you’re building on the last iteration and that makes you feel as if you’re working towards something. This is meaningful and is what creates joy in a world where everyone is unsatisfied and filling their lives with the next consumer item. 
+
+With every work that I’ve been doing recently, the concept has stuck. My father used to put the water bottle on the stairs leading to our room once filled. The trip would be just a minor detour. When he was done working downstairs and is heading upstairs, the work is half done and he only needs to carry it to the room. I think about those moments and smile, “iterate”.
+
+(Note-I feel like Moody with how I’m preaching for “Constant Iteration!!!” (Iterative Note lol- maybe I should put in images and oooh memes))
+
+You pass yourself an alley-oop when you iterate. Like the story above, every time you iterate, and then come back to it, you’re grateful to your past self for doing just that little extra. It’s self-love in how you’re looking out for future you, and that little bit of compassion starts an upwards spiral of compassionate action. 
+
+Iteration then is your cure for procrastination. Since each iteration can be just a little thing like filling the water bottle for tomorrow morning, or just laying out your clothes for the day before you hit the shower, there’s little friction towards actually doing it. You do just the little bit for you and the rest will be done in the next iteration. This reduces the ‘monumental’ effort that folding your clothes actually takes, and more often the compassion loop has you organically doing the whole task to help your future self along. 
+
+In conclusion, it’s easy to forget that you’ve got more than a couple of decades to live and that leads to a feeling of anxiousness. Even in day to day, the urge that you have to go from a zero to a hundred with no in between can lead to the sheer proportion of projects to feel overwhelming. The solution is to view it as an iterative process where you’re work is just a base to improve on the next iteration. 
+
+(Note- Might be best to take a shot every time I used the word iteration heh)

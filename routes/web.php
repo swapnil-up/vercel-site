@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
 
 Route::get('/ping', function () {
     return response()->json(['message' => 'pong']);
@@ -22,6 +23,27 @@ Route::get('/articles/{slug}', function ($slug) {
     $htmlContent = $parsedown->text($content);
 
     return inertia('Article', [
+        'slug' => $slug,
         'content' => $htmlContent
+    ]);
+});
+
+
+Route::get('/articles', function () {
+    $githubApiUrl = 'https://api.github.com/repos/swapnil-up/vercel-site/contents/articles';
+
+    $response = Http::get($githubApiUrl);
+    if ($response->failed()) {
+        return inertia('Articles', ['articles' => []]);
+    }
+
+    $files = $response->json();
+
+    $articles = collect($files)
+        ->filter(fn($file) => isset($file['name']) && str_ends_with($file['name'], '.md'))
+        ->map(fn($file) => pathinfo($file['name'], PATHINFO_FILENAME));
+
+    return inertia('Articles', [
+        'articles' => $articles,
     ]);
 });
