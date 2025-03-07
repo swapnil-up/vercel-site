@@ -11,7 +11,7 @@ It was very easy to throw aside the blanket. He needed only to push himself up a
 > At first he wanted to get off the bed with the lower part of his body, but this lower part (which he incidentally had not yet looked at and which he also couldn't picture clearly) proved itself too difficult to move. The attempt went so slowly. When, having become almost frantic, he finally hurled himself forward with all his force and without thinking, he chose his direction incorrectly, and he hit the lower bedpost hard. The violent pain he felt revealed to him that the lower part of his body was at the moment probably the most sensitive.
 
 
-[Read Article 2](articles/article-2.md)
-[Read Article 3](articles/article-3.md)
-[Read Article 4](articles/article-4.md)
-[Read Article 5](articles/article-5.md)
+[Read Article 2](article-2.md)
+[Read Article 3](article-3.md)
+[Read Article 4](article-4.md)
+[Read Article 5](article-5.md)

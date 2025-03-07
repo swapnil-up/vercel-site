@@ -10,7 +10,7 @@ Thus, he tried to get his upper body out of the bed first and turned his head ca
 
 ***
 
-[Read Article 2](articles/article-2.md)
-[Read Article 3](articles/article-3.md)
-[Read Article 4](articles/article-4.md)
-[Read Article 5](articles/article-5.md)
+[Read Article 2](article-2.md)
+[Read Article 3](article-3.md)
+[Read Article 4](article-4.md)
+[Read Article 5](article-5.md)
