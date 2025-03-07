@@ -9,7 +9,7 @@ Route::get('/ping', function () {
 });
 
 Route::get('/', function () {
-    return inertia('Index/Index');
+    return inertia('Index');
 });
 
 Route::get('/articles/{slug}', function ($slug) {
@@ -46,4 +46,12 @@ Route::get('/articles', function () {
     return inertia('Articles', [
         'articles' => $articles,
     ]);
+});
+
+Route::get('/about', function () {
+    return inertia('About');
+});
+
+Route::get('/now', function(){
+    return inertia('Now');
 });
