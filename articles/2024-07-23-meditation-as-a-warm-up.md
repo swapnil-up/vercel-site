@@ -1,6 +1,6 @@
 ---
 title: "Meditation as a warm-up"
-date:   2024-07-23 
+date:   "2024-07-23" 
 categories:
 tags:
 ---

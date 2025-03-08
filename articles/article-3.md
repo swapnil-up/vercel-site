@@ -1,3 +1,9 @@
+---
+title: "article 3"
+date:   "2025-03-08" 
+categories:
+tags:
+---
 <table class="data">
   <tr>
     <th>Writer</th>

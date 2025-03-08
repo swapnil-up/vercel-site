@@ -1,0 +1,111 @@
+[
+    {
+        "slug": "article-1",
+        "title": "article 1",
+        "date": "2025-03-08",
+        "categories": [],
+        "tags": []
+    },
+    {
+        "slug": "article-2",
+        "title": "article 2",
+        "date": "2025-03-08",
+        "categories": [],
+        "tags": []
+    },
+    {
+        "slug": "article-3",
+        "title": "article 3",
+        "date": "2025-03-08",
+        "categories": [],
+        "tags": []
+    },
+    {
+        "slug": "article-4",
+        "title": "article 4",
+        "date": "2025-03-08",
+        "categories": [],
+        "tags": []
+    },
+    {
+        "slug": "article-5",
+        "title": "article 5",
+        "date": "2025-03-08",
+        "categories": [],
+        "tags": []
+    },
+    {
+        "slug": "2024-11-12-on-using-scrcpy",
+        "title": "On using scrcpy",
+        "date": "2024-11-12",
+        "categories": [
+            "devX"
+        ],
+        "tags": [
+            "app development"
+        ]
+    },
+    {
+        "slug": "2024-08-01-divide-work-into-palatable-chunks",
+        "title": "Divide work into palatable chunks",
+        "date": "2024-08-01",
+        "categories": [
+            "musings"
+        ],
+        "tags": [
+            "productivity"
+        ]
+    },
+    {
+        "slug": "2024-07-25-get-your-hands-dirty-with-chatgpt",
+        "title": "Get your hands dirty with chatgpt",
+        "date": "2024-07-25",
+        "categories": [],
+        "tags": [
+            "productivity"
+        ]
+    },
+    {
+        "slug": "2024-07-23-meditation-as-a-warm-up",
+        "title": "Meditation as a warm-up",
+        "date": "2024-07-23",
+        "categories": [],
+        "tags": []
+    },
+    {
+        "slug": "2024-04-20-the-unfair-advantage-of-keyboard-shortcuts",
+        "title": "The unfair advantage of keyboard shortcuts",
+        "date": "2024-04-20",
+        "categories": [],
+        "tags": [
+            "productivity"
+        ]
+    },
+    {
+        "slug": "2024-04-07-turn-on-greyscale",
+        "title": "Turn on greyscale",
+        "date": "2024-04-07",
+        "categories": "musings",
+        "tags": []
+    },
+    {
+        "slug": "2024-03-12-life-is-iterative",
+        "title": "Life is iterative",
+        "date": "2024-03-12",
+        "categories": "musings",
+        "tags": []
+    },
+    {
+        "slug": "2024-03-11-anki-for-internalization-of-nuggets",
+        "title": "Anki for internalization of nuggets of wisdom",
+        "date": "2024-03-11",
+        "categories": [
+            "musings"
+        ],
+        "tags": [
+            "productivity",
+            "learning",
+            "spaced-repetition"
+        ]
+    }
+]

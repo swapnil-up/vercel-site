@@ -4,6 +4,7 @@ import { defineProps, onMounted } from 'vue';
 
 const props = defineProps({
   slug: String,
+  frontmatter: Object,
   content: String,
 });
 
@@ -30,8 +31,7 @@ function handleClick(event) {
         const url = new URL(link.href);
         if (url.origin === window.location.origin && url.pathname.startsWith("/articles/")) {
             event.preventDefault();
-            const slug = url.pathname.split("/articles/")[1];
-            console.log(slug)
+            const slug = url.pathname.split("/articles/")[1].replace('.md', '');
             openLinkedArticle(slug);
         }
     }
@@ -44,22 +44,26 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex">
+  <div class="flex-col">
+    <header class="mb-6 border-b pb-4">
+      <h3 class="text-3xl font-bold">{{ frontmatter.title }}</h3>
+      <p class="text-gray-600 text-sm">
+        <span>{{ frontmatter.date }}</span>
+        <span v-if="frontmatter.categories" class="ml-4">Category: {{ frontmatter.categories.join(", ") }}</span>
+      </p>
+      <div v-if="frontmatter.tags" class="mt-2">
+        <span v-for="tag in frontmatter.tags" :key="tag" class="px-2 py-1 text-xs bg-gray-200 rounded mr-2">
+          #{{ tag }}
+        </span>
+      </div>
+    </header>
     <div class="w-1/2 p-6">
       <div v-html="props.content"></div>
     </div>
 
     <div v-if="showSecondArticle" class="w-1/2 p-6 bg-gray-100">
-      <div v-html="secondArticle.content"></div>
+      <div v-html="articleContent"></div>
     </div>
   </div>
 </template>
 
-
-<style scoped>
-/* Optional: You can style the container if you need to make the split screen look better */
-.flex {
-  display: flex;
-  height: 100vh;
-}
-</style>

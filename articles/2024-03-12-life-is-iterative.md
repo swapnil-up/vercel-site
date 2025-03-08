@@ -1,6 +1,6 @@
 ---
 title:  "Life is iterative"
-date:   2024-03-12 
+date:   "2024-03-12" 
 categories: musings
 ---
 Life, barring tragedy, has about 60 solid years for me. It’s easy to forget that. Everything that I work on, I can over time improve. There’s magic there that I usually forget. Anything you can do, doesn’t need to be finished in one sitting, or done in only the ‘perfect’ way. This is a trap for never really starting and the solution is to live iteratively. Everything is one experience that you can come back to improve on the next iteration. 

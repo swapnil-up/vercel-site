@@ -1,3 +1,9 @@
+---
+title: "article 1"
+date:   "2025-03-08" 
+categories:
+tags:
+---
 
 ### Yooo
 

@@ -9,6 +9,18 @@ const props = defineProps({
 const previewContent = ref(null);
 const hoveredArticle = ref(null);
 
+let debounceTimeout;
+
+function handleTooltipHover(slug) {
+    if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+    }
+
+    debounceTimeout = setTimeout(() => {
+        fetchPreview(slug);
+    }, 300);
+}
+
 const fetchPreview = async (slug) => {
     try {
         const response = await fetch(`/articles/${slug}/preview`);
@@ -30,10 +42,10 @@ const hidePreview = () => {
   <div>
     <h1>All Articles</h1>
     <ul>
-      <li v-for="article in props.articles" :key="article">
-        <Link :href="`/articles/${article}`"  @mouseenter="fetchPreview(article)" @mouseleave="hidePreview">
-          {{ article }}</Link>
-          <div v-if="hoveredArticle === article" class="tooltip">
+      <li v-for="article in props.articles" :key="article.slug">
+        <Link :href="`/articles/${article.slug}`"  @mouseenter="handleTooltipHover(article.slug)" @mouseleave="hidePreview">
+          {{ article.title || 'Untitled' }}</Link>
+          <div v-if="hoveredArticle === article.slug" class="tooltip">
                     {{ previewContent }}
                 </div>
       </li>

@@ -1,6 +1,6 @@
 ---
 title: "The unfair advantage of keyboard shortcuts"
-date:   2024-04-20 
+date: "2024-04-20" 
 categories:
 tags:
     - productivity

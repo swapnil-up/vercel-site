@@ -1,6 +1,6 @@
 ---
 title: "On using scrcpy"
-date:   2024-11-12 
+date:   "2024-11-12" 
 categories:
     - devX
 tags:

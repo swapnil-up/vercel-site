@@ -1,6 +1,6 @@
 ---
 title:  "Turn on greyscale"
-date:   2024-04-07 
+date:   "2024-04-07" 
 categories: musings
 ---
 
