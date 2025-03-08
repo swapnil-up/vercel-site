@@ -49,12 +49,26 @@ Route::get('/linked-article/{slug}', function ($slug) {
     $response = $client->get('https://raw.githubusercontent.com/swapnil-up/vercel-site/main/articles/' . $slug . '.md');
     $content = $response->getBody()->getContents();
 
+    $frontmatter = [];
+
     $parsedown = new Parsedown();
-    $htmlContent = $parsedown->text($content);
+    preg_match('/^---\s*([\s\S]+?)\s*---\s*(.*)/s', $content, $matches);
+
+
+    if ($matches) {
+        $yaml = $matches[1];
+        $articleContent = $matches[2];
+        $htmlContent = $parsedown->text($articleContent);
+
+        $frontmatter = Yaml::parse($yaml);
+    } else {
+        $htmlContent = $parsedown->text($content);
+    }
 
     return response()->json([
         'slug' => $slug,
-        'content' => $htmlContent,
+        'frontmatter' => $frontmatter,
+        'content' => $htmlContent
     ]);
 });
 
@@ -98,7 +112,7 @@ Route::get('/articles', function () {
         return strtotime($b['date']) - strtotime($a['date']);
     });
 
-    return inertia('ArticlesList', [
+    return inertia('Articles', [
         'articles' => $metadata, 
     ]);
 });
