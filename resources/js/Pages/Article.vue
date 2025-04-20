@@ -108,9 +108,9 @@ onMounted(() => {
 
 
 <style scoped>
-.article-1 {
+/* .article-1 { */
   /* Original article - no additional styling needed */
-}
+/* } */
 
 .article-2 {
   background-color: #f1f5f9; /* Light gray background to differentiate */

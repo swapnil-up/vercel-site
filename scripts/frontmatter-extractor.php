@@ -23,8 +23,6 @@ foreach ($files as $file) {
         // Add '---' before passing to the parser to ensure it is in correct format
         $frontmatterContent = trim($matches[1]);
         
-
-        echo "front matter is \n" . $frontmatterContent;
         try {
             // Parse YAML frontmatter using Symfony's Yaml parser
             $frontmatter = Yaml::parse($frontmatterContent);
@@ -35,10 +33,6 @@ foreach ($files as $file) {
             $date = $frontmatter['date'] ?? '';
             $categories = $frontmatter['categories'] ?? [];
             $tags = $frontmatter['tags'] ?? [];
-
-
-            // $categories = cleanList($categories);
-            // $tags = cleanList($tags);
 
             // Add this article's metadata to the array
             $metadata[] = [
@@ -54,19 +48,6 @@ foreach ($files as $file) {
         }
     }
 }
-
-// function cleanList($list)
-// {
-//     if (!is_array($list)) {
-//         $list = [$list];
-//     }
-
-//     if($list!=[]){
-//         return array_map(function ($item) {
-//             return rtrim($item, '---');
-//         }, $list);
-//     }
-// }
 
 // Sort articles by date (descending)
 usort($metadata, function ($a, $b) {
