@@ -1,0 +1,14 @@
+[
+  {
+    "from": "article-1",
+    "to": "article-2", 
+    "type": "references",
+    "weight": 1
+  },
+  {
+    "from": "thought_001",
+    "to": "article-1",
+    "type": "builds_on",
+    "weight": 0.8
+  }
+]

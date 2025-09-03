@@ -1,0 +1,18 @@
+[
+  {
+    "id": "001",
+    "title": "Cloze deletion for code chunks",
+    "content": "Just realized how overpowered type-in-the-answer cloze deletion cards are for memorizing code patterns...",
+    "type": "insight",
+    "created_at": "2024-12-03",
+    "tags": ["anki", "coding", "memory"]
+  },
+  {
+    "id": "002", 
+    "title": "",
+    "content": "",
+    "type": "placeholder",
+    "created_at": "2024-12-03",
+    "tags": ["todo"]
+  }
+]
