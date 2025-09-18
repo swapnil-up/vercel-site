@@ -1,9 +1,9 @@
 <?php
 
+use App\Models\Article;
+use App\Models\Connection;
+use App\Models\Thought;
 use Illuminate\Support\Facades\Route;
-use GuzzleHttp\Client;
-use Illuminate\Support\Facades\Http;
-use Symfony\Component\Yaml\Yaml;
 
 Route::get('/', function () {
     return inertia('Index');
@@ -23,105 +23,71 @@ Route::get('/graph', function () {
 
 
 Route::get('/api/graph', function () {
-    $client = new Client();
-    
-    $githubApiUrl = 'https://api.github.com/repos/swapnil-up/vercel-site/contents/articles/metadata.json';
-    $response = Http::withHeaders(['Accept' => 'application/vnd.github.v3.raw'])->get($githubApiUrl);
-    
+    $articles = Article::all(['slug', 'title', 'frontmatter']);
+    $thoughts = Thought::all(['id', 'title', 'type', 'content']);
+    $connections = Connection::all(['from_id', 'to_id', 'type', 'weight']);
+
     $nodes = [];
-    $connections = [];
-    
-    if ($response->successful()) {
-        $articles = json_decode($response->body(), true);
-        
-        foreach ($articles as $article) {
-            $nodes[] = [
-                'id' => $article['slug'],
-                'title' => $article['title'],
-                'type' => 'article',
-                'size' => 10, 
-                'url' => '/articles/' . $article['slug']
-            ];
-        }
+    foreach ($articles as $article) {
+        $nodes[] = [
+            'id' => $article->slug,
+            'title' => $article->title,
+            'type' => 'article',
+            'size' => 10,
+            'url' => '/api/node/article/' . $article->slug
+        ];
+    }
+    foreach ($thoughts as $thought) {
+        $nodes[] = [
+            'id' => $thought->id,
+            'title' => $thought->title ?: '• • •',
+            'type' => 'thought',
+            'size' => 5,
+            'content' => $thought->content,
+            'url' => '/api/node/thought/' . $thought->id
+        ];
     }
     
-    try {
-        $connectionsResponse = $client->get('https://raw.githubusercontent.com/swapnil-up/vercel-site/main/graph/connections.json');
-        $connections = json_decode($connectionsResponse->getBody()->getContents(), true);
-    } catch (Exception $e) {
-        // No connections file yet, that's fine
-    }
-    
-    try {
-        $thoughtsResponse = $client->get('https://raw.githubusercontent.com/swapnil-up/vercel-site/main/graph/thoughts.json');
-        $thoughts = json_decode($thoughtsResponse->getBody()->getContents(), true);
-        
-        foreach ($thoughts as $thought) {
-            $nodes[] = [
-                'id' => 'thought_' . $thought['id'],
-                'title' => $thought['title'] ?: '• • •', 
-                'type' => 'thought',
-                'size' => 5,
-                'content' => $thought['content'] ?? '',
-                'url' => '/thought/' . $thought['id']
-            ];
-        }
-    } catch (Exception $e) {
-        // No thoughts yet
-    }
-    
+    $links = $connections->map(function ($conn) {
+        return [
+            'source' => $conn->from_id,
+            'target' => $conn->to_id,
+            'type' => $conn->type,
+            'weight' => $conn->weight
+        ];
+    });
+
     return response()->json([
         'nodes' => $nodes,
-        'connections' => $connections
+        'connections' => $links,
     ]);
-});
-
-Route::get('/api/thought/{id}', function ($id) {
-    $client = new Client();
-    try {
-        $thoughtsResponse = $client->get('https://raw.githubusercontent.com/swapnil-up/vercel-site/main/graph/thoughts.json');
-        $thoughts = json_decode($thoughtsResponse->getBody()->getContents(), true);
-        
-        $thought = collect($thoughts)->firstWhere('id', $id);
-        
-        if (!$thought) {
-            return response()->json(['error' => 'Thought not found'], 404);
-        }
-        
-        return response()->json($thought);
-    } catch (Exception $e) {
-        return response()->json(['error' => 'Could not load thoughts'], 500);
-    }
 });
 
 Route::get('/api/node/{type}/{slug}', function ($type, $slug) {
     if ($type === 'article') {
-        $client = new Client();
-        $response = $client->get('https://raw.githubusercontent.com/swapnil-up/vercel-site/main/articles/' . $slug . '.md');
-        $content = $response->getBody()->getContents();
-        $frontmatter = [];
-        $parsedown = new Parsedown();
-        
-        preg_match('/^---\s*([\s\S]+?)\s*---\s*(.*)/s', $content, $matches);
-        if ($matches) {
-            $yaml = $matches[1];
-            $articleContent = $matches[2];
-            $htmlContent = $parsedown->text($articleContent);
-            $frontmatter = Yaml::parse($yaml);
-        } else {
-            $htmlContent = $parsedown->text($content);
+        $article = Article::find($slug);
+        if (!$article) {
+            return response()->json(['error' => 'Article not found.'], 404);
         }
-        
+        $parsedown = new Parsedown();
         return response()->json([
-            'id' => $slug,
+            'id' => $article->slug,
             'type' => 'article',
-            'title' => $frontmatter['title'] ?? $slug,
-            'content' => $htmlContent,
-            'frontmatter' => $frontmatter
+            'title' => $article->title,
+            'content' => $parsedown->text($article->content),
+            'frontmatter' => $article->frontmatter
         ]);
     } else if ($type === 'thought') {
-        return redirect("/api/thought/{$slug}");
+        $thought = Thought::find($slug);
+        if (!$thought) {
+            return response()->json(['error' => 'Thought not found.'], 404);
+        }
+        return response()->json([
+            'id' => $thought->id,
+            'type' => 'thought',
+            'title' => $thought->title,
+            'content' => $thought->content
+        ]);
     }
-    
     return response()->json(['error' => 'Unknown node type'], 404);
 });

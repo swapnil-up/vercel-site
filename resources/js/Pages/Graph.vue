@@ -77,8 +77,8 @@ export default {
         
         this.nodes = data.nodes;
         this.links = data.connections.map(conn => ({
-          source: conn.from,
-          target: conn.to,
+          source: conn.source,
+          target: conn.target,
           type: conn.type,
           weight: conn.weight || 1
         }));
@@ -258,7 +258,7 @@ export default {
         if (d.type === 'article') {
           response = await fetch(`/api/node/article/${d.id}`);
         } else if (d.type === 'thought') {
-          response = await fetch(`/api/thought/${d.id.replace('thought_', '')}`);
+          response = await fetch(`/api/node/thought/${d.id.replace('thought_', '')}`);
         }
         
         if (response && response.ok) {
