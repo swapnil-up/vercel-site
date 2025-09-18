@@ -72,7 +72,7 @@ export default {
   methods: {
     async loadGraphData() {
       try {
-        const response = await fetch('/api/graph');
+        const response = await fetch('/data/graph');
         const data = await response.json();
         
         this.nodes = data.nodes;

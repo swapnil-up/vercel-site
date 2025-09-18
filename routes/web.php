@@ -22,7 +22,7 @@ Route::get('/graph', function () {
 });
 
 
-Route::get('/api/graph', function () {
+Route::get('/data/graph', function () {
     $articles = Article::all(['slug', 'title', 'frontmatter']);
     $thoughts = Thought::all(['id', 'title', 'type', 'content']);
     $connections = Connection::all(['from_id', 'to_id', 'type', 'weight']);
