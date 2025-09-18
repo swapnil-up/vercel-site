@@ -1,14 +1,32 @@
 [
-  {
-    "from": "article-1",
-    "to": "article-2", 
-    "type": "references",
-    "weight": 1
-  },
-  {
-    "from": "thought_001",
-    "to": "article-1",
-    "type": "builds_on",
-    "weight": 0.8
-  }
+    {
+        "from": "2025-04-20-Follow-chaos-and-do-stuff",
+        "to": "2024-03-11-anki-for-internalization-of-nuggets",
+        "type": "references",
+        "weight": 1
+    },
+    {
+        "from": "2025-04-20-Follow-chaos-and-do-stuff",
+        "to": "2024-07-25-get-your-hands-dirty-with-chatgpt",
+        "type": "references",
+        "weight": 1
+    },
+    {
+        "from": "thought_001",
+        "to": "2024-03-11-anki-for-internalization-of-nuggets",
+        "type": "mentions",
+        "weight": 0.5
+    },
+    {
+        "from": "thought_001",
+        "to": "thought-3",
+        "type": "mentions",
+        "weight": 0.5
+    },
+    {
+        "from": "thought_003",
+        "to": "2024-07-25-get-your-hands-dirty-with-chatgpt",
+        "type": "mentions",
+        "weight": 0.5
+    }
 ]

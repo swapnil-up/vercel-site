@@ -1,3 +1,13 @@
+---
+title: "Follow chaos and do stuff"
+date:   "2025-04-20" 
+categories:
+tags:
+links: 
+    - 2024-03-11-anki-for-internalization-of-nuggets
+    - 2024-07-25-get-your-hands-dirty-with-chatgpt
+---
+
 I just built a really quick prototype for this little annoyance I was having. I grease the groove with pullups, and hit them every 15 minutes, but it's a hassle to unlock my phone and set a timer for it. But not doing that means I'd forget. I spent more than a solid hour a while back just trying to find something that'll just automate the thing in a quick tile that I could click from the lockscreen. Alas nothing worked. Until I just built an MVP for myself. 
 
 I haven't opened an Android Project in almost a year. I've forgotten so much. Yet I built that prototype in the time it took for me to finish my dinner (Yes I do take an hour to have my food, and yes it was cold by the time I was finished). The point here isn't the project itself, almost a majority of it was made by ChatGPT, it's how I'm done and now have an actual thing I can use. It's total shit but it does what it needs to. And I learnt some stuff along the way. 

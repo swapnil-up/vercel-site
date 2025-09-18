@@ -1,38 +1,20 @@
 [
     {
-        "slug": "article-1",
-        "title": "article 1",
-        "date": "2025-03-08",
+        "slug": "2025-04-20-Follow-chaos-and-do-stuff",
+        "title": "Follow chaos and do stuff",
+        "date": "2025-04-20",
         "categories": [],
         "tags": []
     },
     {
-        "slug": "article-2",
-        "title": "article 2",
-        "date": "2025-03-08",
+        "slug": "2025-02-27-On-keyboard-remaps",
+        "title": "On keyboard remaps",
+        "date": "2025-02-27",
         "categories": [],
-        "tags": []
-    },
-    {
-        "slug": "article-3",
-        "title": "article 3",
-        "date": "2025-03-08",
-        "categories": [],
-        "tags": []
-    },
-    {
-        "slug": "article-4",
-        "title": "article 4",
-        "date": "2025-03-08",
-        "categories": [],
-        "tags": []
-    },
-    {
-        "slug": "article-5",
-        "title": "article 5",
-        "date": "2025-03-08",
-        "categories": [],
-        "tags": []
+        "tags": [
+            "optimization",
+            "keyboards"
+        ]
     },
     {
         "slug": "2024-11-12-on-using-scrcpy",

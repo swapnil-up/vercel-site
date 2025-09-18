@@ -3,7 +3,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "build:graph": "php scripts/frontmatter-extractor.php && php scripts/graph-builder.php"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.11",

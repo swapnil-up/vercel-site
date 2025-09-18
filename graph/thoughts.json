@@ -2,7 +2,7 @@
   {
     "id": "001",
     "title": "Cloze deletion for code chunks",
-    "content": "Just realized how overpowered type-in-the-answer cloze deletion cards are for memorizing code patterns...",
+    "content": "Just realized how overpowered type-in-the-answer cloze deletion cards are for memorizing code patterns [[2024-03-11-anki-for-internalization-of-nuggets]] and further adding in [[thought-3]]",
     "type": "insight",
     "created_at": "2024-12-03",
     "tags": ["anki", "coding", "memory"]
@@ -14,5 +14,13 @@
     "type": "placeholder",
     "created_at": "2024-12-03",
     "tags": ["todo"]
+  },
+  {
+    "id": "003",
+    "title": "Have Claude generate question answer pairs for 1000 word chunks",
+    "content": "If you're reading a book, and it feels pointless because you'll forget most of it soon then just put it in claude and generate a document in the format [question] | [answer]. Works great with that article on [[2024-07-25-get-your-hands-dirty-with-chatgpt]]",
+    "type": "insight",
+    "created_at": "2024-12-03",
+    "tags": ["anki", "coding", "memory"]
   }
 ]

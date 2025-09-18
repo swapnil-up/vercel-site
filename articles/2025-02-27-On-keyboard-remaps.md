@@ -1,5 +1,10 @@
-Tags: #optimization #keyboards
-
+---
+title: "On keyboard remaps"
+date:   "2025-02-27" 
+categories:
+tags:
+    - optimization
+    - keyboards
 ---
 
 I am utterly in love. Truly, entirely. What's caused this is finally getting onto kanata for keyboard shortcuts. The idea stemmed from finally really wanting homerow mods as I start learning Vim. Both of them together is so great. And homerow mods by themselves are so good.
