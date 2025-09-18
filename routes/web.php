@@ -34,7 +34,7 @@ Route::get('/data/graph', function () {
             'title' => $article->title,
             'type' => 'article',
             'size' => 10,
-            'url' => '/api/node/article/' . $article->slug
+            'url' => '/data/node/article/' . $article->slug
         ];
     }
     foreach ($thoughts as $thought) {
@@ -44,7 +44,7 @@ Route::get('/data/graph', function () {
             'type' => 'thought',
             'size' => 5,
             'content' => $thought->content,
-            'url' => '/api/node/thought/' . $thought->id
+            'url' => '/data/node/thought/' . $thought->id
         ];
     }
     
@@ -63,7 +63,7 @@ Route::get('/data/graph', function () {
     ]);
 });
 
-Route::get('/api/node/{type}/{slug}', function ($type, $slug) {
+Route::get('/data/node/{type}/{slug}', function ($type, $slug) {
     if ($type === 'article') {
         $article = Article::find($slug);
         if (!$article) {

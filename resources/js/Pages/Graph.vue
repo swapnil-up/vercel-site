@@ -256,9 +256,9 @@ export default {
       try {
         let response;
         if (d.type === 'article') {
-          response = await fetch(`/api/node/article/${d.id}`);
+          response = await fetch(`/data/node/article/${d.id}`);
         } else if (d.type === 'thought') {
-          response = await fetch(`/api/node/thought/${d.id.replace('thought_', '')}`);
+          response = await fetch(`/data/node/thought/${d.id.replace('thought_', '')}`);
         }
         
         if (response && response.ok) {
