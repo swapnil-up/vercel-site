@@ -17,6 +17,23 @@ Route::get('/now', function(){
     return inertia('Now');
 });
 
+Route::get('/data/quote/random', function () {
+    $randomQuote = App\Models\Quote::inRandomOrder()->first();
+    return response()->json($randomQuote);
+});
+
+Route::get('/data/now', function () {
+    $nowArticle = Article::find('now');
+    if (!$nowArticle) {
+        return response()->json(['content' => 'Now page not found.'], 404);
+    }
+    $parsedown = new Parsedown();
+    $content = $parsedown->text($nowArticle->content);
+    return response()->json([
+        'content' => $content
+    ]);
+});
+
 Route::get('/graph', function () {
     return inertia('Graph');
 });

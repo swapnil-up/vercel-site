@@ -11,3 +11,21 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+.markdown-content{
+    color: #444;
+    margin: 40px auto;
+    max-width: 80%;
+    line-height: 1.6em;
+    font-size: 22px;
+    padding: 0;
+}
+.markdown-content p {
+    margin-bottom: 1em;
+}
+
+.markdown-content h1,
+.markdown-content h2 {
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+}
