@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import ErrorMessageGenerator from '../Components/ErrorMessageGenerator.vue'
 
 const counter = ref(0)
 const quote = ref({
@@ -34,4 +35,6 @@ onMounted(() => {
   </div>
   
   <p class="mt-4 text-gray-400">Time since page load: {{ counter }} seconds</p>
+
+  <ErrorMessageGenerator />
 </template>
