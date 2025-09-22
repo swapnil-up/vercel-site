@@ -108,3 +108,7 @@ Route::get('/data/node/{type}/{slug}', function ($type, $slug) {
     }
     return response()->json(['error' => 'Unknown node type'], 404);
 });
+
+Route::get('/tools/bill-splitter', function(){
+    return inertia('Tools/BillSplitter');
+});
