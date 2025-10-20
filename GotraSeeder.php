@@ -1,0 +1,1034 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Gotra;
+use App\Models\SurnameGotra;
+use Illuminate\Support\Facades\DB;
+
+class GotraSeeder extends Seeder
+{
+    public function run()
+    {
+        // Disable foreign key checks during seeding
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+        // Clear existing data
+        SurnameGotra::truncate();
+        Gotra::truncate();
+
+        // Comprehensive Nepali Gotra data scraped from authoritative sources
+        $gotrasData = [
+            [
+                'name' => 'Kaudinya',
+                'description' => 'First disciple of Buddha, represents enlightenment and wisdom',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Acharya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Kharel',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Khadka',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Neupane',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Sapkota',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Bharadwaj',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Adhikari',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Lamichhane',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Lohani',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Niraula',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Pandey',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Pokharel',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Sitaula',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Subedi',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Atreya',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Aryal',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Devkota',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Paudel',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Rosyara',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Sigdel',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Wagle',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Ghrit Kaushik',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Baral',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Khanal',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Garga',
+                'description' => 'Court astrologer of King Nanda, expert in astronomy and mathematics',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Bastola',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Vasistha',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Bhandari',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Bhattarai',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Timilsina',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Vishwamitra',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Bhatta',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Dhananjaya',
+                'description' => 'Sage representing prosperity and victory in spiritual pursuits',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Budhathoki',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Rijal',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Vatsa',
+                'description' => 'Ancient sage lineage associated with prosperity and spiritual growth',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Dahal',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Lamsal',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Upreti',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Upamanyu',
+                'description' => 'Student of Ayoda-Dhaumya, known for devotion and perseverance',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Dhakal',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Mainali',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Kaushik',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Dhungana',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Luitel',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Regmi',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Kashyap',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Ghimire',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Rawal',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Yogi',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Gautam',
+                'description' => 'Founder of Nyaya philosophy, known for logical reasoning',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Gautam',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Joshi',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Mandavya',
+                'description' => 'Sage known for his truthfulness and commitment to justice',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Gyawali',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Panthi',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Maudgalya',
+                'description' => 'Descendant of sage Mudgala, known for righteousness',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Koirala',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Parashar',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Marhattha',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Atri',
+                'description' => 'One of the seven great sages (Saptarishi), father of Durvasa and Dattatreya',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Ojha',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Shandilya',
+                'description' => 'Sage known for devotional practices and spiritual texts',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Prasai',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Bhardwaj',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Puri',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Dhungel',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Agastya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Khatiwada, Gautam, Chapagai, Mishra, Ojha, Adhikari, Pahari, Basti, Gotame, Godar, Thadarai, Dangi, Ghotane Gurung, Malla, Aryal (Kala), Awasthi, Kathayat, Kawari, Khadka (Kalikoti), Kulkarni (Maharashtri), Gelal, Geli (Pathak), Bagale (Gora), Dotel, Thalari, Thapa (Kalikoti), Khulal, Puwar, Bagale, Vihare, Dulal, Duwadi, Pamar (Kshetri), Bam (Rakse Thakuri), Bhatt (Pashupati), Madati (Thakuri), Malla (Thakuri Achhami, Parbate, Samal), Hamal (Kale, Gore), Dangi, Somvanshi (Achhami Thakuri), Samal, Sandel, Maidali, Yadav, Ranabhat, Shah (Thakuri Raskoti Samal)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Atri',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Aryal, Dawadi, Duwadi, Dulal, Gelel, Pokharel (Pani), Sigdel, Bagale, Kalikote Khadka, Kalikote Thapa, Paudel (Dark), Paudel (Fair), Arjyal, Thapa (Puwar), Thapa (Khulal), Thapa (Bagal), Thapa (Vihare), Thapa (Kalikote), Duwadi (Bhatt), Rai, Ranabhat, Dulal, Osti, Gelel, Sigdel, Khatri (Bhujel)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Ātreya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Joshi (Silai), Sedhai, Gauli, Tandon',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Aṅgira',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Pahadi',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Ātasya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                    [
+                        'surname' => 'Ātastaya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Ojha, Mehta',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Indrapramada',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Upreti, Oli, Karmacharya, Joshi, Dulal, Pandey, Bhatt (Duval), Dhakal, Mainali, Bartoula, Daini, Pandey, Pachbhaiya (Maharashtrian), Pathak, Pande, Phulara, Bisht (Dadde), Mishra, Mainali, Vaidya, Pant (Acharya)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Upamanyu',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Puwaar (Bisht), Thapa, Bohara Khadka, Dani (Kshatri)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Kapila',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Adhikari (Bhandare), Adhikari (Khilchine), Adhikari (Kauwali), Amatya, Awasthi, Ojha, Kammar, Kakshapati, Kahali, Kai Kasaju, Kayastha, Karki (Jugadi), Kumal, Kumbhairana, Khadka (Chhadko), Thakuri (Khand), Thakuri (Khan), Khidkisainee, Khidewala, Gaurtaula, Gayan, Gupta (Rauniyar), Gharti (Bhujel), Ghimire (Budhipola), Ghimire (Chitapkhala), Ghimire (Chitikhole), Ghimire (Budhiyal), Ghimire (Rumale), Ghodasainee, Chatout, Chhagala Thani, Jiyu (Thakuri), Joshi (Shrestha), Jha, Tamata, Gatala, Thagunna (Singh Thakuri), Thakuri, Thakurani, Tandukar, Tiwari, Thapa (Ghimire), Thapa (Godar), Darji, Dugad, Deuba, Dojui, Dhami, Dhwajju, Nakarmi, Naga, Negi, Pradhan, Pandey (Badkhora), Pandey (Badal), Pandey (Bhumihar), Pandey (Simaldia), Patra, Bakheti, Badal, Batasa, Baniya, Wangrai, Vajuri, Bijukchhe, Gaida, Idwal, Tila, Bagdagal, Budhathoki, Shonari, Shrivastava, Saud, Saxena, Singhal, Velwase, Vokti, Bhatt (Musyal), Bhatt (Kalauni), Bhwomi, Matmari, Madal, Mann, Malku, Malla, Mallik, Mahtara, Makaju, Majhi (Rai), Mathema, Malakar, Mishra, Mudbhari (Doteli), Yadav, Ranjit, Raulo (Thakuri), Rai (Thakuri), Rokka, Rauniyar (Gupta), Lakaul, Vaidya, Shah (Thakuri), Shahi, Godar Thapa, Bogati, Budhathoki (Sodari), Sindhuliya, Singh (Rajput), Suwal, Saij, Hamal, Humli, Hait, Haiphori, Hada, Nhche Pradhan, Kathayat, Chhatakuli, Pandey, Simaldia, Badkhor, Shrestha, Limbu, Rai, Sherpa, Badal, Sen (Oli), Majhi, Alina Adhikari',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Kashyapa',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Bhadari, Bham, Mahataro (Kshetri), Dangi, Thami (Kshatriya), Bogati',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Kaushalya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Kakar',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Kautsa',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Visht (Kamalakote)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Krishnajanni',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Khakurel, Duve, Visht',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Krishnatri',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Jha, Mishra',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Katyayana',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Khadka (Lakai)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Kudita',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Baduwal, Barma (Chhantyal)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Kushika',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Acharya (Lamjel, Bhawagi, Dixit), Gagle, Marasini, Satyal, Baskota, Gaire, Thapa (Wagle/Bagale), Paneru, Parajuli, Pyakurel, Nyaopane, Khadka (Kamalkote/Lakai), Pathak, Banskota, Bhandari (Kala), Dixit, Sapkota, Banjade, Banjara, Rawal, Lamjal, Morasaini, Trital, Rakah, Punjali, Raunal (Lakai), Acharya, Oli, Rajopadhyaya (Acharya), Bhatt (Acharya), Thapa',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Kaundinya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Dhungana, Dhital, Khaptari Basnet, Majhi, Bastakoti, Lamichhane, Khadka (Khapati), Bidari, Rimal, Regmi, Pudasaini, Rayamajhi, Luitel, Tiwari, Baniya, Raghuvanshi Bhandari, Phuyal, Pathak, Oja, Budhathapa, Ghodasaini, Chimali, Thapa, Chatkuli, Joshi (Regmi), Tandon, Dangi, Thami, Bakheti, Bam (Chhantyal Thakuri), Barma, Betali, Bhandari (Achhami), Rajopadhyay (Rimal), Raya, Swarn, Senchhuri, Shahi (Sijapati), Sanjel, Achhami Thakuri, Baniya, Bogati, Rokaya, Heti, Gauli, Dashauliya',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Kaushika',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Bastola, Palpali Khadka, Lamichhane (Bhatt), Rokaha, Risal, Bhurtel, Gajurel, Acharya, Lamichhane Thapa, Joshi (Jhijhar), Bhatt, Bhetwal, Lamichhane Gurung, Agrawal, Acharya (Bhurtel), Khetan, Gupta (Agrawal), Goyal (Agrawal), Goyanka, Chundal, Chukudal, Chaudhary (Agrawal), Jhijhar, Thapa (Lamichhane), Pal (Doteli), Pokharel (Dangali), Poddar (Agrawal), Bastola, Malla (Raikaji), Mittal, Modi, Roka, Lamjel, Vanshal, Vaidya (Maharashtri), Shah (Kanskeli Khand), Shah (Raikaji), Joshi',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Garga',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Tiwari, Guni, Dhodari, Chand, Tripathi, Dangal, Indauriya (Gauda), Chan, Negi, Pade (Paleu), Bam (Thakuri), Visht, Bhandari, Mahat, Mahto, Joshi',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Gautama',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Pandit, Baral, Nepal, Khanal, Bardeva, Karki (Sutar), Apagai, Khatri, Khanal (Khoriyan/Gara), Ratatinguli, Baraili',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Ghritakaushika',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Ghodasaini',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Jamadagni',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Ghodasaini, Majhi',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Jaimini',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Jha',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Tandi',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Vishwakarma',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Taittiriya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Bhushal, Karki (Khulal), Pangeni, Basnet, Basyal, Bhandari, Badhathoki, Dhamal, Rizal, Rimal, Humagai, Guragai, Khanal (Khoriyan/Gara), Kunwar, Okharel, Gairipippli, Ghodasaini, Dumre, Dhant, Pangeni, Bakharel, Budhathapa (Kunwar), Marasini, Pakuwaal, Karki',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Dhananjaya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Arya, Kattel, Karki (Lama), Kunwar (Jogi), Dongre, Pant, Panth, Puwar (Karki), Marhatta, Parhatta, Rouila, Ruheil, Dhimal, Pandit, Naral',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Parashara',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Mishra, Awasthi (Deshottara)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Bhargava',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Niraula, Sangraula, Devkota, Oja, Kandel (Upadhyay/Khadka), Kapri, Kaini, Khadka, Khan (Thakuri), Khani, Getal, Maharaji Thapa, Khand, Sitoula, Pande (Kuleta), Chand (Kumaoni/Pyuthani/Thakuri), Chamkariya, Champal, Chimariya, Chaudhary, Jha (Tiklihada), Chauhan, Choula Gai, Chwai (Subedi), Jamlagai, Jumli, Joshi, Thagunna, Thakuri (Syangjali/Khand), Dallakoti, Thapa (Achhami/Kalikote/Patkheti/Bhandari/Maharaji), Visht (Sijapati), Subedi (Lampakhe/Nayanghare), Silwal, Sivakoti, Wagle, Lohani, Bohora, Pant, Panthi, Patkheti (Thapa), Badhai, Barakoti, Balayar, Balchaudi, Basnet (Sirpali), Baj, Barhakoti, Bimli, Visht (Idbal/Kharakhale/Dhyara/Sijapati/Saun), Bhatt (Palyal), Bhattacharya, Bhandari (Niraula/Suntakhane), Malla (Doteli/Thakuri), Maharaji (Kshatriya), Mishra, Rawal (Palpali), Lohani, Laudari, Vasti, Shah (Medhasi/Thakuri), Shivakoti, Shahi, Singh (Thakuri), Sen (Thakuri), Bhingri, Senwal (Thakuri), Hamal (Thakuri), Vaidwar (Kshetri), Shripali Basnet, Pade, Khani, Pokharel (Doodh), Thapaliya, Joshi (Latola/Niraula), Jamarkattel, Choula Gai, Maharaji Khadka, Dulal, Devkota, Dhami, Nayanghare, Negi, Naulakha, Adhikari (Sharma/Bajgai/Thami), Burlakoti, Majgaiya, Rajouriya, Chimoriya, Lama (Gurung), Ghale (Gurung)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Bharadwaja',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Adhikari (Charka), Katuwal, Maske, Gyawali, Dhital, Bajgai, Panthi, Khadhao Maku, Jayakam, Joshi (Bajgai), Pradhanang, Bisht (Lokhali), Bhandari (Bajgai), Raul (Achhami), Raule, Lokhada, Swar (Bajgai), Maske',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Mandavya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Koirala, Upreti, Kuinkel, Karki (Khulal/Lama/Mudula), Timalsena, Belkani, Thapa (Kalikote), Simkhada, Belbase, Kathayat, Chakravarti, Chatterjee, Chattopadhyay, Timalsina, Pala (Bajureli), Banerjee, Visht (Simkhada), Belkandi, Belbase, Bhattacharya, Mukherjee, Lekali, Simkhada',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Maudgalya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Dahal, Lamsal, Jha, Rupakheti, Rana, Chauhan, Kharal, Kunwar, Jabra, Thakur (Jha), Khulal, Joshi, Budhathapa, Budhathoki (Dahal), Bhatt, Bhatt (Nagar), Mahajan, Mishra, Rana (Kunwar), Rawal',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Vatsa',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Kharel, Bhattarai, Chalise, Dawadi, Thangsinghe (Bhandari), Suyal (Gharti), Raut, Suyel (Thapa), Madwari, Pallakoti, Pathak, Keshari, Kasera, Karanjit, Khaniya, Kharel (Mudbhari/Hatiyara), Gamnage, Gharti, Champo (Thakuri), Chamariya, Chalwane, Challa (Thakuri), Chalise, Thakuri (Kalyal), Thapa (Suyal), Dawadi, Dwivedi, Pant, Pathak, Visht (Bhullani), Bhatt (Tapleli), Marhatta, Majhi, Madwari (Surkheti), Raut, Suyal, Soti, Kesari, Gaire, Phallakoti',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Vashishtha',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Bhatt (Anil), Duwadi, Nirvanshi Rai, Rayal',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Vishvamitra',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Katuwal, Mahat, Prasai, Kafle (Saji/Vasi), Chandane, Java, Joshi (Tantola), Jha, Tiwari, Das, Dhami, Pain, Pathak, Warai, Basiya, Visht (Kafalya/Kafal), Mandal, Mahat (Kshatriya), Mishra, Raul (Mankoti), Samanti, Sawa',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Shandilya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Sahi',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Shaunaka',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Chauhan (Kshetri)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Bhrigu',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Ghale, Shah (Kalyal Thakuri)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Ravi',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Nagila',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Valmiki',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Mankote, Malakar, Mandal',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Shandil',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Sonam (Thakuri)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Shunaka',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Awasthi, Saraswat',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Sankritya',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Malla (Thakuri)',
+                'description' => 'Ancient sage lineage with rich spiritual heritage',
+                'pravara' => '',
+                'surnames' => [
+                    [
+                        'surname' => 'Sanakasa',
+                        'variant' => null,
+                        'region' => null,
+                        'subcaste' => null,
+                    ],
+                ],
+            ],
+        ];
+
+        foreach ($gotrasData as $gotraData) {
+            $gotra = Gotra::create([
+                'name' => $gotraData['name'],
+                'description' => $gotraData['description'],
+                'pravara' => $gotraData['pravara']
+            ]);
+
+            foreach ($gotraData['surnames'] as $surnameData) {
+                SurnameGotra::create([
+                    'surname' => $surnameData['surname'],
+                    'gotra_id' => $gotra->id,
+                    'variant' => $surnameData['variant'],
+                    'region' => $surnameData['region'],
+                    'subcaste' => $surnameData['subcaste']
+                ]);
+            }
+        }
+
+        // Re-enable foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        $this->command->info('Seeded ' . count($gotrasData) . ' gotras with their surname mappings.');
+    }
+}

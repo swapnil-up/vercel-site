@@ -112,3 +112,7 @@ Route::get('/data/node/{type}/{slug}', function ($type, $slug) {
 Route::get('/tools/bill-splitter', function(){
     return inertia('Tools/BillSplitter');
 });
+
+Route::get('/tools/gotra-checker', function(){
+    return inertia('Tools/GotraChecker');
+});
