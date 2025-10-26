@@ -116,3 +116,7 @@ Route::get('/tools/bill-splitter', function(){
 Route::get('/tools/gotra-checker', function(){
     return inertia('Tools/GotraChecker');
 });
+
+Route::get('/tools/rantim', function(){
+    return inertia('Tools/RanTim');
+});
