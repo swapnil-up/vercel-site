@@ -4,6 +4,7 @@ use App\Models\Article;
 use App\Models\Connection;
 use App\Models\Thought;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PostController;
 
 Route::get('/', function () {
     return inertia('Index');
@@ -37,6 +38,15 @@ Route::get('/data/now', function () {
 Route::get('/graph', function () {
     return inertia('Graph');
 });
+
+
+Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
+Route::get('/posts/tag/{tag}', [PostController::class, 'byTag'])->name('posts.by-tag');
+Route::get('/posts/{slug}', [PostController::class, 'show'])->name('posts.show');
+
+Route::get('/timer', function () {
+    return inertia('Tools/EmomTimer');
+})->name('timer.emom');
 
 
 Route::get('/data/graph', function () {
