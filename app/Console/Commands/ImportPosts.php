@@ -38,7 +38,7 @@ class ImportPosts extends Command
                     $content = $document->body();
                     
                     $title = $frontmatter['title'] ?? $this->extractTitle($content);
-                    $slug = $frontmatter['slug'] ?? $defaultSlug;
+                    $slug = $frontmatter['slug'] ?? Str::slug($title);
                     
                     // Parse wikilinks
                     $internalLinks = $this->extractWikilinks($content);

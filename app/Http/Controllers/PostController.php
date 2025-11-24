@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class PostController extends Controller
 {
@@ -70,6 +71,7 @@ class PostController extends Controller
 
     public function byTag($tag)
     {
+        $tag = (string) $tag; // sqlite gotcha?
         $posts = Post::where('is_draft', false)
             ->whereJsonContains('tags', $tag)
             ->orderBy('published_date', 'desc')
