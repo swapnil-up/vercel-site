@@ -73,7 +73,7 @@ class PostController extends Controller
     {
         $tag = (string) $tag; // sqlite gotcha?
         $posts = Post::where('is_draft', false)
-            ->whereJsonContains('tags', $tag)
+            ->whereRaw("json_extract(tags, '$') LIKE ?", ['%"' . $tag . '"%'])
             ->orderBy('published_date', 'desc')
             ->get()
             ->map(fn($post) => [
