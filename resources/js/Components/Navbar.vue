@@ -10,7 +10,8 @@ import { Link } from '@inertiajs/vue3';
             </h1>
             <ul class="flex space-x-6">
                 <li><Link href="/" class="hover:text-gray-400">Home</Link></li>
-                <li><Link href="/graph" class="hover:text-gray-400">Articles</Link></li>
+                <li><Link href="/posts" class="hover:text-gray-400">WIP</Link></li>
+                <li><Link href="/graph" class="hover:text-gray-400">Graph</Link></li>
                 <li><Link href="/about" class="hover:text-gray-400">About</Link></li>
                 <li><Link href="/now" class="hover:text-gray-400">Now</Link></li>
             </ul>
