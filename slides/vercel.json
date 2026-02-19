@@ -1,3 +1,11 @@
 {
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "trailingSlash": true,
+  "rewrites": [
+    {
+      "source": "/:folder((?!assets|public).*)/:path*",
+      "destination": "/:folder/index.html"
+    }
+  ]
 }
