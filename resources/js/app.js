@@ -1,21 +1,38 @@
 import './bootstrap';
-import { createApp, h } from "vue";
-import { createInertiaApp } from "@inertiajs/vue3";
+import '../css/app.css';
+
+import { createApp, h } from 'vue';
+import { createInertiaApp, Head, Link } from '@inertiajs/vue3';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { ZiggyVue } from 'ziggy-js';
 import AppLayout from "@/Layouts/AppLayout.vue";
-import '../css/app.css'; 
+
+const appName = import.meta.env.VITE_APP_NAME || 'Swapnil Upadhyay';
 
 createInertiaApp({
-    resolve: (name) => {
-        const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
-        let page = pages[`./Pages/${name}.vue`].default;
+    title: (title) => title ? `${title} - ${appName}` : appName,
 
-        page.layout = page.layout || AppLayout; //pass others as a prop if neeeded
+    resolve: async (name) => {
+        const page = await resolvePageComponent(
+            `./Pages/${name}.vue`, 
+            import.meta.glob('./Pages/**/*.vue')
+        );
+        page.default.layout = page.default.layout || AppLayout;
 
         return page;
     },
+
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
+        return createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(ZiggyVue)
+            .component('Head', Head)
+            .component('Link', Link)
             .mount(el);
+    },
+    
+    progress: {
+        color: '#4B5563',
+        showSpinner: true,
     },
 });

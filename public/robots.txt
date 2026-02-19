@@ -1,2 +1,9 @@
+# Allow all crawlers
 User-agent: *
-Disallow:
+Allow: /
+
+# Sitemap
+Sitemap: https://www.swapnilupadhyay.com.np/sitemap.xml
+
+# Crawl-delay
+# Crawl-delay: 1
