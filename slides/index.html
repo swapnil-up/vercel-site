@@ -1,47 +1,4 @@
-#!/usr/bin/env node
-
-/**
- * Automatically generate index.html with all presentations
- * Run this before building: node generate-index.js
- */
-
-const fs = require('fs');
-const path = require('path');
-
-// Find all .md files except slides.md
-const presentations = fs.readdirSync('.')
-  .filter(file => file.endsWith('.md') && file !== 'slides.md')
-  .map(file => {
-    const name = path.basename(file, '.md');
-    
-    // Try to extract title from the markdown file
-    const content = fs.readFileSync(file, 'utf-8');
-    const titleMatch = content.match(/^title:\s*(.+)$/m);
-    const title = titleMatch ? titleMatch[1] : formatTitle(name);
-    
-    return { name, title, file };
-  });
-
-console.log('📊 Found presentations:', presentations.map(p => p.name));
-
-// Format slug into readable title (fallback)
-function formatTitle(slug) {
-  return slug
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-// Generate the presentations array for JavaScript
-const presArray = presentations.map(p => `
-            {
-                slug: '${p.name}',
-                title: '${p.title}',
-                description: 'Click to view this presentation'
-            }`).join(',');
-
-// Generate the index HTML
-const indexContent = `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -180,7 +137,17 @@ const indexContent = `<!DOCTYPE html>
 
     <script>
         // Auto-generated presentation list
-        const presentations = [${presArray}
+        const presentations = [
+            {
+                slug: 'coding-as-transformation',
+                title: 'Coding As Transformation',
+                description: 'Click to view this presentation'
+            },
+            {
+                slug: 'socratic-programmer',
+                title: 'The Socratic Programmer',
+                description: 'Click to view this presentation'
+            }
         ];
 
         // Render presentations
@@ -188,20 +155,13 @@ const indexContent = `<!DOCTYPE html>
         presentations.forEach(pres => {
             const card = document.createElement('a');
             card.className = 'presentation-card';
-            card.href = \`/\${pres.slug}/\`;
-            card.innerHTML = \`
-                <h2>\${pres.title}</h2>
-                <p>\${pres.description}</p>
-            \`;
+            card.href = `/${pres.slug}/`;
+            card.innerHTML = `
+                <h2>${pres.title}</h2>
+                <p>${pres.description}</p>
+            `;
             container.appendChild(card);
         });
     </script>
 </body>
 </html>
-`;
-
-// Write to index.html
-fs.writeFileSync('index.html', indexContent);
-
-console.log('✅ Generated index.html with', presentations.length, 'presentations');
-console.log('📝 index.html created/updated');
