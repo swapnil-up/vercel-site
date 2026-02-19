@@ -1,1 +1,8 @@
 .vercel
+dist
+node_modules
+.slidev
+
+# Auto-generated files created by scripts
+vercel.json
+slides.md

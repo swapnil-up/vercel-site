@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "slidev",
-    "build": "slidev build",
-    "export": "slidev export"
+    "dev": "slidev slides.md --open",
+    "prebuild": "node generate-vercel-config.js && node generate-index.js",
+    "build": "bash build-all.sh",
+    "preview": "npx vite preview --outDir dist --port 3030"
   },
   "keywords": [],
   "author": "",

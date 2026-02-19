@@ -14,7 +14,7 @@ A collection of thoughts on code and philosophy.
 
 # Available Decks
 
-- [Coding as Transformation](/coding-as-transformation/)
+- [Coding As Transformation](/coding-as-transformation/)
 - [The Socratic Programmer](/socratic-programmer/)
 
 ---

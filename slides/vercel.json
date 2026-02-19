@@ -1,11 +1,19 @@
 {
   "outputDirectory": "dist",
-  "cleanUrls": true,
-  "trailingSlash": true,
+  "cleanUrls": false,
+  "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/:folder((?!assets|public).*)/:path*",
-      "destination": "/:folder/index.html"
+      "source": "/coding-as-transformation/:path*",
+      "destination": "/coding-as-transformation/index.html"
+    },
+    {
+      "source": "/socratic-programmer/:path*",
+      "destination": "/socratic-programmer/index.html"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
     }
   ]
 }
