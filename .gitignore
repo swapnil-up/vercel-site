@@ -23,3 +23,9 @@ yarn-error.log
 /.zed
 .vercel
 /tech
+
+
+
+//////////////// FOR SLIDES ////////////////
+/slides/node_modules/
+/slides/dist/
