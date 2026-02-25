@@ -18,6 +18,10 @@ Route::get('/now', function(){
     return inertia('Now');
 });
 
+Route::get('/tools/sketch', function () {
+    return inertia('Tools/Sketch');
+});
+
 Route::get('/data/quote/random', function () {
     $randomQuote = App\Models\Quote::inRandomOrder()->first();
     return response()->json($randomQuote);
