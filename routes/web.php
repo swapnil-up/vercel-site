@@ -22,6 +22,14 @@ Route::get('/tools/sketch', function () {
     return inertia('Tools/Sketch');
 });
 
+Route::get('/tools/whisper', function () {
+    return inertia('Tools/Whisper');
+})->name('whisper');
+
+Route::get('/tracker', function () {
+    return inertia('Tracker');
+})->name('tracker');
+
 Route::get('/data/quote/random', function () {
     $randomQuote = App\Models\Quote::inRandomOrder()->first();
     return response()->json($randomQuote);
