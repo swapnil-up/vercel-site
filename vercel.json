@@ -12,28 +12,12 @@
             "dest": "/build/$1"
         },
         {
+            "src": "/(favicon.*|apple-touch-icon.*|web-app-manifest.*|site\\.webmanifest|achievements\\.txt|robots\\.txt|.*\\.svg|.*\\.png|.*\\.jpg)",
+            "dest": "/$1"
+        },
+        {
             "src": "/(.*)",
             "dest": "/api/index.php"
-        },
-        {
-            "src": "/(favicon.*|apple-touch-icon.*|web-app-manifest.*|site\\.webmanifest)",
-            "dest": "$1"
-        },
-        {
-            "src": "/achievements.txt",
-            "dest": "/achievements.txt"
-        },
-        {
-            "src": "/robots.txt",
-            "dest": "/robots.txt"
-        },
-        {
-            "src": "/((?!.*\\.php$).*)",
-            "dest": "/api/index.php",
-            "continue": true
-        },
-        {
-            "handle": "filesystem"
         }
     ],
     "env": {
