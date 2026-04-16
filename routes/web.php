@@ -19,8 +19,12 @@ Route::get('/tools', function () {
     return inertia('Tools/Index');
 });
 
-Route::get('/now', function () {
-    return inertia('Now');
+Route::get('/tools/clicker', function () {
+    return inertia('Tools/Clicker');
+});
+
+Route::get('/tools/error-generator', function () {
+    return inertia('Tools/ErrorGenerator');
 });
 
 Route::get('/tools/sketch', function () {

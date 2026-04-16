@@ -1,5 +1,7 @@
 <script setup>
 const tools = [
+  { name: 'Life Optimizer', path: '/tools/clicker', description: 'Click to optimize your life' },
+  { name: 'SeriousCLI', path: '/tools/error-generator', description: 'Productivity terminal' },
   { name: 'Sketch', path: '/tools/sketch', description: 'Drawing canvas' },
   { name: 'Whisper', path: '/tools/whisper', description: 'Voice transcription' },
   { name: 'EMOM Timer', path: '/timer', description: 'Interval timer for workouts' },

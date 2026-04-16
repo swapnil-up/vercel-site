@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import ErrorMessageGenerator from '../Components/ErrorMessageGenerator.vue'
+import ClickerGame from '../Components/ClickerGame.vue'
 
 const counter = ref(0)
 const quote = ref({
@@ -51,5 +52,9 @@ onMounted(() => {
     <p class="mt-8 text-gray-400 text-sm">Time since page load: {{ counter }} seconds</p>
 
     <ErrorMessageGenerator />
+
+    <div class="mt-8">
+      <ClickerGame />
+    </div>
   </div>
 </template>
