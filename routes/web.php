@@ -15,6 +15,10 @@ Route::get('/about', function () {
     return inertia('About');
 });
 
+Route::get('/tools', function () {
+    return inertia('Tools/Index');
+});
+
 Route::get('/now', function () {
     return inertia('Now');
 });
