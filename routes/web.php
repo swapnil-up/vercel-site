@@ -27,6 +27,10 @@ Route::get('/tools/error-generator', function () {
     return inertia('Tools/ErrorGenerator');
 });
 
+Route::get('/tools/tamagotchi', function () {
+    return inertia('Tools/Tamagotchi');
+});
+
 Route::get('/tools/sketch', function () {
     return inertia('Tools/Sketch');
 });

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import ErrorMessageGenerator from '../Components/ErrorMessageGenerator.vue'
 import ClickerGame from '../Components/ClickerGame.vue'
+import Tamagotchi from '../Components/Tamagotchi.vue'
 
 const counter = ref(0)
 const quote = ref({
@@ -55,6 +56,10 @@ onMounted(() => {
 
     <div class="mt-8">
       <ClickerGame />
+    </div>
+
+    <div class="mt-8">
+      <Tamagotchi />
     </div>
   </div>
 </template>

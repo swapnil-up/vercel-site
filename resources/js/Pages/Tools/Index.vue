@@ -1,5 +1,6 @@
 <script setup>
 const tools = [
+  { name: 'Blobby', path: '/tools/tamagotchi', description: 'Virtual pet' },
   { name: 'Life Optimizer', path: '/tools/clicker', description: 'Click to optimize your life' },
   { name: 'SeriousCLI', path: '/tools/error-generator', description: 'Productivity terminal' },
   { name: 'Sketch', path: '/tools/sketch', description: 'Drawing canvas' },
