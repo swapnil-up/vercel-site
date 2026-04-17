@@ -52,17 +52,17 @@ const playFinalBeep = () => {
 };
 
 // Timer logic
-watch([isRunning, timeLeft], ([running, time]) => {
-  if (running && time > 0) {
+watch(isRunning, (running) => {
+  if (running) {
     intervalId = setInterval(() => {
       timeLeft.value--;
-      
+
       // Check for minute mark (beep at start of each minute)
       if (timeLeft.value % 60 === 0 && timeLeft.value > 0) {
         playWarningBeeps();
         currentRound.value = Math.floor((totalRounds.value * 60 - timeLeft.value) / 60) + 1;
       }
-      
+
       // Final beep
       if (timeLeft.value === 0) {
         playFinalBeep();
@@ -79,6 +79,11 @@ watch([isRunning, timeLeft], ([running, time]) => {
 });
 
 const handleStart = () => {
+  // Ensure audio context is running (required by browser autoplay policies)
+  if (audioContext && audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
+
   const totalSeconds = minutes.value * 60;
   timeLeft.value = totalSeconds;
   totalRounds.value = minutes.value;
@@ -111,7 +116,11 @@ const formatTime = (seconds) => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-const secondsInCurrentMinute = computed(() => timeLeft.value % 60);
+const secondsInCurrentMinute = computed(() => {
+  if (timeLeft.value === 0) return 0;
+  const remainder = timeLeft.value % 60;
+  return remainder === 0 ? 60 : remainder;
+});
 const progress = computed(() => 
   timeLeft.value > 0 ? ((60 - secondsInCurrentMinute.value) / 60) * 100 : 0
 );

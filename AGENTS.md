@@ -1,6 +1,20 @@
 # AGENTS.md - Agent Instructions for vercel-site
 
-This is an older personal site built with VILT stack (Vue 3 + Laravel + Inertia + Tailwind 4), deployed serverless on Vercel with SQLite database.
+This is a personal site built with VILT stack (Vue 3 + Laravel + Inertia + Tailwind 4), deployed serverless on Vercel with SQLite database.
+
+## Setup
+
+First-time setup:
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+npm install
+npm run dev
+```
+
+Then use `php artisan serve` or your preferred Laravel local server.
 
 ## Project Structure
 
