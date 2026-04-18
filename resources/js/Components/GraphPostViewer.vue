@@ -13,8 +13,12 @@ const handlePostClick = (slug) => {
   emit('open-post', slug);
 };
 
-const handleTagClick = (tag) => {
-  emit('highlight-tag', tag);
+const handleTagClick = (tag, event) => {
+  if (event && event.shiftKey) {
+    emit('highlight-tag', tag);
+  } else {
+    window.location.href = `/posts/tag/${encodeURIComponent(tag)}`;
+  }
 };
 </script>
 

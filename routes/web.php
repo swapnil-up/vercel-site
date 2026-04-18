@@ -75,19 +75,37 @@ Route::get('/timer', function () {
 })->name('timer.emom');
 
 Route::get('/data/graph', function () {
-    $posts = Post::all(['slug', 'title', 'content', 'tags']);
+    $posts = Post::all(['slug', 'title', 'content', 'tags', 'source_path']);
     $thoughts = Thought::all(['id', 'title', 'type', 'content']);
     $connections = Connection::all(['from_id', 'to_id', 'type', 'weight']);
 
     $nodes = [];
-    foreach ($posts as $post) {
-        $nodes[] = [
-            'id' => $post->slug,
-            'title' => $post->title,
-            'type' => 'article',
-            'size' => 10,
-            'url' => '/data/node/article/'.$post->slug,
-        ];
+foreach ($posts as $post) {
+      // Extract folder hierarchy from source_path (last 2 segments after filtering common path prefixes)
+      $folders = [];
+      if ($post->source_path) {
+        $parts = array_values(array_filter(explode(DIRECTORY_SEPARATOR, dirname($post->source_path))));
+        // Filter out common path prefixes (home, swap, github, and common repo names)
+        $skip = ['home', 'swap', 'github', 'obsidian-vault', '.', ''];
+        $filtered = array_values(array_filter($parts, fn($p) => !in_array($p, $skip)));
+        $count = count($filtered);
+        if ($count >= 2) {
+          $folders = [$filtered[$count - 2], $filtered[$count - 1]];
+        } elseif ($count === 1) {
+          $folders = [$filtered[0]];
+        }
+      }
+      
+      $nodes[] = [
+        'id' => $post->slug,
+        'title' => $post->title,
+        'type' => 'article',
+        'size' => 10,
+        'url' => '/data/node/article/'.$post->slug,
+        'tags' => $post->tags ?? [],
+        'folders' => $folders,
+        'source_path' => $post->source_path,
+      ];
     }
     foreach ($thoughts as $thought) {
         // Skip thoughts that are already represented as posts

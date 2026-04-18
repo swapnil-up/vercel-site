@@ -12,9 +12,9 @@ use Spatie\YamlFrontMatter\YamlFrontMatter;
 
 class ImportPosts extends Command
 {
-    protected $signature = 'posts:import {paths* : One or more directory paths to import from}';
+protected $signature = 'posts:import {paths* : One or more directory paths to import from} {--prune : Remove posts whose source files no longer exist}';
 
-    protected $description = 'Import markdown files with frontmatter into database from multiple sources';
+  protected $description = 'Import markdown files with frontmatter into database from multiple sources';
 
     public function handle()
     {
@@ -35,9 +35,9 @@ class ImportPosts extends Command
                 continue;
             }
 
-            $files = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($path)
-            );
+$files = new \RecursiveIteratorIterator(
+        new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::FOLLOW_SYMLINKS)
+      );
 
             foreach ($files as $file) {
                 if ($file->isFile() && $file->getExtension() === 'md') {
@@ -88,6 +88,7 @@ class ImportPosts extends Command
                 $allSlugs[] = $slug;
 
                 $relativePath = str_replace($path.'/', '', $file);
+      $absolutePath = $file;
                 $folders = explode(DIRECTORY_SEPARATOR, $relativePath);
                 array_pop($folders);
                 $tagsFromPath = $folders;
@@ -106,7 +107,7 @@ class ImportPosts extends Command
                         'published_date' => $frontmatter['date'] ?? $date,
                         'content_updated_at' => $frontmatter['updated'] ?? now(),
                         'is_draft' => $frontmatter['draft'] ?? false,
-                        'source_path' => $relativePath,
+                        'source_path' => $absolutePath,
                     ]
                 );
 
@@ -117,16 +118,20 @@ class ImportPosts extends Command
             }
         }
 
-        $this->info('Processing wikilinks and generating internal links...');
-        $this->processWikilinks($allSlugs);
+$this->info('Processing wikilinks and generating internal links...');
+    $this->processWikilinks($allSlugs);
 
-        $this->info('Creating graph nodes and connections...');
-        $this->createGraphNodesAndConnections();
+    $this->info('Creating graph nodes and connections...');
+    $this->createGraphNodesAndConnections();
 
-        $this->info("Total imported: {$imported}");
+    $this->info("Total imported: {$imported}");
 
-        return 0;
+    if ($this->option('prune')) {
+      $this->pruneOrphanPosts($allMdFiles);
     }
+
+    return 0;
+  }
 
     private function processWikilinks(array $allSlugs)
     {
@@ -318,11 +323,39 @@ class ImportPosts extends Command
         // Get all valid post slugs
         $validSlugs = Post::pluck('slug')->toArray();
 
-        // Remove connections where target doesn't exist
-        $orphanedConnections = Connection::whereNotIn('to_id', $validSlugs)->get();
-        foreach ($orphanedConnections as $connection) {
-            $this->info("Removed orphaned connection: {$connection->from_id} -> {$connection->to_id}");
-            $connection->delete();
-        }
+// Remove connections where target doesn't exist
+    $orphanedConnections = Connection::whereNotIn('to_id', $validSlugs)->get();
+    foreach ($orphanedConnections as $connection) {
+      $this->info("Removed orphaned connection: {$connection->from_id} -> {$connection->to_id}");
+      $connection->delete();
     }
+  }
+
+  private function pruneOrphanPosts(array $importedFiles)
+  {
+    $importedPaths = array_column($importedFiles, 'path');
+    $orphans = Post::whereNotNull('source_path')
+      ->whereNotIn('source_path', $importedPaths)
+      ->get();
+
+    if ($orphans->isEmpty()) {
+      $this->info('No orphan posts to remove.');
+      return;
+    }
+
+    $count = 0;
+    foreach ($orphans as $post) {
+      $this->warn("Removing orphan post: {$post->slug} (source: {$post->source_path})");
+      
+      // Remove corresponding graph node and connections
+      Thought::find($post->slug)?->delete();
+      Connection::where('from_id', $post->slug)->delete();
+      Connection::where('to_id', $post->slug)->delete();
+      
+      $post->delete();
+      $count++;
+    }
+
+    $this->info("Pruned {$count} orphan post(s).");
+  }
 }

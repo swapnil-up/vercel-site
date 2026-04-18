@@ -47,6 +47,13 @@
         <button @click="toggleDarkMode" class="control-btn dark-toggle">
           {{ isDarkMode ? '☀️' : '🌙' }}
         </button>
+        <button 
+          @click="toggleTagEdges" 
+          class="control-btn"
+          :class="{ 'active': showTagEdges }"
+        >
+          Tags
+        </button>
       </div>
       <svg ref="svg" class="graph-svg"></svg>
     </div>
@@ -66,6 +73,10 @@ export default {
     return {
       nodes: [],
       links: [],
+      folderNodes: [],
+      folderLinks: [],
+      tagNodes: [],
+      tagLinks: [],
       stackedNodes: [],
       simulation: null,
       zoom: null,
@@ -73,7 +84,9 @@ export default {
       container: null,
       width: 0,
       height: 0,
-      isDarkMode: false
+      isDarkMode: false,
+      showTagEdges: false,
+      selectedTag: null
     }
   },
   
@@ -100,6 +113,8 @@ export default {
           type: conn.type,
           weight: conn.weight || 1
         }));
+        this.computeFolderNodes();
+        this.computeTagNodes();
       } catch (error) {
         console.error('Failed to load graph data:', error);
       }
@@ -128,21 +143,28 @@ export default {
           this.container.attr("transform", event.transform);
         });
 
-      this.svg.call(this.zoom);
+      this.svg.call(this.zoom)
+        .on('click', (event) => {
+          // Only reset if clicking directly on svg background (not on a node)
+          if (event.target.tagName === 'svg') {
+            this.resetNodeHighlighting();
+            this.stackedNodes = [];
+          }
+        });
 
-      // Adaptive force parameters based on node count
-      const nodeCount = this.nodes.length;
-      const linkDistance = Math.max(30, Math.min(80, 400 / Math.sqrt(nodeCount)));
-      const chargeStrength = Math.max(-800, Math.min(-100, -50 * Math.sqrt(nodeCount)));
-      const collisionRadius = Math.max(5, Math.min(15, 100 / Math.sqrt(nodeCount)));
+// Force parameters — weaker charge keeps nodes closer
+    const nodeCount = this.nodes.length;
+    const linkDistance = Math.max(25, Math.min(70, 350 / Math.sqrt(nodeCount)));
+    const chargeStrength = Math.max(-300, Math.min(-50, -15 * Math.sqrt(nodeCount)));
+    const collisionRadius = Math.max(4, Math.min(12, 80 / Math.sqrt(nodeCount)));
 
       this.simulation = d3.forceSimulation(this.nodes)
         .force('link', d3.forceLink(this.links).id(d => d.id).distance(linkDistance))
         .force('charge', d3.forceManyBody().strength(chargeStrength))
         .force('center', d3.forceCenter(this.width / 2, this.height / 2))
         .force('collision', d3.forceCollide().radius(d => (d.size || 8) + collisionRadius))
-        .force('x', d3.forceX().strength(0.05)) // Add gentle x-centering force
-        .force('y', d3.forceY().strength(0.05)); // Add gentle y-centering force
+.force('x', d3.forceX().strength(0.05)) // Add gentle x-centering force
+      .force('y', d3.forceY().strength(0.05)); // Add gentle y-centering force
       
       const link = this.container.append('g')
         .attr('class', 'links')
@@ -154,6 +176,95 @@ export default {
         .style('stroke-opacity', 0.6)
         .style('stroke-width', d => Math.sqrt(d.weight) * 2);
       
+      // Folder nodes (always visible, hub nodes)
+      const folderNodeGroup = this.container.append('g')
+        .attr('class', 'folder-nodes');
+      
+const folderNodeCircles = folderNodeGroup
+        .selectAll('circle')
+        .data(this.folderNodes)
+        .join('circle')
+        .attr('class', 'folder-node')
+        .attr('r', 14)
+        .style('fill', '#f97316')
+        .style('stroke', this.isDarkMode ? '#c2410c' : '#fff')
+        .style('stroke-width', 2)
+        .style('cursor', 'pointer')
+        .style('opacity', 0.9)
+        .on('click', this.handleFolderNodeClick);
+
+      const folderNodeLabels = folderNodeGroup
+        .selectAll('text')
+        .data(this.folderNodes)
+        .join('text')
+        .text(d => d.title)
+        .style('font-size', '11px')
+        .style('font-weight', '700')
+        .style('text-anchor', 'middle')
+        .style('fill', '#1a1a1a')
+        .style('pointer-events', 'none')
+        .attr('dy', 4);
+      
+      // Folder links
+      const folderLinkGroup = this.container.append('g')
+        .attr('class', 'folder-links');
+      
+      const folderLinkLines = folderLinkGroup
+        .selectAll('line')
+        .data(this.folderLinks)
+        .join('line')
+        .attr('class', 'folder-link')
+        .style('stroke', '#f97316')
+        .style('stroke-opacity', 0.25)
+        .style('stroke-width', 1.5);
+      
+      // Tag nodes (hidden by default)
+      const tagNodeGroup = this.container.append('g')
+        .attr('class', 'tag-nodes')
+        .style('display', 'none')
+        .lower(); // Put behind regular nodes
+      
+      this.simulation.nodes(this.nodes);
+      this.simulation.force('link', d3.forceLink(this.links).id(d => d.id).distance(linkDistance));
+      
+      const tagNodeCircles = tagNodeGroup
+        .selectAll('circle')
+        .data(this.tagNodes)
+        .join('circle')
+        .attr('class', 'tag-node')
+        .attr('r', 12)
+        .style('fill', '#22c55e')
+        .style('stroke', this.isDarkMode ? '#166534' : '#fff')
+        .style('stroke-width', 2)
+        .style('cursor', 'pointer')
+        .on('click', this.handleTagNodeClick);
+      
+      const tagNodeLabels = tagNodeGroup
+        .selectAll('text')
+        .data(this.tagNodes)
+        .join('text')
+        .text(d => d.title)
+        .style('font-size', '10px')
+        .style('font-weight', '700')
+        .style('text-anchor', 'middle')
+        .style('fill', '#1a1a1a')
+        .style('pointer-events', 'none')
+        .attr('dy', 4);
+      
+      // Tag links (from tag nodes to article nodes)
+      const tagLinkGroup = this.container.append('g')
+        .attr('class', 'tag-links')
+        .style('display', 'none');
+      
+      const tagLinkLines = tagLinkGroup
+        .selectAll('line')
+        .data(this.tagLinks)
+        .join('line')
+        .attr('class', 'tag-link')
+        .style('stroke', '#22c55e')
+        .style('stroke-opacity', 0.4)
+        .style('stroke-width', 1.5);
+      
       const node = this.container.append('g')
         .attr('class', 'nodes')
         .selectAll('circle')
@@ -161,7 +272,7 @@ export default {
         .join('circle')
         .attr('class', 'graph-node')
         .attr('r', d => this.calculateNodeSize(d))
-        .style('fill', d => this.getNodeColor(d.type))
+        .style('fill', d => this.getNodeFillColor(d))
         .style('stroke', this.isDarkMode ? '#333' : '#fff')
         .style('stroke-width', 2)
         .style('cursor', 'pointer')
@@ -192,6 +303,122 @@ export default {
           .attr('x2', d => d.target.x)
           .attr('y2', d => d.target.y);
         
+// Compute folder node positions as centroid of connected articles
+    const folderPositions = new Map();
+    this.folderNodes.forEach(folderNode => {
+      const connectedArticleIds = this.folderLinks
+        .filter(l => l.source === folderNode.id)
+        .map(l => l.target);
+      const connectedArticles = this.nodes.filter(n => connectedArticleIds.includes(n.id));
+      if (connectedArticles.length > 0) {
+        const sumX = connectedArticles.reduce((sum, n) => sum + (n.x || 0), 0);
+        const sumY = connectedArticles.reduce((sum, n) => sum + (n.y || 0), 0);
+        folderPositions.set(folderNode.id, {
+          x: sumX / connectedArticles.length,
+          y: sumY / connectedArticles.length
+        });
+      }
+    });
+    
+    // Update folder node circle positions
+    this.container.selectAll('.folder-node')
+      .attr('cx', d => {
+        const pos = folderPositions.get(d.id);
+        return pos ? pos.x : d.x;
+      })
+      .attr('cy', d => {
+        const pos = folderPositions.get(d.id);
+        return pos ? pos.y : d.y;
+      });
+    
+    // Update folder node label positions
+    this.container.selectAll('.folder-nodes text')
+      .attr('x', d => {
+        const pos = folderPositions.get(d.id);
+        return pos ? pos.x : d.x;
+      })
+      .attr('y', d => {
+        const pos = folderPositions.get(d.id);
+        return pos ? pos.y : d.y;
+      });
+    
+    // Folder links (from folder node position to article position)
+    this.container.selectAll('.folder-link')
+      .attr('x1', d => {
+        const pos = folderPositions.get(d.source);
+        return pos ? pos.x : 0;
+      })
+      .attr('y1', d => {
+        const pos = folderPositions.get(d.source);
+        return pos ? pos.y : 0;
+      })
+      .attr('x2', d => {
+        const targetNode = this.nodes.find(n => n.id === d.target);
+        return targetNode ? (targetNode.x || 0) : 0;
+      })
+      .attr('y2', d => {
+        const targetNode = this.nodes.find(n => n.id === d.target);
+        return targetNode ? (targetNode.y || 0) : 0;
+      });
+    
+    // Compute tag node positions as centroid of connected articles
+    const tagPositions = new Map();
+        this.tagNodes.forEach(tagNode => {
+          const connectedArticleIds = this.tagLinks
+            .filter(l => l.source === tagNode.id)
+            .map(l => l.target);
+          const connectedArticles = this.nodes.filter(n => connectedArticleIds.includes(n.id));
+          if (connectedArticles.length > 0) {
+            const sumX = connectedArticles.reduce((sum, n) => sum + (n.x || 0), 0);
+            const sumY = connectedArticles.reduce((sum, n) => sum + (n.y || 0), 0);
+            tagPositions.set(tagNode.id, {
+              x: sumX / connectedArticles.length,
+              y: sumY / connectedArticles.length
+            });
+          }
+        });
+        
+        // Update tag node circle positions
+        this.container.selectAll('.tag-node')
+          .attr('cx', d => {
+            const pos = tagPositions.get(d.id);
+            return pos ? pos.x : d.x;
+          })
+          .attr('cy', d => {
+            const pos = tagPositions.get(d.id);
+            return pos ? pos.y : d.y;
+          });
+        
+        // Update tag node label positions
+        this.container.selectAll('.tag-nodes text')
+          .attr('x', d => {
+            const pos = tagPositions.get(d.id);
+            return pos ? pos.x : d.x;
+          })
+          .attr('y', d => {
+            const pos = tagPositions.get(d.id);
+            return pos ? pos.y : d.y;
+          });
+        
+        // Tag links (from tag node position to article position)
+        this.container.selectAll('.tag-link line')
+          .attr('x1', d => {
+            const pos = tagPositions.get(d.source);
+            return pos ? pos.x : 0;
+          })
+          .attr('y1', d => {
+            const pos = tagPositions.get(d.source);
+            return pos ? pos.y : 0;
+          })
+          .attr('x2', d => {
+            const targetNode = this.nodes.find(n => n.id === d.target);
+            return targetNode ? (targetNode.x || 0) : 0;
+          })
+          .attr('y2', d => {
+            const targetNode = this.nodes.find(n => n.id === d.target);
+            return targetNode ? (targetNode.y || 0) : 0;
+          });
+        
         node
           .attr('cx', d => d.x)
           .attr('cy', d => d.y);
@@ -206,11 +433,11 @@ export default {
       });
     },
 
-    resetZoom() {
-      // Adaptive force parameters for reset
-      const nodeCount = this.nodes.length;
-      const linkDistance = Math.max(30, Math.min(80, 400 / Math.sqrt(nodeCount)));
-      const chargeStrength = Math.max(-800, Math.min(-100, -50 * Math.sqrt(nodeCount)));
+resetZoom() {
+    // Adaptive force parameters for reset
+    const nodeCount = this.nodes.length;
+    const linkDistance = Math.max(30, Math.min(80, 400 / Math.sqrt(nodeCount)));
+    const chargeStrength = Math.max(-800, Math.min(-100, -50 * Math.sqrt(nodeCount)));
       
       this.simulation
         .force('link', d3.forceLink(this.links).id(d => d.id).distance(linkDistance))
@@ -235,14 +462,14 @@ export default {
       );
     },
 
-    fitToContent() {
-      if (this.nodes.length === 0) return;
-      
-      // Restart simulation with fresh parameters
-      const nodeCount = this.nodes.length;
-      const linkDistance = Math.max(30, Math.min(80, 400 / Math.sqrt(nodeCount)));
-      const chargeStrength = Math.max(-800, Math.min(-100, -50 * Math.sqrt(nodeCount)));
-      const collisionRadius = Math.max(5, Math.min(15, 100 / Math.sqrt(nodeCount)));
+fitToContent() {
+    if (this.nodes.length === 0) return;
+
+    // Restart simulation with fresh parameters
+    const nodeCount = this.nodes.length;
+    const linkDistance = Math.max(30, Math.min(80, 400 / Math.sqrt(nodeCount)));
+    const chargeStrength = Math.max(-800, Math.min(-100, -50 * Math.sqrt(nodeCount)));
+    const collisionRadius = Math.max(5, Math.min(15, 100 / Math.sqrt(nodeCount)));
 
       this.simulation
         .force('link', d3.forceLink(this.links).id(d => d.id).distance(linkDistance))
@@ -303,7 +530,9 @@ export default {
         'article': '#3b82f6',
         'thought': '#10b981', 
         'prediction': '#f59e0b',
-        'reflection': '#8b5cf6'
+        'reflection': '#8b5cf6',
+        'tag': '#22c55e',
+        'folder': '#f97316'
       };
       return colors[type] || '#6b7280';
     },
@@ -320,9 +549,145 @@ export default {
       return baseSize * sizeMultiplier;
     },
     
+computeFolderNodes() {
+      const folderMap = new Map();
+      const folderLinks = [];
+
+      // Group nodes by their last folder, only if they have a nested path (> 1 folder level)
+      this.nodes.forEach(node => {
+        if (!node.folders || node.folders.length < 2) return;
+
+        // Use the last folder as the hub (e.g., "TIL" for coding notes/TIL/posts)
+        const topFolder = node.folders[node.folders.length - 1];
+        if (!folderMap.has(topFolder)) {
+          folderMap.set(topFolder, []);
+        }
+        folderMap.get(topFolder).push(node.id);
+      });
+
+      // Create virtual folder nodes and links
+      const folderNodes = [];
+      folderMap.forEach((nodeIds, folder) => {
+        const folderNodeId = `folder:${folder}`;
+
+        folderNodes.push({
+          id: folderNodeId,
+          title: folder,
+          type: 'folder',
+          size: 14,
+          tags: [folder]
+        });
+
+        nodeIds.forEach(nodeId => {
+          folderLinks.push({
+            source: folderNodeId,
+            target: nodeId,
+            type: 'folder',
+            weight: 1
+          });
+        });
+      });
+
+      this.folderNodes = folderNodes;
+      this.folderLinks = folderLinks;
+    },
+    
+    computeTagNodes() {
+      const tagMap = new Map();
+      const tagLinks = [];
+      
+      // Group nodes by their tags
+      this.nodes.forEach(node => {
+        if (!node.tags || node.tags.length === 0) return;
+        
+        node.tags.forEach(tag => {
+          if (!tagMap.has(tag)) {
+            tagMap.set(tag, []);
+          }
+          tagMap.get(tag).push(node);
+        });
+      });
+      
+      // Create virtual tag nodes and links, positioning at centroid of connected articles
+      const tagNodes = [];
+      tagMap.forEach((connectedNodes, tag) => {
+        const tagNodeId = `tag:${tag}`;
+        
+        // Calculate centroid of all connected article nodes
+        let sumX = 0, sumY = 0, count = 0;
+        connectedNodes.forEach(node => {
+          if (node.x !== undefined && node.y !== undefined) {
+            sumX += node.x;
+            sumY += node.y;
+            count++;
+          }
+        });
+        
+        // Default to center if no positioned nodes found yet
+        const cx = count > 0 ? sumX / count : this.width / 2;
+        const cy = count > 0 ? sumY / count : this.height / 2;
+        
+        tagNodes.push({
+          id: tagNodeId,
+          title: tag,
+          type: 'tag',
+          size: 6,
+          tags: [tag],
+          x: cx,
+          y: cy,
+          fx: cx, // Fix position so simulation doesn't move them
+          fy: cy
+        });
+        
+        connectedNodes.forEach(node => {
+          tagLinks.push({
+            source: tagNodeId,
+            target: node.id,
+            type: 'tag',
+            weight: 1
+          });
+        });
+      });
+      
+      this.tagNodes = tagNodes;
+      this.tagLinks = tagLinks;
+    },
+    
+    toggleTagEdges() {
+      this.showTagEdges = !this.showTagEdges;
+      
+      if (!this.container) return;
+      
+      // Show/hide tag nodes and links
+      this.container.selectAll('.tag-nodes').style('display', this.showTagEdges ? 'block' : 'none');
+      this.container.selectAll('.tag-links').style('display', this.showTagEdges ? 'block' : 'none');
+      
+      // Color regular nodes based on whether they have tags
+      this.container.selectAll('.graph-node')
+        .style('fill', d => this.getNodeFillColor(d));
+    },
+    
+    getNodeFillColor(node) {
+      // Tag and folder nodes always show in their type color
+      if (node.type === 'tag') {
+        return '#22c55e';
+      }
+      if (node.type === 'folder') {
+        return '#f97316';
+      }
+      return this.getNodeColor(node.type);
+    },
+    
     async handleNodeClick(event, d) {
       if (event.defaultPrevented) return;
       
+      // If tag mode is on and it's a virtual tag node, highlight connections
+      if (this.showTagEdges && d.type === 'tag') {
+        this.highlightTagConnections(d);
+        return;
+      }
+      
+      // Otherwise always open (even green articles with tags open as usual)
       try {
         let response;
         if (d.type === 'article') {
@@ -338,6 +703,110 @@ export default {
       } catch (error) {
         console.error('Failed to load node:', error);
       }
+    },
+    
+    highlightTagConnections(node) {
+      // Find all nodes connected via tag links
+      const connectedIds = new Set([node.id]);
+      
+      this.tagLinks.forEach(link => {
+        if (link.source === node.id) {
+          connectedIds.add(link.target);
+        } else if (link.target === node.id) {
+          connectedIds.add(link.source);
+        }
+      });
+      
+      // Dim all regular nodes, highlight connected
+      this.container.selectAll('.graph-node')
+        .style('opacity', n => connectedIds.has(n.id) ? 1 : 0.2)
+        .style('stroke-width', n => connectedIds.has(n.id) ? 4 : 2)
+        .style('stroke', n => connectedIds.has(n.id) ? '#22c55e' : (this.isDarkMode ? '#333' : '#fff'));
+      
+      // Highlight tag links (line elements)
+      this.container.selectAll('.tag-link line')
+        .style('opacity', link => 
+          link.source === node.id || link.target === node.id ? 1 : 0.05
+        )
+        .style('stroke-width', link => 
+          link.source === node.id || link.target === node.id ? 2.5 : 1
+        );
+      
+      // Highlight tag nodes
+      this.container.selectAll('.tag-node')
+        .style('opacity', n => n.id === node.id ? 1 : 0.3)
+        .style('stroke-width', n => n.id === node.id ? 4 : 2);
+      
+      // Dim regular links
+      this.container.selectAll('.graph-link')
+        .style('opacity', 0.1);
+      
+      // Dim regular labels
+      this.container.selectAll('.labels text')
+        .style('opacity', n => connectedIds.has(n.id) ? 1 : 0.2);
+    },
+    
+    handleTagNodeClick(event, d) {
+      if (event.defaultPrevented) return;
+      event.stopPropagation();
+      
+      // Clicking a tag node highlights its connected articles
+      this.highlightTagConnections(d);
+    },
+    
+    handleFolderNodeClick(event, d) {
+      if (event.defaultPrevented) return;
+      event.stopPropagation();
+      
+      // Clicking a folder node highlights its connected articles
+      this.highlightFolderConnections(d);
+    },
+    
+    highlightFolderConnections(node) {
+      // Find all nodes connected via folder links
+      const connectedIds = new Set([node.id]);
+      
+      this.folderLinks.forEach(link => {
+        if (link.source === node.id) {
+          connectedIds.add(link.target);
+        } else if (link.target === node.id) {
+          connectedIds.add(link.source);
+        }
+      });
+      
+      // Dim all regular nodes, highlight connected
+      this.container.selectAll('.graph-node')
+        .style('opacity', n => connectedIds.has(n.id) ? 1 : 0.2)
+        .style('stroke-width', n => connectedIds.has(n.id) ? 4 : 2)
+        .style('stroke', n => connectedIds.has(n.id) ? '#f97316' : (this.isDarkMode ? '#333' : '#fff'));
+      
+      // Highlight folder links
+      this.container.selectAll('.folder-link')
+        .style('opacity', link =>
+          link.source === node.id || link.target === node.id ? 1 : 0.05
+        )
+        .style('stroke-width', link =>
+          link.source === node.id || link.target === node.id ? 2.5 : 1.5
+        );
+      
+      // Highlight folder nodes
+      this.container.selectAll('.folder-node')
+        .style('opacity', n => n.id === node.id ? 1 : 0.3)
+        .style('stroke-width', n => n.id === node.id ? 4 : 2);
+      
+      // Dim wikilink edges
+      this.container.selectAll('.graph-link')
+        .style('opacity', 0.1);
+      
+      // Dim tag links if visible
+      if (this.showTagEdges) {
+        this.container.selectAll('.tag-link line')
+          .style('opacity', 0.05);
+      }
+      
+      // Dim labels
+      this.container.selectAll('.labels text')
+        .style('opacity', n => connectedIds.has(n.id) ? 1 : 0.2);
     },
 
     handleNodeHover(event, d) {
@@ -439,11 +908,11 @@ export default {
       this.stackedNodes.splice(index, 1);
     },
     
-    dragStarted(event, d) {
-      if (!event.active) this.simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
-    },
+dragStarted(event, d) {
+    if (!event.active) this.simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+  },
     
     dragged(event, d) {
       d.fx = event.x;
@@ -761,5 +1230,25 @@ export default {
 
 .graph-link {
   transition: stroke-opacity 0.2s;
+}
+
+.tag-link {
+  pointer-events: none;
+}
+
+.tag-toggle {
+  min-width: 3.5rem;
+}
+
+.tag-toggle.active {
+  background-color: #22c55e;
+  border-color: #22c55e;
+  color: white;
+}
+
+.dark-mode .tag-toggle.active {
+  background-color: #16a34a;
+  border-color: #16a34a;
+  color: white;
 }
 </style>

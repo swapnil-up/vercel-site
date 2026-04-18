@@ -42,14 +42,16 @@ All commands should be run from project root.
 
 ### Posts Import (Primary)
 ```bash
-php artisan posts:import <path>
+php artisan posts:import <path> [--prune]
 ```
 - **Idempotent**: Safe to run multiple times - uses slug for deduplication
+- **Symlink Support**: Follows symlinked directories (e.g., TIL folder symlinked from another repo)
 - **Automatic Graph Integration**: Creates graph nodes and connections automatically
 - **Wikilink Processing**: Converts `[[slug]]` to internal links and creates graph edges
 - **Smart Link Resolution**: Handles title-based matching and partial slug matching
 - **Multi-source Support**: Import from multiple directories at once
 - **Data Updates**: Updates existing posts, nodes, and connections when files change
+- **Prune Option**: `--prune` removes posts whose source files no longer exist
 - **Cleanup**: Removes orphaned connections automatically
 - Arguments:
   - `<path>` - Directory to scan for .md files (recursive)
