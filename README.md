@@ -113,7 +113,6 @@ php artisan db:seed --class=QuotesSeeder
 | `/tools/whisper` | Voice transcription (WIP) |
 | `/tools/emom-timer` | EMOM timer |
 | `/tools/bill-splitter` | Bill splitter |
-| `/tools/gotra-checker` | Gotra checker |
 | `/tools/rantim` | Random timer |
 
 ## Features
@@ -152,7 +151,6 @@ A collection of useful tools accessible via `/tools/*`:
 - **Whisper**: Voice-to-text (planned)
 - **EMOM Timer**: Interval training timer
 - **Bill Splitter**: Split bills with friends
-- **Gotra Checker**: Gotra verification
 - **RanTim**: Random timer
 
 ### Achievement Tracker

@@ -8,7 +8,6 @@ const tools = [
   { name: 'EMOM Timer', path: '/timer', description: 'Interval timer for workouts' },
   { name: 'RanTim', path: '/tools/rantim', description: 'Random timer' },
   { name: 'Bill Splitter', path: '/tools/bill-splitter', description: 'Split bills with friends' },
-  { name: 'Gotra Checker', path: '/tools/gotra-checker', description: 'Check gotra compatibility' },
 ]
 </script>
 
