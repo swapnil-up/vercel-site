@@ -8,6 +8,14 @@
     },
     "routes": [
         {
+            "src": "/whisper/(.*)",
+            "dest": "/whisper/$1"
+        },
+        {
+            "src": "/coi-serviceworker\\.js",
+            "dest": "/coi-serviceworker.js"
+        },
+        {
             "src": "/build/(.*)",
             "dest": "/build/$1"
         },
