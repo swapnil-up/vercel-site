@@ -101,11 +101,10 @@ function loadRemote(url, dst, size_mb, cbProgress, cbReady, cbCancel, cbPrint) {
 
     rq.onupgradeneeded = function (event) {
         var db = event.target.result;
-        if (db.version == 1) {
-            var os = db.createObjectStore('models', { autoIncrement: false });
+        if (!db.objectStoreNames.contains('models')) {
+            db.createObjectStore('models', { autoIncrement: false });
             cbPrint('loadRemote: created IndexedDB ' + db.name + ' version ' + db.version);
         } else {
-            // clear the database
             var os = event.currentTarget.transaction.objectStore('models');
             os.clear();
             cbPrint('loadRemote: cleared IndexedDB ' + db.name + ' version ' + db.version);

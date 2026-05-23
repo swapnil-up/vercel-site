@@ -44,9 +44,12 @@ async function loadCOI() {
 
 function checkCachedModel() {
   return new Promise((resolve) => {
-    const rq = indexedDB.open('whisper.ggerganov.com', 1)
+    const rq = indexedDB.open('whisper.ggerganov.com', 2)
     rq.onupgradeneeded = (event) => {
-      event.target.result.createObjectStore('models', { autoIncrement: false })
+      const db = event.target.result
+      if (!db.objectStoreNames.contains('models')) {
+        db.createObjectStore('models', { autoIncrement: false })
+      }
       resolve(null)
     }
     rq.onsuccess = (event) => {
@@ -101,7 +104,7 @@ onMounted(async () => {
       setStatus: (text) => { status.value = text },
     }
 
-    window.dbVersion = 1
+    window.dbVersion = 2
     window.dbName = 'whisper.ggerganov.com'
 
     await loadScript('/whisper/helpers.js')

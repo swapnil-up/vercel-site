@@ -20,7 +20,7 @@
             "dest": "/build/$1"
         },
         {
-            "src": "/(favicon.*|apple-touch-icon.*|web-app-manifest.*|site\\.webmanifest|achievements\\.txt|robots\\.txt|.*\\.svg|.*\\.png|.*\\.jpg)",
+            "src": "/(favicon.*|apple-touch-icon.*|web-app-manifest.*|site\\.webmanifest|achievements\\.txt|robots\\.txt|fonts/.*|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.woff2)",
             "dest": "/$1"
         },
         {

@@ -35,7 +35,7 @@ import { Link } from '@inertiajs/vue3';
         <div>
           <h4 class="font-display text-sm font-bold text-mustard mb-3">Connect</h4>
           <ul class="space-y-2 text-sm text-white/70">
-            <li><a href="https://github.com/swap" target="_blank" rel="noopener noreferrer" class="hover:text-coral transition-colors">GitHub</a></li>
+            <li><a href="https://github.com/swapnil-up" target="_blank" rel="noopener noreferrer" class="hover:text-coral transition-colors">GitHub</a></li>
             <li><a href="https://slides.swapnilupadhyay.com.np" target="_blank" rel="noopener noreferrer" class="hover:text-coral transition-colors">Slides</a></li>
             <li><Link href="/about" class="hover:text-coral transition-colors">About</Link></li>
           </ul>
