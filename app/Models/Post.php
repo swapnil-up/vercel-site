@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['title','slug','content','content_html','description','tags','series','series_order','internal_links','published_date','content_updated_at','is_draft','created_at','updated_at','source_path'];
     protected $casts = [
         'tags' => 'array',

@@ -9,7 +9,7 @@
         v-for="(node, index) in stackedNodes" 
         :key="node.id"
         class="stacked-node"
-        :class="{ 'is-short': isShortContent(node.content) }"
+        :class="{ 'is-short': isShortContent(node.content_html) }"
         :style="{ 
           zIndex: 1000 - index,
           transform: `translateY(${index * 8}px)`,
@@ -34,7 +34,7 @@
         <!-- Simple content for non-article nodes -->
         <div v-else class="node-content" v-html="node.content"></div>
         
-        <div v-if="isShortContent(node.content)" class="content-spacer"></div>
+        <div v-if="isShortContent(node.content_html)" class="content-spacer"></div>
       </div>
     </div>
     
@@ -61,6 +61,7 @@
 import * as d3 from 'd3';
 import GraphPostViewer from '../Components/GraphPostViewer.vue';
 import { useDarkMode } from '@/Composables/useDarkMode';
+import { useGraphData } from '@/Composables/useGraphData';
 
 export default {
   name: 'Graph',
@@ -69,7 +70,8 @@ export default {
   },
   setup() {
     const { isDark } = useDarkMode();
-    return { isDark };
+    const graphUtils = useGraphData();
+    return { isDark, graphUtils };
   },
   data() {
     return {
@@ -258,8 +260,8 @@ const folderNodeCircles = folderNodeGroup
         .data(this.nodes)
         .join('circle')
         .attr('class', 'graph-node')
-        .attr('r', d => this.calculateNodeSize(d))
-        .style('fill', d => this.getNodeFillColor(d))
+        .attr('r', d => this.graphUtils.calculateNodeSize(d, this.links))
+        .style('fill', d => this.graphUtils.getNodeFillColor(d))
         .style('stroke', this.isDarkMode ? 'var(--color-warm-muted)' : 'var(--color-cream)')
         .style('stroke-width', 2)
         .style('cursor', 'pointer')
@@ -512,130 +514,14 @@ fitToContent() {
       this.simulation.alpha(0.3).restart();
     },
     
-    getNodeColor(type) {
-      const colors = {
-        'article': 'var(--color-sky)',
-        'thought': 'var(--color-mint)', 
-        'prediction': 'var(--color-mustard)',
-        'reflection': 'var(--color-sky)',
-        'tag': 'var(--color-mint)',
-        'folder': 'var(--color-coral)'
-      };
-      return colors[type] || 'var(--color-warm-muted)';
-    },
-    
-    calculateNodeSize(node) {
-      // Calculate node size based on connections and type
-      const connectionCount = this.links.filter(
-        link => link.source.id === node.id || link.target.id === node.id
-      ).length;
-      
-      const baseSize = node.type === 'article' ? 8 : 5;
-      const sizeMultiplier = Math.min(2, 1 + connectionCount * 0.1);
-      
-      return baseSize * sizeMultiplier;
-    },
-    
 computeFolderNodes() {
-      const folderMap = new Map();
-      const folderLinks = [];
-
-      // Group nodes by their last folder, only if they have a nested path (> 1 folder level)
-      this.nodes.forEach(node => {
-        if (!node.folders || node.folders.length < 2) return;
-
-        // Use the last folder as the hub (e.g., "TIL" for coding notes/TIL/posts)
-        const topFolder = node.folders[node.folders.length - 1];
-        if (!folderMap.has(topFolder)) {
-          folderMap.set(topFolder, []);
-        }
-        folderMap.get(topFolder).push(node.id);
-      });
-
-      // Create virtual folder nodes and links
-      const folderNodes = [];
-      folderMap.forEach((nodeIds, folder) => {
-        const folderNodeId = `folder:${folder}`;
-
-        folderNodes.push({
-          id: folderNodeId,
-          title: folder,
-          type: 'folder',
-          size: 14,
-          tags: [folder]
-        });
-
-        nodeIds.forEach(nodeId => {
-          folderLinks.push({
-            source: folderNodeId,
-            target: nodeId,
-            type: 'folder',
-            weight: 1
-          });
-        });
-      });
-
+      const { folderNodes, folderLinks } = this.graphUtils.computeFolderNodes(this.nodes);
       this.folderNodes = folderNodes;
       this.folderLinks = folderLinks;
     },
     
     computeTagNodes() {
-      const tagMap = new Map();
-      const tagLinks = [];
-      
-      // Group nodes by their tags
-      this.nodes.forEach(node => {
-        if (!node.tags || node.tags.length === 0) return;
-        
-        node.tags.forEach(tag => {
-          if (!tagMap.has(tag)) {
-            tagMap.set(tag, []);
-          }
-          tagMap.get(tag).push(node);
-        });
-      });
-      
-      // Create virtual tag nodes and links, positioning at centroid of connected articles
-      const tagNodes = [];
-      tagMap.forEach((connectedNodes, tag) => {
-        const tagNodeId = `tag:${tag}`;
-        
-        // Calculate centroid of all connected article nodes
-        let sumX = 0, sumY = 0, count = 0;
-        connectedNodes.forEach(node => {
-          if (node.x !== undefined && node.y !== undefined) {
-            sumX += node.x;
-            sumY += node.y;
-            count++;
-          }
-        });
-        
-        // Default to center if no positioned nodes found yet
-        const cx = count > 0 ? sumX / count : this.width / 2;
-        const cy = count > 0 ? sumY / count : this.height / 2;
-        
-        tagNodes.push({
-          id: tagNodeId,
-          title: tag,
-          type: 'tag',
-          size: 6,
-          tags: [tag],
-          x: cx,
-          y: cy,
-          fx: cx, // Fix position so simulation doesn't move them
-          fy: cy
-        });
-        
-        connectedNodes.forEach(node => {
-          tagLinks.push({
-            source: tagNodeId,
-            target: node.id,
-            type: 'tag',
-            weight: 1
-          });
-        });
-      });
-      
+      const { tagNodes, tagLinks } = this.graphUtils.computeTagNodes(this.nodes);
       this.tagNodes = tagNodes;
       this.tagLinks = tagLinks;
     },
@@ -651,17 +537,7 @@ computeFolderNodes() {
       
       // Color regular nodes based on whether they have tags
       this.container.selectAll('.graph-node')
-        .style('fill', d => this.getNodeFillColor(d));
-    },
-    
-    getNodeFillColor(node) {
-      if (node.type === 'tag') {
-        return 'var(--color-mint)';
-      }
-      if (node.type === 'folder') {
-        return 'var(--color-coral)';
-      }
-      return this.getNodeColor(node.type);
+        .style('fill', d => this.graphUtils.getNodeFillColor(d));
     },
     
     async handleNodeClick(event, d) {
@@ -740,61 +616,6 @@ computeFolderNodes() {
       this.highlightTagConnections(d);
     },
     
-    handleFolderNodeClick(event, d) {
-      if (event.defaultPrevented) return;
-      event.stopPropagation();
-      
-      // Clicking a folder node highlights its connected articles
-      this.highlightFolderConnections(d);
-    },
-    
-    highlightFolderConnections(node) {
-      // Find all nodes connected via folder links
-      const connectedIds = new Set([node.id]);
-      
-      this.folderLinks.forEach(link => {
-        if (link.source === node.id) {
-          connectedIds.add(link.target);
-        } else if (link.target === node.id) {
-          connectedIds.add(link.source);
-        }
-      });
-      
-      // Dim all regular nodes, highlight connected
-      this.container.selectAll('.graph-node')
-        .style('opacity', n => connectedIds.has(n.id) ? 1 : 0.2)
-        .style('stroke-width', n => connectedIds.has(n.id) ? 4 : 2)
-        .style('stroke', n => connectedIds.has(n.id) ? 'var(--color-coral)' : (this.isDarkMode ? 'var(--color-warm-muted)' : 'var(--color-cream)'));
-      
-      // Highlight folder links
-      this.container.selectAll('.folder-link')
-        .style('opacity', link =>
-          link.source === node.id || link.target === node.id ? 1 : 0.05
-        )
-        .style('stroke-width', link =>
-          link.source === node.id || link.target === node.id ? 2.5 : 1.5
-        );
-      
-      // Highlight folder nodes
-      this.container.selectAll('.folder-node')
-        .style('opacity', n => n.id === node.id ? 1 : 0.3)
-        .style('stroke-width', n => n.id === node.id ? 4 : 2);
-      
-      // Dim wikilink edges
-      this.container.selectAll('.graph-link')
-        .style('opacity', 0.1);
-      
-      // Dim tag links if visible
-      if (this.showTagEdges) {
-        this.container.selectAll('.tag-link line')
-          .style('opacity', 0.05);
-      }
-      
-      // Dim labels
-      this.container.selectAll('.labels text')
-        .style('opacity', n => connectedIds.has(n.id) ? 1 : 0.2);
-    },
-
     handleNodeHover(event, d) {
       // Highlight connected nodes and links
       const connectedNodeIds = new Set([d.id]);

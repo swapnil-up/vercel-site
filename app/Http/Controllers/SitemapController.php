@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Article;
+use App\Models\Post;
 use App\Models\Thought;
 use Illuminate\Http\Response;
 
@@ -10,14 +10,15 @@ class SitemapController extends Controller
 {
     public function index(): Response
     {
-        $articles = Article::orderBy('updated_at', 'desc')
+        $posts = Post::where('is_draft', false)
+            ->orderBy('updated_at', 'desc')
             ->get();
 
         $thoughts = Thought::orderBy('updated_at', 'desc')
             ->get();
 
         $sitemap = '<?xml version="1.0" encoding="UTF-8"?>';
-        $sitemap .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+        $sitemap .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.8">';
 
         // Homepage
         $sitemap .= $this->buildUrlEntry(
@@ -27,19 +28,19 @@ class SitemapController extends Controller
             '1.0'
         );
 
-        // Articles Index
+        // Posts Index
         $sitemap .= $this->buildUrlEntry(
-            route('articles.index'),
-            $articles->first()?->updated_at ?? now(),
+            route('posts.index'),
+            $posts->first()?->updated_at ?? now(),
             'daily',
             '0.9'
         );
 
-        // Individual Articles
-        foreach ($articles as $article) {
+        // Individual Posts
+        foreach ($posts as $post) {
             $sitemap .= $this->buildUrlEntry(
-                route('articles.show', $article->slug),
-                $article->updated_at,
+                route('posts.show', $post->slug),
+                $post->updated_at,
                 'monthly',
                 '0.8'
             );
@@ -47,7 +48,7 @@ class SitemapController extends Controller
 
         // Graph/Thoughts
         $sitemap .= $this->buildUrlEntry(
-            route('graph'),
+            url('/graph'),
             $thoughts->first()?->updated_at ?? now(),
             'weekly',
             '0.7'

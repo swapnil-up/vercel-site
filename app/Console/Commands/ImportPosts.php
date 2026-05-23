@@ -2,27 +2,25 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Connection;
 use App\Models\Post;
-use App\Models\Thought;
+use App\Services\GraphSync;
+use App\Services\WikilinkProcessor;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
-use League\CommonMark\CommonMarkConverter;
 use Spatie\YamlFrontMatter\YamlFrontMatter;
 
 class ImportPosts extends Command
 {
-protected $signature = 'posts:import {paths* : One or more directory paths to import from} {--prune : Remove posts whose source files no longer exist}';
+    protected $signature = 'posts:import {paths* : One or more directory paths to import from} {--prune : Remove posts whose source files no longer exist}';
 
-  protected $description = 'Import markdown files with frontmatter into database from multiple sources';
+    protected $description = 'Import markdown files with frontmatter into database from multiple sources';
 
-    public function handle()
+    public function handle(WikilinkProcessor $wikilinkProcessor, GraphSync $graphSync)
     {
         $paths = $this->argument('paths');
 
         if (empty($paths)) {
             $this->error('No paths provided. Usage: php artisan posts:import <path1> <path2> ...');
-
             return 1;
         }
 
@@ -31,13 +29,12 @@ protected $signature = 'posts:import {paths* : One or more directory paths to im
         foreach ($paths as $path) {
             if (! is_dir($path)) {
                 $this->warn("Directory not found: {$path} - skipping");
-
                 continue;
             }
 
-$files = new \RecursiveIteratorIterator(
-        new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::FOLLOW_SYMLINKS)
-      );
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::FOLLOW_SYMLINKS)
+            );
 
             foreach ($files as $file) {
                 if ($file->isFile() && $file->getExtension() === 'md') {
@@ -51,7 +48,6 @@ $files = new \RecursiveIteratorIterator(
 
         if (empty($allMdFiles)) {
             $this->error('No markdown files found in provided paths');
-
             return 1;
         }
 
@@ -72,10 +68,7 @@ $files = new \RecursiveIteratorIterator(
                     continue;
                 }
 
-                $defaultSlug = $filename;
-
                 $frontmatter = $document->matter();
-                $date = $frontmatter['date'] ?? now()->toDateString();
                 $content = trim($document->body()) ?: 'No content yet.';
 
                 $title = $frontmatter['title']
@@ -88,7 +81,7 @@ $files = new \RecursiveIteratorIterator(
                 $allSlugs[] = $slug;
 
                 $relativePath = str_replace($path.'/', '', $file);
-      $absolutePath = $file;
+                $absolutePath = $file;
                 $folders = explode(DIRECTORY_SEPARATOR, $relativePath);
                 array_pop($folders);
                 $tagsFromPath = $folders;
@@ -99,12 +92,12 @@ $files = new \RecursiveIteratorIterator(
                     [
                         'title' => $title,
                         'content' => $content,
-                        'content_html' => '', // Will be updated in processWikilinks
+                        'content_html' => '',
                         'description' => $frontmatter['description'] ?? null,
                         'tags' => $tags,
                         'series' => $frontmatter['series'] ?? null,
                         'series_order' => $frontmatter['series_order'] ?? null,
-                        'published_date' => $frontmatter['date'] ?? $date,
+                        'published_date' => $frontmatter['date'] ?? now()->toDateString(),
                         'content_updated_at' => $frontmatter['updated'] ?? now(),
                         'is_draft' => $frontmatter['draft'] ?? false,
                         'source_path' => $absolutePath,
@@ -118,70 +111,42 @@ $files = new \RecursiveIteratorIterator(
             }
         }
 
-$this->info('Processing wikilinks and generating internal links...');
-    $this->processWikilinks($allSlugs);
+        $this->info('Processing wikilinks and generating internal links...');
+        $this->processWikilinks($allSlugs, $wikilinkProcessor);
 
-    $this->info('Creating graph nodes and connections...');
-    $this->createGraphNodesAndConnections();
+        $this->info('Creating graph nodes and connections...');
+        $this->createGraphNodesAndConnections($graphSync);
 
-    $this->info("Total imported: {$imported}");
+        $this->info("Total imported: {$imported}");
 
-    if ($this->option('prune')) {
-      $this->pruneOrphanPosts($allMdFiles);
+        if ($this->option('prune')) {
+            $this->pruneOrphanPosts($allMdFiles, $graphSync);
+        }
+
+        return 0;
     }
 
-    return 0;
-  }
-
-    private function processWikilinks(array $allSlugs)
+    private function processWikilinks(array $allSlugs, WikilinkProcessor $wikilinkProcessor): void
     {
-        $posts = Post::all();
-        $slugMap = collect($posts)->mapWithKeys(function ($post) {
-            return [$post->slug => $post->id];
-        })->toArray();
-
-        $titleMap = collect($posts)->mapWithKeys(function ($post) {
-            return [Str::slug($post->title) => $post->slug];
-        })->toArray();
-
+        $maps = $wikilinkProcessor->buildSlugMap();
+        $slugMap = $maps['slugMap'];
+        $titleMap = $maps['titleMap'];
         $slugSet = array_flip($allSlugs);
 
+        $posts = Post::all();
+
         foreach ($posts as $post) {
-            $content = $post->content;
+            $links = $wikilinkProcessor->extractLinks($post->content);
             $internalLinks = [];
 
-            preg_match_all('/\[\[([^\]]+)\]\]/', $content, $matches);
-
-            foreach ($matches[1] as $link) {
-                $parts = explode('|', $link);
-                $slugPart = end($parts);
-                if ($slugPart === false) {
-                    continue;
-                }
-                $slug = Str::slug(trim($slugPart));
-
-                $targetSlug = null;
-                if (isset($slugSet[$slug])) {
-                    $targetSlug = $slug;
-                } elseif (isset($slugMap[$slug])) {
-                    $targetSlug = $slug;
-                } elseif (isset($titleMap[$slug])) {
-                    $targetSlug = $titleMap[$slug];
-                } else {
-                    foreach ($slugMap as $existingSlug => $postId) {
-                        if (str_contains($existingSlug, $slug) || str_contains($slug, $existingSlug)) {
-                            $targetSlug = $existingSlug;
-                            break;
-                        }
-                    }
-                }
-
+            foreach ($links as $link) {
+                $targetSlug = $wikilinkProcessor->resolveSlug($link, $slugMap, $slugSet, $titleMap);
                 if ($targetSlug) {
                     $internalLinks[] = $targetSlug;
                 }
             }
 
-            $contentHtml = $this->convertToHtml($content, $slugMap, $slugSet, $titleMap);
+            $contentHtml = $wikilinkProcessor->convertToHtml($post->content, $slugMap, $slugSet, $titleMap);
 
             $post->internal_links = array_unique($internalLinks);
             $post->content_html = $contentHtml;
@@ -191,171 +156,40 @@ $this->info('Processing wikilinks and generating internal links...');
         $this->info('Updated '.$posts->count().' posts with internal links');
     }
 
-    private function convertToHtml(string $content, array $slugMap, array $slugSet, array $titleMap): string
-    {
-        $converter = new CommonMarkConverter;
-
-        $content = preg_replace_callback('/\[\[([^\]]+)\]\]/', function ($matches) use ($slugMap, $slugSet, $titleMap) {
-            $link = $matches[1];
-            $parts = explode('|', $link);
-
-            if (count($parts) === 2) {
-                $displayText = trim($parts[0]);
-                $slug = Str::slug(trim($parts[1]));
-            } else {
-                $displayText = trim($link);
-                $slug = Str::slug($displayText);
-            }
-
-            $targetSlug = null;
-            if (isset($slugSet[$slug])) {
-                $targetSlug = $slug;
-            } elseif (isset($slugMap[$slug])) {
-                $targetSlug = $slug;
-            } elseif (isset($titleMap[$slug])) {
-                $targetSlug = $titleMap[$slug];
-            } else {
-                foreach ($slugMap as $existingSlug => $postId) {
-                    if (str_contains($existingSlug, $slug) || str_contains($slug, $existingSlug)) {
-                        $targetSlug = $existingSlug;
-                        break;
-                    }
-                }
-            }
-
-            if ($targetSlug) {
-                return "[{$displayText}](/posts/{$targetSlug})";
-            }
-
-            return $displayText;
-        }, $content);
-
-        return $converter->convert($content)->getContent();
-    }
-
-    private function createGraphNodesAndConnections()
+    private function createGraphNodesAndConnections(GraphSync $graphSync): void
     {
         $posts = Post::all();
 
         foreach ($posts as $post) {
-            $this->createGraphNode($post);
-            $this->createGraphConnections($post);
+            $graphSync->syncNode($post);
+            $graphSync->syncConnections($post);
         }
 
-        // Clean up orphaned connections (where target post no longer exists)
-        $this->cleanupOrphanedConnections();
+        $graphSync->cleanupOrphanedConnections();
 
         $this->info('Created graph nodes and connections for '.$posts->count().' posts');
     }
 
-    private function createGraphNode(Post $post)
+    private function pruneOrphanPosts(array $importedFiles, GraphSync $graphSync): void
     {
-        $existingThought = Thought::find($post->slug);
+        $importedPaths = array_column($importedFiles, 'path');
+        $orphans = Post::whereNotNull('source_path')
+            ->whereNotIn('source_path', $importedPaths)
+            ->get();
 
-        if ($existingThought) {
-            // Update existing thought with latest post data
-            $existingThought->update([
-                'title' => $post->title,
-                'content' => $post->content,
-                'tags' => $post->tags,
-            ]);
-        } else {
-            // Create new thought
-            Thought::create([
-                'id' => $post->slug,
-                'title' => $post->title,
-                'content' => $post->content,
-                'type' => 'article',
-                'tags' => $post->tags,
-            ]);
-
-            $this->info("Created graph node: {$post->slug}");
-        }
-    }
-
-    private function createGraphConnections(Post $post)
-    {
-        if (empty($post->internal_links)) {
-            // Remove all connections from this post if it has no internal links
-            Connection::where('from_id', $post->slug)->delete();
-
+        if ($orphans->isEmpty()) {
+            $this->info('No orphan posts to remove.');
             return;
         }
 
-        // Get current connections for this post
-        $currentConnections = Connection::where('from_id', $post->slug)
-            ->where('type', 'mentions')
-            ->get()
-            ->pluck('to_id')
-            ->toArray();
-
-        // Create new connections that don't exist
-        foreach ($post->internal_links as $linkedSlug) {
-            $existingConnection = Connection::where('from_id', $post->slug)
-                ->where('to_id', $linkedSlug)
-                ->where('type', 'mentions')
-                ->first();
-
-            if (! $existingConnection) {
-                Connection::create([
-                    'from_id' => $post->slug,
-                    'to_id' => $linkedSlug,
-                    'type' => 'mentions',
-                    'weight' => 0.5,
-                ]);
-
-                $this->info("Created graph connection: {$post->slug} -> {$linkedSlug}");
-            }
+        $count = 0;
+        foreach ($orphans as $post) {
+            $this->warn("Removing orphan post: {$post->slug} (source: {$post->source_path})");
+            $graphSync->removeNode($post->slug);
+            $post->delete();
+            $count++;
         }
 
-        // Remove connections that are no longer in internal_links
-        $connectionsToRemove = array_diff($currentConnections, $post->internal_links);
-        foreach ($connectionsToRemove as $toRemove) {
-            Connection::where('from_id', $post->slug)
-                ->where('to_id', $toRemove)
-                ->where('type', 'mentions')
-                ->delete();
-        }
+        $this->info("Pruned {$count} orphan post(s).");
     }
-
-    private function cleanupOrphanedConnections()
-    {
-        // Get all valid post slugs
-        $validSlugs = Post::pluck('slug')->toArray();
-
-// Remove connections where target doesn't exist
-    $orphanedConnections = Connection::whereNotIn('to_id', $validSlugs)->get();
-    foreach ($orphanedConnections as $connection) {
-      $this->info("Removed orphaned connection: {$connection->from_id} -> {$connection->to_id}");
-      $connection->delete();
-    }
-  }
-
-  private function pruneOrphanPosts(array $importedFiles)
-  {
-    $importedPaths = array_column($importedFiles, 'path');
-    $orphans = Post::whereNotNull('source_path')
-      ->whereNotIn('source_path', $importedPaths)
-      ->get();
-
-    if ($orphans->isEmpty()) {
-      $this->info('No orphan posts to remove.');
-      return;
-    }
-
-    $count = 0;
-    foreach ($orphans as $post) {
-      $this->warn("Removing orphan post: {$post->slug} (source: {$post->source_path})");
-      
-      // Remove corresponding graph node and connections
-      Thought::find($post->slug)?->delete();
-      Connection::where('from_id', $post->slug)->delete();
-      Connection::where('to_id', $post->slug)->delete();
-      
-      $post->delete();
-      $count++;
-    }
-
-    $this->info("Pruned {$count} orphan post(s).");
-  }
 }

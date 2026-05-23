@@ -58,8 +58,8 @@ class HandleInertiaRequests extends Middleware
         // Map routes to titles
         $titles = [
             'home' => 'Swapnil Upadhyay - Developer & Writer',
-            'articles.index' => 'Articles - Swapnil Upadhyay',
-            'articles.show' => $this->getArticleTitle($request),
+            'posts.index' => 'Articles - Swapnil Upadhyay',
+            'posts.show' => $this->getArticleTitle($request),
             'graph' => 'Knowledge Graph - Swapnil Upadhyay',
             'about' => 'About - Swapnil Upadhyay',
         ];
@@ -76,8 +76,8 @@ class HandleInertiaRequests extends Middleware
         
         $descriptions = [
             'home' => 'Personal website and blog about development, thoughts, and technology',
-            'articles.index' => 'Technical articles and essays about development, Laravel, Vue, and more',
-            'articles.show' => $this->getArticleDescription($request),
+            'posts.index' => 'Technical articles and essays about development, Laravel, Vue, and more',
+            'posts.show' => $this->getArticleDescription($request),
             'graph' => 'An interconnected web of thoughts, ideas, and concepts',
             'about' => 'Learn more about Swapnil Upadhyay',
         ];
@@ -90,12 +90,12 @@ class HandleInertiaRequests extends Middleware
      */
     protected function getArticleTitle(Request $request): string
     {
-        $slug = $request->route('article');
-        
-        // If you have an Article model
-        $article = \App\Models\Article::where('slug', $slug)->first();
-        return $article ? $article->title . ' - Swapnil Upadhyay' : 'Article - Swapnil Upadhyay';
-        
+        $slug = $request->route('slug');
+        if (! $slug) {
+            return 'Article - Swapnil Upadhyay';
+        }
+        $post = \App\Models\Post::where('slug', $slug)->first();
+        return $post ? $post->title . ' - Swapnil Upadhyay' : 'Article - Swapnil Upadhyay';
     }
 
     /**
@@ -103,13 +103,13 @@ class HandleInertiaRequests extends Middleware
      */
     protected function getArticleDescription(Request $request): string
     {
-        $slug = $request->route('article');
-        
-        $article = \App\Models\Article::where('slug', $slug)
-            ->first();
-            
-        return $article 
-            ? ($article->excerpt ?? substr(strip_tags($article->content), 0, 160)) 
+        $slug = $request->route('slug');
+        if (! $slug) {
+            return 'Read this article on Swapnil Upadhyay\'s blog';
+        }
+        $post = \App\Models\Post::where('slug', $slug)->first();
+        return $post
+            ? ($post->description ?? substr(strip_tags($post->content), 0, 160))
             : 'Read this article on Swapnil Upadhyay\'s blog';
     }
 

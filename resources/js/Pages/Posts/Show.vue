@@ -30,12 +30,12 @@ onUnmounted(() => {
     <div class="progress-bar" :style="{ width: progress + '%' }" />
 
     <article class="max-w-4xl mx-auto px-6 py-12">
-      <header class="mb-12">
-        <Link href="/posts" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral transition-colors mb-4 group">
-          <span class="group-hover:-translate-x-1 transition-transform">←</span>
-          Back to posts
-        </Link>
+      <Link href="/posts" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral transition-colors mb-4 group">
+        <span class="group-hover:-translate-x-1 transition-transform">←</span>
+        Back to posts
+      </Link>
 
+      <header class="mb-12">
         <div class="flex items-center gap-3 text-sm text-warm-muted mb-4">
           <time>{{ post.published_date }}</time>
           <span v-if="post.updated_at && post.updated_at !== post.published_date" class="before:content-['·'] before:mr-3">
@@ -63,7 +63,6 @@ onUnmounted(() => {
         </div>
       </header>
 
-      <!-- Series Navigation -->
       <div v-if="seriesPosts && seriesPosts.length > 1" class="mb-10 p-6 bg-sky text-white rounded-sm">
         <h3 class="font-display text-sm font-bold mb-3">
           Part {{ post.series_order }} of "{{ post.series }}"
@@ -84,10 +83,8 @@ onUnmounted(() => {
         </ol>
       </div>
 
-      <!-- Content -->
       <div class="article-content max-w-none" v-html="post.content_html" />
 
-      <!-- Linked Posts -->
       <div v-if="linkedPosts && linkedPosts.length > 0" class="mt-16 pt-8 border-t border-warm-border">
         <h3 class="font-display text-lg font-bold text-ink mb-4 flex items-center gap-2">
           <span class="w-1.5 h-6 bg-coral rounded-sm inline-block"></span>

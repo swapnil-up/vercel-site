@@ -78,6 +78,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import NestedItems from '../Components/NestedItems.vue'
+import { parseAchievements } from '../Composables/useParseAchievements'
 
 const items = ref([])
 const loading = ref(true)
@@ -89,40 +90,6 @@ const toggleExpand = (index) => {
   } else {
     expandedItems.value.add(index)
   }
-}
-
-const parseAchievements = (text) => {
-  const lines = text.trim().split('\n')
-  const result = []
-  const stack = []
-
-  for (const line of lines) {
-    const match = line.match(/^(\s*)(.+)$/)
-    if (!match) continue
-
-    const indent = match[1].length
-    const title = match[2].trim()
-
-    const item = {
-      title,
-      children: []
-    }
-
-    // Find the correct parent level
-    while (stack.length > 0 && stack[stack.length - 1].level >= indent) {
-      stack.pop()
-    }
-
-    if (stack.length === 0) {
-      result.push(item)
-    } else {
-      stack[stack.length - 1].item.children.push(item)
-    }
-
-    stack.push({ level: indent, item })
-  }
-
-  return result
 }
 
 const handleToggle = () => {
