@@ -110,7 +110,7 @@ php artisan db:seed --class=QuotesSeeder
 | `/about` | About page |
 | `/now` | Now page (current focus) |
 | `/tools/sketch` | Drawing tool |
-| `/tools/whisper` | Voice transcription (WIP) |
+| `/tools/whisper` | In-browser voice transcription via whisper.cpp WASM |
 | `/tools/emom-timer` | EMOM timer |
 | `/tools/bill-splitter` | Bill splitter |
 | `/tools/rantim` | Random timer |
@@ -148,7 +148,7 @@ php artisan db:seed --class=QuotesSeeder
 
 A collection of useful tools accessible via `/tools/*`:
 - **Sketch**: Canvas drawing tool
-- **Whisper**: Voice-to-text (planned)
+- **Whisper**: In-browser speech-to-text via whisper.cpp WASM — record mic or upload audio, exports TXT/JSON with or without timestamps
 - **EMOM Timer**: Interval training timer
 - **Bill Splitter**: Split bills with friends
 - **RanTim**: Random timer
