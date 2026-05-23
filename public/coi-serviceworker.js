@@ -26,6 +26,9 @@ if (typeof window === 'undefined') {
         if (r.cache === "only-if-cached" && r.mode !== "same-origin") {
             return;
         }
+        if (r.url.includes('huggingface.co')) {
+            return;
+        }
 
         const request = (coepCredentialless && r.mode === "no-cors")
             ? new Request(r, {
