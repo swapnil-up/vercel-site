@@ -3,5 +3,7 @@ import Tamagotchi from '../../Components/Tamagotchi.vue'
 </script>
 
 <template>
-  <Tamagotchi />
+  <div class="pt-12">
+    <Tamagotchi />
+  </div>
 </template>

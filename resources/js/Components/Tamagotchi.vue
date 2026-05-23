@@ -31,9 +31,9 @@ let particleId = 0
 const expressions = ['happy', 'excited', 'love', 'content', 'neutral', 'thinking', 'confused', 'surprised', ' sleepy', 'sad', 'lonely', 'bored', 'hungry', 'angry', 'sick', 'crying']
 
 const stats = computed(() => [
-  { label: 'Hunger', value: pet.value.hunger, icon: '🍖', color: pet.value.hunger < 30 ? 'bg-red-500' : 'bg-orange-400' },
-  { label: 'Boredom', value: pet.value.boredom, icon: '🎨', color: pet.value.boredom < 30 ? 'bg-red-500' : 'bg-blue-400' },
-  { label: 'Love', value: pet.value.love, icon: '💕', color: pet.value.love < 30 ? 'bg-red-500' : 'bg-pink-400' },
+  { label: 'Hunger', value: pet.value.hunger, icon: '🍖', color: pet.value.hunger < 30 ? 'bg-coral' : 'bg-orange-400' },
+  { label: 'Boredom', value: pet.value.boredom, icon: '🎨', color: pet.value.boredom < 30 ? 'bg-coral' : 'bg-sky' },
+  { label: 'Love', value: pet.value.love, icon: '💕', color: pet.value.love < 30 ? 'bg-coral' : 'bg-pink-400' },
 ])
 
 const petMood = computed(() => {
@@ -350,13 +350,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 p-6">
+  <div class="min-h-screen bg-cream p-6">
     <div class="max-w-2xl mx-auto">
-      <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+      <div class="bg-warm-surface/90 backdrop-blur-sm rounded-sm shadow-lg p-8">
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h1 class="text-3xl font-bold text-gray-800">Blobby</h1>
-            <p class="text-sm text-gray-500">Age: {{ pet.age }} mins</p>
+            <h1 class="font-display text-3xl font-bold text-ink">Blobby</h1>
+            <p class="text-sm text-warm-muted">Age: {{ pet.age }} mins</p>
           </div>
           <div class="text-4xl animate-bounce">{{ expression }}</div>
         </div>
@@ -460,50 +460,50 @@ onUnmounted(() => {
               </div>
 
               <div v-if="showActionMessage"
-                class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/90 rounded-full shadow-lg text-sm font-bold text-pink-500 animate-bounce">
+                class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-warm-surface rounded-sm text-sm font-bold text-coral animate-bounce">
                 {{ actionMessage }}
               </div>
             </div>
 
-            <p class="text-center text-gray-600 mt-4 mb-4">{{ petMessage }}</p>
+            <p class="text-center text-warm-muted mt-4 mb-4">{{ petMessage }}</p>
 
-            <p class="text-center text-xs text-gray-400 mb-4">Click Blobby to interact!</p>
+            <p class="text-center text-xs text-warm-muted mb-4">Click Blobby to interact!</p>
 
             <div class="flex justify-center gap-3">
               <button @click="feed"
-                class="px-5 py-3 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-2xl hover:from-orange-500 hover:to-orange-600 hover:scale-105 active:scale-95 transition-all font-semibold shadow-lg">
+                class="px-5 py-3 bg-gradient-to-r from-coral to-mustard text-white rounded-2xl hover:from-coral hover:to-mustard hover:scale-105 active:scale-95 transition-all font-semibold shadow-lg">
                 🍖 Feed
               </button>
               <button @click="petAction"
-                class="px-5 py-3 bg-gradient-to-r from-pink-400 to-pink-500 text-white rounded-2xl hover:from-pink-500 hover:to-pink-600 hover:scale-105 active:scale-95 transition-all font-semibold shadow-lg">
+                class="px-5 py-3 bg-gradient-to-r from-coral to-mustard text-white rounded-2xl hover:from-coral hover:to-mustard hover:scale-105 active:scale-95 transition-all font-semibold shadow-lg">
                 💕 Cuddle
               </button>
               <button @click="playGame('rps')"
-                class="px-5 py-3 bg-gradient-to-r from-blue-400 to-blue-500 text-white rounded-2xl hover:from-blue-500 hover:to-blue-600 hover:scale-105 active:scale-95 transition-all font-semibold shadow-lg">
+                class="px-5 py-3 bg-gradient-to-r from-sky to-sky text-white rounded-2xl hover:from-sky hover:to-sky hover:scale-105 active:scale-95 transition-all font-semibold shadow-lg">
                 🎮 Play
               </button>
             </div>
           </div>
 
           <div class="w-full md:w-64">
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">Stats</h3>
+            <h3 class="font-display text-lg font-semibold text-ink mb-4">Stats</h3>
             <div class="space-y-4">
-              <div v-for="stat in stats" :key="stat.label" class="bg-white/60 rounded-xl p-3">
+              <div v-for="stat in stats" :key="stat.label" class="bg-warm-surface rounded-sm p-3">
                 <div class="flex items-center gap-2 mb-2">
                   <span class="text-lg">{{ stat.icon }}</span>
-                  <span class="text-sm font-medium text-gray-700">{{ stat.label }}</span>
-                  <span class="ml-auto text-sm font-bold" :class="stat.value < 30 ? 'text-red-500' : 'text-gray-600'">{{ stat.value }}%</span>
+                  <span class="text-sm font-medium text-ink">{{ stat.label }}</span>
+                  <span class="ml-auto text-sm font-bold" :class="stat.value < 30 ? 'text-coral' : 'text-warm-muted'">{{ stat.value }}%</span>
                 </div>
-                <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-3 bg-warm-border rounded-full overflow-hidden">
                   <div class="h-full rounded-full transition-all duration-500 ease-out" :class="stat.color"
                     :style="{ width: stat.value + '%' }"></div>
                 </div>
               </div>
             </div>
 
-            <div class="mt-6 pt-4 border-t border-gray-200">
-              <h3 class="text-sm font-semibold text-gray-700 mb-2">Mini-games</h3>
-              <p class="text-xs text-gray-500 mb-3">Win = Blobby gets bored, Lose = Blobby is happy!</p>
+            <div class="mt-6 pt-4 border-t border-warm-border">
+              <h3 class="font-display text-sm font-semibold text-ink mb-2">Mini-games</h3>
+              <p class="text-xs text-warm-muted mb-3">Win = Blobby gets bored, Lose = Blobby is happy!</p>
               <div class="flex gap-2">
                 <button @click="playGame('rps')" class="flex-1 px-3 py-2 bg-indigo-100 text-indigo-600 rounded-xl text-sm hover:bg-indigo-200 transition-colors font-medium">
                   RPS
@@ -518,44 +518,44 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="showGame" class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/30">
-      <div class="bg-white p-8 rounded-3xl max-w-sm w-full mx-4 shadow-2xl">
+    <div v-if="showGame" class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-ink/50">
+      <div class="bg-warm-surface p-8 rounded-sm max-w-sm w-full mx-4 shadow-2xl">
         <div class="text-center mb-6">
           <div class="text-5xl mb-3">{{ gameType === 'rps' ? '🪨📄✂️' : '🔢' }}</div>
-          <h3 class="text-xl font-bold text-gray-800">{{ gameType === 'rps' ? 'Rock Paper Scissors' : 'Guess the Number' }}</h3>
+          <h3 class="font-display text-xl font-bold text-ink">{{ gameType === 'rps' ? 'Rock Paper Scissors' : 'Guess the Number' }}</h3>
         </div>
 
         <div v-if="!gameResult" class="space-y-4">
-          <p v-if="gameType === 'rps'" class="text-sm text-gray-600 text-center">
+          <p v-if="gameType === 'rps'" class="text-sm text-warm-muted text-center">
             r = rock, p = paper, s = scissors
           </p>
-          <p v-else class="text-sm text-gray-600 text-center">
+          <p v-else class="text-sm text-warm-muted text-center">
             Guess a number 1-10
           </p>
 
           <input id="game-input" v-model="gameInput" @keyup.enter="submitGame" @keyup.escape="closeGame" type="text"
-            class="w-full p-4 border-2 border-gray-200 rounded-2xl text-center text-2xl focus:border-pink-400 focus:outline-none"
+            class="w-full p-4 border-2 border-warm-border rounded-sm text-center text-2xl focus:border-coral focus:outline-none"
             :placeholder="gameType === 'rps' ? 'r, p, or s' : '1-10'" />
 
           <div class="flex gap-3">
             <button @click="submitGame"
-              class="flex-1 py-3 bg-gradient-to-r from-pink-400 to-pink-500 text-white rounded-xl hover:from-pink-500 hover:to-pink-600 font-semibold transition-all">
+              class="flex-1 py-3 bg-gradient-to-r from-coral to-mustard text-white rounded-sm hover:from-coral hover:to-mustard font-semibold transition-all">
               Play!
             </button>
             <button @click="closeGame"
-              class="px-6 py-3 bg-gray-200 text-gray-600 rounded-xl hover:bg-gray-300 font-medium transition-all">
+              class="px-6 py-3 bg-warm-surface text-warm-muted rounded-sm hover:bg-coral/10 font-medium transition-all">
               Cancel
             </button>
           </div>
         </div>
 
         <div v-else class="text-center">
-          <p class="text-lg font-medium text-gray-700 mb-6">{{ gameMessage }}</p>
+          <p class="text-lg font-medium text-ink mb-6">{{ gameMessage }}</p>
           <div class="flex gap-3">
-            <button @click="playGame(gameType)" class="flex-1 py-3 bg-gradient-to-r from-pink-400 to-pink-500 text-white rounded-xl hover:from-pink-500 hover:to-pink-600 font-semibold">
+            <button @click="playGame(gameType)" class="flex-1 py-3 bg-gradient-to-r from-coral to-mustard text-white rounded-sm hover:from-coral hover:to-mustard font-semibold">
               Again!
             </button>
-            <button @click="closeGame" class="flex-1 py-3 bg-gray-200 text-gray-600 rounded-xl hover:bg-gray-300 font-medium">
+            <button @click="closeGame" class="flex-1 py-3 bg-warm-surface text-warm-muted rounded-sm hover:bg-coral/10 font-medium">
               Done
             </button>
           </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-2xl mx-auto p-6 mt-5 bg-black text-green-400 font-mono text-sm rounded-lg shadow-lg">
+  <div class="max-w-full p-6 bg-black text-green-400 font-mono text-sm rounded-lg shadow-lg">
     <div class="mb-4">
       <div class="flex items-center mb-2">
         <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>

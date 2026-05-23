@@ -109,6 +109,7 @@ const handleTagClick = (tag, event) => {
 }
 
 .post-content {
+  font-family: var(--font-body, "DM Sans", sans-serif);
   max-width: 100%;
 }
 
@@ -119,7 +120,7 @@ const handleTagClick = (tag, event) => {
 .post-date {
   display: block;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-warm-muted);
   margin-bottom: 0.75rem;
 }
 
@@ -128,16 +129,17 @@ const handleTagClick = (tag, event) => {
 }
 
 .post-title {
+  font-family: var(--font-display, "Bricolage Grotesque", sans-serif);
   font-size: 2rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-ink);
   margin-bottom: 1rem;
   line-height: 1.2;
 }
 
 .post-description {
   font-size: 1.125rem;
-  color: #4b5563;
+  color: var(--color-warm-muted);
   line-height: 1.6;
   margin-bottom: 1.5rem;
 }
@@ -152,8 +154,8 @@ const handleTagClick = (tag, event) => {
 .tag-button {
   font-size: 0.875rem;
   padding: 0.5rem 1rem;
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: var(--color-warm-surface);
+  color: var(--color-warm-border);
   border-radius: 9999px;
   border: none;
   cursor: pointer;
@@ -161,22 +163,22 @@ const handleTagClick = (tag, event) => {
 }
 
 .tag-button:hover {
-  background-color: #e5e7eb;
-  color: #111827;
+  background-color: var(--color-warm-border);
+  color: var(--color-ink);
 }
 
 .series-navigation {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background-color: #eff6ff;
-  border-radius: 0.5rem;
-  border: 1px solid #dbeafe;
+  background-color: var(--color-sky);
+  border-radius: 0.125rem;
+  border: 1px solid var(--color-sky);
 }
 
 .series-title {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #1e3a8a;
+  color: var(--color-ink);
   margin-bottom: 0.75rem;
 }
 
@@ -191,13 +193,13 @@ const handleTagClick = (tag, event) => {
 
 .series-current {
   font-size: 0.875rem;
-  color: #1e3a8a;
+  color: var(--color-ink);
   font-weight: 500;
 }
 
 .series-link {
   font-size: 0.875rem;
-  color: #1e40af;
+  color: var(--color-ink);
   background: none;
   border: none;
   cursor: pointer;
@@ -207,20 +209,20 @@ const handleTagClick = (tag, event) => {
 }
 
 .series-link:hover {
-  color: #1e3a8a;
+  color: var(--color-ink);
   text-decoration: underline;
 }
 
 .prose-content {
   font-size: 1rem;
   line-height: 1.75;
-  color: #374151;
+  color: var(--color-warm-border);
 }
 
 .prose-content :deep(h2) {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-ink);
   margin-top: 3rem;
   margin-bottom: 1rem;
 }
@@ -228,7 +230,7 @@ const handleTagClick = (tag, event) => {
 .prose-content :deep(h3) {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-ink);
   margin-top: 2rem;
   margin-bottom: 0.75rem;
 }
@@ -238,7 +240,7 @@ const handleTagClick = (tag, event) => {
 }
 
 .prose-content :deep(a) {
-  color: #2563eb;
+  color: var(--color-coral);
   text-decoration: none;
 }
 
@@ -248,17 +250,17 @@ const handleTagClick = (tag, event) => {
 
 .prose-content :deep(code) {
   font-size: 0.875rem;
-  background-color: #f3f4f6;
+  background-color: var(--color-warm-surface);
   padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  color: #111827;
+  border-radius: 0.125rem;
+  color: var(--color-ink);
 }
 
 .prose-content :deep(pre) {
-  background-color: #111827;
-  color: #f9fafb;
+  background-color: var(--color-ink);
+  color: var(--color-cream);
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: 0.125rem;
   overflow-x: auto;
 }
 
@@ -269,26 +271,26 @@ const handleTagClick = (tag, event) => {
 }
 
 .prose-content :deep(strong) {
-  color: #111827;
+  color: var(--color-ink);
   font-weight: 600;
 }
 
 .prose-content :deep(blockquote) {
-  border-left: 4px solid #d1d5db;
+  border-left: 4px solid var(--color-warm-border);
   padding-left: 1rem;
-  color: #6b7280;
+  color: var(--color-warm-muted);
 }
 
 .linked-posts {
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-warm-border);
 }
 
 .linked-posts-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-ink);
   margin-bottom: 1rem;
 }
 
@@ -301,101 +303,28 @@ const handleTagClick = (tag, event) => {
 .linked-post-card {
   display: block;
   padding: 1rem;
-  background-color: white;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
+  background-color: var(--color-cream);
+  border-radius: 0.125rem;
+  border: 1px solid var(--color-warm-border);
   cursor: pointer;
   text-align: left;
   transition: all 0.2s;
 }
 
 .linked-post-card:hover {
-  border-color: #d1d5db;
+  border-color: var(--color-warm-border);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .linked-post-title {
   font-weight: 500;
-  color: #111827;
+  color: var(--color-ink);
   margin-bottom: 0.25rem;
 }
 
 .linked-post-description {
   font-size: 0.875rem;
-  color: #6b7280;
-}
-
-/* Dark mode support */
-.dark-mode .post-title,
-.dark-mode .linked-post-title {
-  color: #f9fafb;
-}
-
-.dark-mode .post-description,
-.dark-mode .linked-post-description {
-  color: #d1d5db;
-}
-
-.dark-mode .prose-content {
-  color: #d1d5db;
-}
-
-.dark-mode .prose-content :deep(h2),
-.dark-mode .prose-content :deep(h3) {
-  color: #f9fafb;
-}
-
-.dark-mode .prose-content :deep(code) {
-  background-color: #374151;
-  color: #f9fafb;
-}
-
-.dark-mode .prose-content :deep(strong) {
-  color: #f9fafb;
-}
-
-.dark-mode .prose-content :deep(blockquote) {
-  border-left-color: #4b5563;
-  color: #9ca3af;
-}
-
-.dark-mode .tag-button {
-  background-color: #374151;
-  color: #d1d5db;
-}
-
-.dark-mode .tag-button:hover {
-  background-color: #4b5563;
-  color: #f9fafb;
-}
-
-.dark-mode .series-navigation {
-  background-color: #1e3a8a;
-  border-color: #1e40af;
-}
-
-.dark-mode .series-title {
-  color: #dbeafe;
-}
-
-.dark-mode .series-current {
-  color: #dbeafe;
-}
-
-.dark-mode .series-link {
-  color: #60a5fa;
-}
-
-.dark-mode .series-link:hover {
-  color: #93c5fd;
-}
-
-.dark-mode .linked-post-card {
-  background-color: #1f2937;
-  border-color: #374151;
-}
-
-.dark-mode .linked-post-card:hover {
-  border-color: #4b5563;
+  color: var(--color-warm-muted);
 }
 </style>
+

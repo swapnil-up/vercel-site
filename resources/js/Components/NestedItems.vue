@@ -32,7 +32,7 @@
           v-else
           class="flex-shrink-0 w-4"
         />
-        <span class="text-gray-700">{{ item.title }}</span>
+        <span class="text-ink/80">{{ item.title }}</span>
         <span v-if="item.children && item.children.length > 0" class="ml-auto text-xs text-gray-400">
           {{ item.children.length }}
         </span>

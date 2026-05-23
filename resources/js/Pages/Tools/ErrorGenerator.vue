@@ -3,5 +3,7 @@ import ErrorMessageGenerator from '../../Components/ErrorMessageGenerator.vue'
 </script>
 
 <template>
-  <ErrorMessageGenerator />
+  <div class="pt-12">
+    <ErrorMessageGenerator />
+  </div>
 </template>

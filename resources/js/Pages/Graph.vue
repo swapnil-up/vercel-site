@@ -44,9 +44,6 @@
         <button @click="zoomIn" class="control-btn">Zoom In</button>
         <button @click="zoomOut" class="control-btn">Zoom Out</button>
         <button @click="fitToContent" class="control-btn">Fit All</button>
-        <button @click="toggleDarkMode" class="control-btn dark-toggle">
-          {{ isDarkMode ? '☀️' : '🌙' }}
-        </button>
         <button 
           @click="toggleTagEdges" 
           class="control-btn"
@@ -63,11 +60,16 @@
 <script>
 import * as d3 from 'd3';
 import GraphPostViewer from '../Components/GraphPostViewer.vue';
+import { useDarkMode } from '@/Composables/useDarkMode';
 
 export default {
   name: 'Graph',
   components: {
     GraphPostViewer
+  },
+  setup() {
+    const { isDark } = useDarkMode();
+    return { isDark };
   },
   data() {
     return {
@@ -84,9 +86,18 @@ export default {
       container: null,
       width: 0,
       height: 0,
-      isDarkMode: false,
       showTagEdges: false,
       selectedTag: null
+    }
+  },
+  computed: {
+    isDarkMode() {
+      return this.isDark;
+    }
+  },
+  watch: {
+    isDarkMode() {
+      this.updateGraphColors();
     }
   },
   
@@ -172,9 +183,20 @@ export default {
         .data(this.links)
         .join('line')
         .attr('class', 'graph-link')
-        .style('stroke', this.isDarkMode ? '#666' : '#999')
+        .style('stroke', this.isDarkMode ? '#555' : '#bbb')
         .style('stroke-opacity', 0.6)
         .style('stroke-width', d => Math.sqrt(d.weight) * 2);
+      
+      // Folder links (hub nodes to articles)
+      const folderLinkGroup = this.container.append('g')
+        .attr('class', 'folder-links');
+      folderLinkGroup.selectAll('line')
+        .data(this.folderLinks)
+        .join('line')
+        .attr('class', 'folder-link')
+        .style('stroke', '#f97316')
+        .style('stroke-opacity', 0.35)
+        .style('stroke-width', 1.5);
       
       // Folder nodes (always visible, hub nodes)
       const folderNodeGroup = this.container.append('g')
@@ -187,54 +209,19 @@ const folderNodeCircles = folderNodeGroup
         .attr('class', 'folder-node')
         .attr('r', 14)
         .style('fill', '#f97316')
-        .style('stroke', this.isDarkMode ? '#c2410c' : '#fff')
+        .style('stroke', this.isDarkMode ? '#aaa' : '#fff')
         .style('stroke-width', 2)
-        .style('cursor', 'pointer')
-        .style('opacity', 0.9)
-        .on('click', this.handleFolderNodeClick);
 
-      const folderNodeLabels = folderNodeGroup
-        .selectAll('text')
-        .data(this.folderNodes)
-        .join('text')
-        .text(d => d.title)
-        .style('font-size', '11px')
-        .style('font-weight', '700')
-        .style('text-anchor', 'middle')
-        .style('fill', '#1a1a1a')
-        .style('pointer-events', 'none')
-        .attr('dy', 4);
-      
-      // Folder links
-      const folderLinkGroup = this.container.append('g')
-        .attr('class', 'folder-links');
-      
-      const folderLinkLines = folderLinkGroup
-        .selectAll('line')
-        .data(this.folderLinks)
-        .join('line')
-        .attr('class', 'folder-link')
-        .style('stroke', '#f97316')
-        .style('stroke-opacity', 0.25)
-        .style('stroke-width', 1.5);
-      
-      // Tag nodes (hidden by default)
+      // Tag nodes
       const tagNodeGroup = this.container.append('g')
-        .attr('class', 'tag-nodes')
-        .style('display', 'none')
-        .lower(); // Put behind regular nodes
-      
-      this.simulation.nodes(this.nodes);
-      this.simulation.force('link', d3.forceLink(this.links).id(d => d.id).distance(linkDistance));
-      
-      const tagNodeCircles = tagNodeGroup
-        .selectAll('circle')
+        .attr('class', 'tag-nodes');
+      tagNodeGroup.selectAll('circle')
         .data(this.tagNodes)
         .join('circle')
         .attr('class', 'tag-node')
         .attr('r', 12)
         .style('fill', '#22c55e')
-        .style('stroke', this.isDarkMode ? '#166534' : '#fff')
+        .style('stroke', this.isDarkMode ? '#aaa' : '#fff')
         .style('stroke-width', 2)
         .style('cursor', 'pointer')
         .on('click', this.handleTagNodeClick);
@@ -273,7 +260,7 @@ const folderNodeCircles = folderNodeGroup
         .attr('class', 'graph-node')
         .attr('r', d => this.calculateNodeSize(d))
         .style('fill', d => this.getNodeFillColor(d))
-        .style('stroke', this.isDarkMode ? '#333' : '#fff')
+        .style('stroke', this.isDarkMode ? '#444' : '#fff')
         .style('stroke-width', 2)
         .style('cursor', 'pointer')
         .call(d3.drag()
@@ -293,7 +280,7 @@ const folderNodeCircles = folderNodeGroup
         .style('font-size', '12px')
         .style('text-anchor', 'middle')
         .style('pointer-events', 'none')
-        .style('fill', this.isDarkMode ? '#e5e7eb' : '#333')
+        .style('fill', this.isDarkMode ? '#ccc' : '#555')
         .attr('dy', d => (d.size || 8) + 15);
       
       this.simulation.on('tick', () => {
@@ -721,7 +708,7 @@ computeFolderNodes() {
       this.container.selectAll('.graph-node')
         .style('opacity', n => connectedIds.has(n.id) ? 1 : 0.2)
         .style('stroke-width', n => connectedIds.has(n.id) ? 4 : 2)
-        .style('stroke', n => connectedIds.has(n.id) ? '#22c55e' : (this.isDarkMode ? '#333' : '#fff'));
+        .style('stroke', n => connectedIds.has(n.id) ? '#22c55e' : (this.isDarkMode ? '#444' : '#fff'));
       
       // Highlight tag links (line elements)
       this.container.selectAll('.tag-link line')
@@ -778,7 +765,7 @@ computeFolderNodes() {
       this.container.selectAll('.graph-node')
         .style('opacity', n => connectedIds.has(n.id) ? 1 : 0.2)
         .style('stroke-width', n => connectedIds.has(n.id) ? 4 : 2)
-        .style('stroke', n => connectedIds.has(n.id) ? '#f97316' : (this.isDarkMode ? '#333' : '#fff'));
+        .style('stroke', n => connectedIds.has(n.id) ? '#f97316' : (this.isDarkMode ? '#444' : '#fff'));
       
       // Highlight folder links
       this.container.selectAll('.folder-link')
@@ -925,11 +912,6 @@ dragStarted(event, d) {
       d.fy = null;
     },
     
-    toggleDarkMode() {
-      this.isDarkMode = !this.isDarkMode;
-      this.updateGraphColors();
-    },
-
     async handleOpenPost(slug) {
       try {
         const response = await fetch(`/data/node/article/${slug}`);
@@ -1005,13 +987,13 @@ dragStarted(event, d) {
       if (!this.container) return;
       
       this.container.selectAll('.graph-link')
-        .style('stroke', this.isDarkMode ? '#666' : '#999');
+        .style('stroke', this.isDarkMode ? '#555' : '#bbb');
       
       this.container.selectAll('.graph-node')
-        .style('stroke', this.isDarkMode ? '#333' : '#fff');
+        .style('stroke', this.isDarkMode ? '#444' : '#fff');
       
       this.container.selectAll('.labels text')
-        .style('fill', this.isDarkMode ? '#e5e7eb' : '#333');
+        .style('fill', this.isDarkMode ? '#ccc' : '#555');
     }
   }
 }
@@ -1025,8 +1007,8 @@ dragStarted(event, d) {
 }
 
 .graph-container.dark-mode {
-  background-color: #1f2937;
-  color: #e5e7eb;
+  background-color: var(--color-cream);
+  color: var(--color-ink);
 }
 
 .graph-main {
@@ -1045,42 +1027,39 @@ dragStarted(event, d) {
 }
 
 .control-btn {
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  background: var(--color-warm-surface);
+  border: 1px solid var(--color-warm-border);
+  border-radius: 0.25rem;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   cursor: pointer;
+  color: var(--color-ink);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all 0.2s;
 }
 
 .dark-mode .control-btn {
-  background: #374151;
-  border-color: #4b5563;
-  color: #e5e7eb;
+  background: var(--color-warm-surface);
+  border-color: var(--color-warm-border);
+  color: var(--color-ink);
 }
 
 .control-btn:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
+  background: var(--color-cream);
+  border-color: var(--color-warm-muted);
 }
 
 .dark-mode .control-btn:hover {
-  background: #4b5563;
-  border-color: #6b7280;
-}
-
-.dark-toggle {
-  min-width: 2.5rem;
+  background: var(--color-warm-surface);
+  border-color: var(--color-coral);
 }
 
 .graph-sidebar {
   width: 50vw;
   max-width: 700px;
   min-width: 400px;
-  background: #f8fafc;
-  border-left: 1px solid #e2e8f0;
+  background: var(--color-warm-surface);
+  border-left: 1px solid var(--color-warm-border);
   padding: 0;
   overflow-y: auto;
   height: 100vh;
@@ -1088,17 +1067,17 @@ dragStarted(event, d) {
 }
 
 .dark-mode .graph-sidebar {
-  background: #111827;
-  border-left-color: #374151;
+  background: var(--color-warm-surface);
+  border-left-color: var(--color-warm-border);
 }
 
 .stack-indicator {
   position: sticky;
   top: 0;
-  background: #3b82f6;
-  color: white;
+  background: var(--color-sky);
+  color: var(--color-cream);
   padding: 0.5rem 1rem;
-  border-radius: 6px;
+  border-radius: 0.25rem;
   font-size: 0.875rem;
   text-align: center;
   margin: 1rem;
@@ -1106,13 +1085,13 @@ dragStarted(event, d) {
 }
 
 .dark-mode .stack-indicator {
-  background: #1d4ed8;
+  background: var(--color-sky);
 }
 
 .stacked-node {
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  background: var(--color-warm-surface);
+  border: 1px solid var(--color-warm-border);
+  border-radius: 0.25rem;
   margin: 0 1rem 1rem 1rem;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   position: relative;
@@ -1124,8 +1103,8 @@ dragStarted(event, d) {
 }
 
 .dark-mode .stacked-node {
-  background: #1f2937;
-  border-color: #374151;
+  background: var(--color-warm-surface);
+  border-color: var(--color-warm-border);
 }
 
 .stacked-node.is-short {
@@ -1138,7 +1117,7 @@ dragStarted(event, d) {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-warm-border);
   position: sticky;
   top: 0;
   background: inherit;
@@ -1146,7 +1125,7 @@ dragStarted(event, d) {
 }
 
 .dark-mode .node-header {
-  border-bottom-color: #374151;
+  border-bottom-color: var(--color-warm-border);
 }
 
 .node-header h3 {
@@ -1165,11 +1144,11 @@ dragStarted(event, d) {
 }
 
 .clickable-heading:hover {
-  color: #3b82f6;
+  color: var(--color-coral);
 }
 
 .dark-mode .clickable-heading:hover {
-  color: #60a5fa;
+  color: var(--color-coral);
 }
 
 .close-btn {
@@ -1177,24 +1156,24 @@ dragStarted(event, d) {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-warm-muted);
   padding: 0.25rem;
-  border-radius: 4px;
+  border-radius: 0.125rem;
   transition: all 0.2s;
 }
 
 .close-btn:hover {
-  color: #374151;
-  background: #f3f4f6;
+  color: var(--color-ink);
+  background: var(--color-warm-border);
 }
 
 .dark-mode .close-btn {
-  color: #9ca3af;
+  color: var(--color-warm-muted);
 }
 
 .dark-mode .close-btn:hover {
-  color: #e5e7eb;
-  background: #374151;
+  color: var(--color-ink);
+  background: var(--color-warm-border);
 }
 
 .node-content {
@@ -1211,12 +1190,12 @@ dragStarted(event, d) {
 .graph-svg {
   width: 100%;
   height: 100%;
-  background: #fafafa;
+  background: transparent;
   cursor: grab;
 }
 
 .dark-mode .graph-svg {
-  background: #0f172a;
+  background: transparent;
 }
 
 .graph-svg:active {
@@ -1241,14 +1220,14 @@ dragStarted(event, d) {
 }
 
 .tag-toggle.active {
-  background-color: #22c55e;
-  border-color: #22c55e;
-  color: white;
+  background-color: var(--color-mint);
+  border-color: var(--color-mint);
+  color: var(--color-ink);
 }
 
 .dark-mode .tag-toggle.active {
-  background-color: #16a34a;
-  border-color: #16a34a;
-  color: white;
+  background-color: var(--color-mint);
+  border-color: var(--color-mint);
+  color: var(--color-ink);
 }
 </style>

@@ -3,5 +3,7 @@ import ClickerGame from '../../Components/ClickerGame.vue'
 </script>
 
 <template>
-  <ClickerGame />
+  <div class="pt-12">
+    <ClickerGame />
+  </div>
 </template>

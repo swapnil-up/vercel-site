@@ -327,29 +327,29 @@ function formatTime(s) {
       <!-- Header -->
       <div class="text-center mb-10">
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase mb-4"
-          :class="modelReady ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-neutral-800 text-neutral-400 border border-neutral-700'">
-          <span class="w-1.5 h-1.5 rounded-full" :class="modelReady ? 'bg-emerald-400' : 'bg-neutral-500'" />
+          :class="modelReady ? 'bg-mint/10 text-mint border border-mint/20' : 'bg-neutral-800 text-warm-muted border border-neutral-700'">
+          <span class="w-1.5 h-1.5 rounded-full" :class="modelReady ? 'bg-mint' : 'bg-warm-muted'" />
           {{ modelReady ? 'Model ready' : 'Engine not loaded' }}
         </div>
-        <h1 class="text-2xl font-bold text-white tracking-tight">whisper</h1>
-        <p class="text-sm text-neutral-500 mt-1">in-browser speech-to-text via whisper.cpp WASM</p>
+        <h1 class="text-2xl font-bold font-display font-display text-3xl font-bold text-ink tracking-tighter">whisper</h1>
+        <p class="text-sm text-warm-muted mt-1">in-browser speech-to-text via whisper.cpp WASM</p>
       </div>
 
-      <div v-if="error" class="mb-6 p-4 bg-red-950/50 border border-red-500/20 rounded-xl text-red-400 text-sm">
+      <div v-if="error" class="mb-6 p-4 bg-coral/10 border border-coral/20 rounded-sm text-coral text-sm">
         {{ error }}
       </div>
 
       <!-- Model Section -->
       <div class="mb-6">
         <div v-if="phase === 'init' || phase === 'loading-engine'"
-          class="flex items-center gap-3 p-4 rounded-xl bg-neutral-900 border border-neutral-800">
-          <div class="w-2 h-2 rounded-full bg-cyan-400 animate-plus" />
-          <span class="text-sm text-neutral-400">{{ status }}</span>
+          class="flex items-center gap-3 p-4 rounded-sm bg-warm-surface border border-warm-border">
+          <div class="w-2 h-2 rounded-full bg-coral animate-plus" />
+          <span class="text-sm text-warm-muted">{{ status }}</span>
         </div>
 
         <div v-else-if="phase === 'engine-ready'"
-          class="p-5 rounded-xl bg-neutral-900 border border-neutral-800">
-          <p class="text-sm text-neutral-400 mb-4">
+          class="p-5 rounded-sm bg-warm-surface border border-warm-border">
+          <p class="text-sm text-warm-muted mb-4">
             Download a quantized Whisper model to get started. Cached in your browser for future use.
           </p>
           <button @click="loadModel"
@@ -362,24 +362,24 @@ function formatTime(s) {
         </div>
 
         <div v-else-if="phase === 'loading-model'"
-          class="p-5 rounded-xl bg-neutral-900 border border-neutral-800">
-          <div class="flex items-center gap-2 text-sm text-neutral-400 mb-3">
-            <div class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-plus" />
+          class="p-5 rounded-sm bg-warm-surface border border-warm-border">
+          <div class="flex items-center gap-2 text-sm text-warm-muted mb-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-coral animate-plus" />
             {{ status }}
           </div>
-          <div class="h-1.5 rounded-full bg-neutral-800 overflow-hidden">
-            <div class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300"
+          <div class="h-1.5 rounded-full bg-warm-border overflow-hidden rounded-sm">
+            <div class="h-full rounded-full bg-gradient-to-r from-coral to-mustard transition-all duration-300"
               :style="{ width: Math.round(modelProgress * 100) + '%' }" />
           </div>
-          <p class="text-xs text-neutral-600 mt-1.5 font-mono">{{ Math.round(modelProgress * 100) }}%</p>
+          <p class="text-xs text-warm-muted mt-1.5 font-mono">{{ Math.round(modelProgress * 100) }}%</p>
         </div>
 
         <div v-else
-          class="flex items-center gap-3 p-4 rounded-xl bg-neutral-900 border border-neutral-800">
-          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="flex items-center gap-3 p-4 rounded-sm bg-warm-surface border border-warm-border">
+          <svg class="w-4 h-4 text-mint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
-          <span class="text-sm text-emerald-400 font-medium">tiny.en-q5_1 loaded</span>
+          <span class="text-sm text-mint font-medium">tiny.en-q5_1 loaded</span>
         </div>
       </div>
 
@@ -391,37 +391,37 @@ function formatTime(s) {
           <!-- Record Card -->
           <div @click="isRecording ? stopRecording() : startRecording()"
             class="input-card group cursor-pointer"
-            :class="{ 'ring-2 ring-amber-500/40 bg-amber-500/5 border-amber-500/30': isRecording, 'border-neutral-800 hover:border-neutral-700': !isRecording }">
+            :class="{ 'ring-2 ring-coral/40 bg-coral/5 border-coral/30': isRecording, 'border-warm-border hover:border-coral': !isRecording }">
             <div class="flex flex-col items-center gap-3 py-6">
               <div class="record-btn" :class="{ recording: isRecording }">
                 <div class="record-btn-inner" :class="{ recording: isRecording }">
                   <div v-if="isRecording" class="record-stop-icon" />
-                  <svg v-else class="w-6 h-6 text-neutral-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-else class="w-6 h-6 text-warm-muted group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4 0h8m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                   </svg>
                 </div>
               </div>
               <div class="text-center">
-                <p class="text-sm font-medium" :class="isRecording ? 'text-amber-400' : 'text-neutral-300'">
+                <p class="text-sm font-medium" :class="isRecording ? 'text-coral' : 'text-ink'">
                   {{ isRecording ? formatTime(recordingDuration) : 'Record' }}
                 </p>
-                <p class="text-xs text-neutral-600 mt-0.5">{{ isRecording ? 'tap to stop' : 'microphone' }}</p>
+                <p class="text-xs text-warm-muted mt-0.5">{{ isRecording ? 'tap to stop' : 'microphone' }}</p>
               </div>
             </div>
           </div>
 
           <!-- Upload Card -->
-          <div class="input-card border border-dashed border-neutral-800 hover:border-neutral-700 transition-colors">
+          <div class="input-card border border-dashed border-warm-border hover:border-coral transition-colors">
             <input type="file" accept="audio/*" @change="handleFileUpload" class="hidden" id="audio-upload" />
             <label for="audio-upload" class="flex flex-col items-center gap-3 py-6 cursor-pointer">
-              <div class="w-12 h-12 rounded-full bg-neutral-900 flex items-center justify-center group-hover:bg-neutral-800 transition-colors">
-                <svg class="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="w-12 h-12 rounded-full bg-cream flex items-center justify-center group-hover:bg-coral/10 transition-colors">
+                <svg class="w-5 h-5 text-warm-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
               </div>
               <div class="text-center">
-                <p class="text-sm font-medium text-neutral-300">Upload</p>
-                <p class="text-xs text-neutral-600 mt-0.5">mp3, wav, m4a, ogg</p>
+                <p class="text-sm font-medium text-ink">Upload</p>
+                <p class="text-xs text-warm-muted mt-0.5">mp3, wav, m4a, ogg</p>
               </div>
             </label>
           </div>
@@ -429,7 +429,7 @@ function formatTime(s) {
       </div>
 
       <!-- Transcription Output -->
-      <div class="rounded-xl bg-neutral-900 border border-neutral-800 overflow-hidden">
+      <div class="rounded-sm bg-warm-surface border border-warm-border overflow-hidden">
         <div class="flex items-center justify-between px-5 py-3 border-b border-neutral-800">
           <div class="flex items-center gap-2">
             <div class="flex gap-1">
@@ -437,7 +437,7 @@ function formatTime(s) {
               <span class="w-2 h-2 rounded-full bg-neutral-700" />
               <span class="w-2 h-2 rounded-full bg-neutral-700" />
             </div>
-            <span class="text-xs text-neutral-600 font-mono ml-2">transcript</span>
+            <span class="text-xs text-warm-muted font-mono ml-2">transcript</span>
           </div>
           <div class="flex items-center gap-2">
             <div v-if="segments.length > 0" class="flex gap-1">
@@ -451,7 +451,7 @@ function formatTime(s) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
             </button>
-            <button v-if="phase === 'done'" @click="reset" class="toolbar-btn text-emerald-400 hover:text-emerald-300" title="Record again">
+            <button v-if="phase === 'done'" @click="reset" class="toolbar-btn text-mint hover:text-emerald-300" title="Record again">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -466,7 +466,7 @@ function formatTime(s) {
             <span class="wave-bar" />
             <span class="wave-bar" />
           </div>
-          <span class="text-xs text-neutral-500">{{ status }}</span>
+          <span class="text-xs text-warm-muted">{{ status }}</span>
         </div>
 
         <div v-if="transcription"
@@ -493,8 +493,8 @@ function formatTime(s) {
 
 <style scoped>
 .whisper-page {
-  background: #0a0a0b;
-  color: #e4e4e7;
+  background: var(--color-cream);
+  color: var(--color-ink);
 }
 
 .btn-amber {
@@ -505,18 +505,19 @@ function formatTime(s) {
   font-size: 0.8125rem;
   font-weight: 500;
   border-radius: 0.75rem;
-  background: linear-gradient(135deg, #d97706, #f59e0b);
+  background: var(--color-coral);
   color: #1c1917;
   transition: all 0.2s;
 }
 .btn-amber:hover {
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  background: var(--color-coral); opacity: 0.8;
   box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
 }
 
 .input-card {
   border-radius: 1rem;
-  background: #141416;
+  background: var(--color-warm-surface);
+  border: 1px solid var(--color-warm-border);
   transition: all 0.2s;
 }
 
@@ -524,14 +525,16 @@ function formatTime(s) {
   width: 4rem;
   height: 4rem;
   border-radius: 9999px;
-  background: #1f1f23;
+  background: var(--color-warm-surface);
+  border: 1px solid var(--color-warm-border);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s;
 }
 .record-btn.recording {
-  background: rgba(245, 158, 11, 0.15);
+  background: var(--color-coral);
+  opacity: 0.15;
   box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
   animation: record-pulse 1.5s infinite;
 }
@@ -545,14 +548,14 @@ function formatTime(s) {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 9999px;
-  background: #3f3f46;
+  background: var(--color-warm-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s;
 }
 .record-btn-inner.recording {
-  background: #dc2626;
+  background: var(--color-coral);
   border-radius: 0.375rem;
   width: 1.25rem;
   height: 1.25rem;
@@ -561,7 +564,7 @@ function formatTime(s) {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 1px;
-  background: white;
+  background: var(--color-cream);
 }
 
 .toolbar-btn {
@@ -572,18 +575,19 @@ function formatTime(s) {
   font-size: 0.6875rem;
   font-weight: 500;
   font-family: ui-monospace, monospace;
-  color: #52525b;
+  color: var(--color-warm-muted);
   background: transparent;
   border-radius: 0.375rem;
   transition: all 0.15s;
 }
 .toolbar-btn:hover {
   color: #d4d4d8;
-  background: #1f1f23;
+  background: var(--color-warm-surface);
+  border: 1px solid var(--color-warm-border);
 }
 
 .terminal-output {
-  background: #050505;
+  background: var(--color-ink);
   max-height: 28rem;
   overflow-y: auto;
   color: #4ade80;
@@ -592,7 +596,8 @@ function formatTime(s) {
 }
 .terminal-output::-webkit-scrollbar { width: 6px; }
 .terminal-output::-webkit-scrollbar-track { background: transparent; }
-.terminal-output::-webkit-scrollbar-thumb { background: #1f1f23; border-radius: 3px; }
+.terminal-output::-webkit-scrollbar-thumb { background: var(--color-warm-surface);
+  border: 1px solid var(--color-warm-border); border-radius: 3px; }
 
 .wave {
   display: flex;
@@ -603,7 +608,7 @@ function formatTime(s) {
 .wave-bar {
   width: 2px;
   height: 100%;
-  background: #52525b;
+  background: var(--color-warm-border);
   border-radius: 1px;
   animation: wave 1s ease-in-out infinite;
 }
@@ -612,8 +617,8 @@ function formatTime(s) {
 .wave-bar:nth-child(3) { animation-delay: 0.3s; }
 .wave-bar:nth-child(4) { animation-delay: 0.45s; }
 @keyframes wave {
-  0%, 100% { transform: scaleY(0.3); background: #3f3f46; }
-  50% { transform: scaleY(1); background: #a1a1aa; }
+  0%, 100% { transform: scaleY(0.3); background: var(--color-warm-muted); }
+  50% { transform: scaleY(1); background: var(--color-coral); }
 }
 
 .animate-plus {

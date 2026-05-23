@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing overflow-hidden" @mousedown="handleMouseDown" @touchstart="handleTouchStart" ref="containerRef">
+  <div class="w-full h-screen bg-gradient-to-br from-ink via-ink to-ink flex flex-col items-center justify-center cursor-grab active:cursor-grabbing overflow-hidden" @mousedown="handleMouseDown" @touchstart="handleTouchStart" ref="containerRef">
     <!-- Three.js Canvas Container -->
     <div id="three-container" class="absolute inset-0"></div>
 
@@ -7,18 +7,18 @@
     <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
       <!-- Instructions -->
       <div v-if="!state.isRolling && !state.timerActive && !state.victoryPlaying" class="text-center text-white mb-20 pointer-events-auto">
-        <h1 class="text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+        <h1 class="font-display text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-coral to-mustard">
           Roll the Dice
         </h1>
-        <p class="text-xl text-gray-300">Drag to throw • Let it settle • Work for that many minutes</p>
+        <p class="text-lg text-white/70">Drag to throw • Let it settle • Work for that many minutes</p>
       </div>
 
       <!-- Timer Display -->
       <div v-if="state.timerActive && state.result" class="text-center pointer-events-auto">
-        <div class="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-4">
+        <div class="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-coral to-mustard mb-4">
           {{ formatTime(state.timeRemaining) }}
         </div>
-        <div class="text-2xl text-gray-300">
+        <div class="text-lg text-white/70">
           {{ state.result }} minute{{ state.result !== 1 ? 's' : '' }} of focus
         </div>
       </div>
@@ -26,10 +26,10 @@
       <!-- Victory State -->
       <div v-if="state.victoryPlaying" class="text-center pointer-events-auto">
         <div class="text-6xl mb-4">🎉</div>
-        <h2 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 mb-6">
+        <h2 class="font-display text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-mustard to-coral mb-6">
           Time's Up!
         </h2>
-        <button @click="resetGame" class="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xl font-bold rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all">
+        <button @click="resetGame" class="px-8 py-4 bg-gradient-to-r from-coral to-mustard text-white text-xl font-bold rounded-sm hover:from-coral/80 hover:to-mustard/80 transition-all">
           Roll Again
         </button>
       </div>

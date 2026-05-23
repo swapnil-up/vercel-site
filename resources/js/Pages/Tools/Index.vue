@@ -12,18 +12,25 @@ const tools = [
 </script>
 
 <template>
-  <div>
-    <h1 class="text-3xl font-bold mb-6">Tools</h1>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <a
-        v-for="tool in tools"
-        :key="tool.path"
-        :href="tool.path"
-        class="block p-6 border rounded-lg hover:bg-gray-50 transition"
-      >
-        <h2 class="text-xl font-semibold">{{ tool.name }}</h2>
-        <p class="text-gray-600 mt-2">{{ tool.description }}</p>
-      </a>
+  <div class="max-w-6xl mx-auto px-6 py-12">
+      <h1 class="font-display text-4xl font-bold text-ink mb-6">
+        Tools
+      </h1>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a
+          v-for="tool in tools"
+          :key="tool.path"
+          :href="tool.path"
+          class="block p-6 border-2 border-warm-border bg-warm-surface rounded-lg hover:bg-cream/50 hover:border-coral transition-colors"
+        >
+          <h2 class="font-display text-xl font-bold text-ink mb-2">
+            {{ tool.name }}
+          </h2>
+          <p class="text-warm-muted mt-2">
+            {{ tool.description }}
+          </p>
+        </a>
+      </div>
     </div>
-  </div>
 </template>

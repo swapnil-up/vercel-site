@@ -15,6 +15,10 @@ Route::get('/about', function () {
     return inertia('About');
 });
 
+Route::get('/now', function () {
+    return inertia('Now');
+})->name('now');
+
 Route::get('/tools', function () {
     return inertia('Tools/Index');
 });
@@ -50,15 +54,13 @@ Route::get('/data/quote/random', function () {
 });
 
 Route::get('/data/now', function () {
-    $nowArticle = Article::find('now');
-    if (! $nowArticle) {
+    $nowPost = Post::where('slug', 'now')->first();
+    if (! $nowPost) {
         return response()->json(['content' => 'Now page not found.'], 404);
     }
-    $parsedown = new Parsedown;
-    $content = $parsedown->text($nowArticle->content);
 
     return response()->json([
-        'content' => $content,
+        'content' => $nowPost->content_html,
     ]);
 });
 
