@@ -14,6 +14,13 @@
     <meta name="author" content="Swapnil Upadhyay">
     <link rel="canonical" href="{{ $page['props']['meta']['url'] ?? url()->current() }}">
 
+    {{-- Open Graph / Social --}}
+    <meta property="og:title" content="{{ $page['props']['meta']['title'] ?? 'Swapnil Upadhyay' }}">
+    <meta property="og:description" content="{{ $page['props']['meta']['description'] ?? 'Personal website and blog' }}">
+    <meta property="og:url" content="{{ $page['props']['meta']['url'] ?? url()->current() }}">
+    <meta property="og:image" content="{{ $page['props']['meta']['image'] ?? asset('images/og-image.jpg') }}">
+    <meta property="og:type" content="website">
+
     {{-- Favicon --}}
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('favicon-96x96.png') }}">

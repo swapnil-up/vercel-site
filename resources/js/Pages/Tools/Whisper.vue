@@ -45,7 +45,10 @@ async function loadCOI() {
 function checkCachedModel() {
   return new Promise((resolve) => {
     const rq = indexedDB.open('whisper.ggerganov.com', 1)
-    rq.onupgradeneeded = () => resolve(null)
+    rq.onupgradeneeded = (event) => {
+      event.target.result.createObjectStore('models', { autoIncrement: false })
+      resolve(null)
+    }
     rq.onsuccess = (event) => {
       const db = event.target.result
       if (!db.objectStoreNames.contains('models')) { db.close(); resolve(null); return }
