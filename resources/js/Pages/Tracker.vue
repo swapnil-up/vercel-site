@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-cream via-cream/50 to-cream py-12 px-4">
+  <div class="min-h-screen bg-cream py-12 px-4">
     <div class="max-w-4xl mx-auto">
       <h1 class="font-display text-4xl font-bold text-ink mb-2">
         Achievement Progress

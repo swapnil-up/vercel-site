@@ -31,9 +31,9 @@ let particleId = 0
 const expressions = ['happy', 'excited', 'love', 'content', 'neutral', 'thinking', 'confused', 'surprised', ' sleepy', 'sad', 'lonely', 'bored', 'hungry', 'angry', 'sick', 'crying']
 
 const stats = computed(() => [
-  { label: 'Hunger', value: pet.value.hunger, icon: '🍖', color: pet.value.hunger < 30 ? 'bg-coral' : 'bg-orange-400' },
+  { label: 'Hunger', value: pet.value.hunger, icon: '🍖', color: pet.value.hunger < 30 ? 'bg-coral' : 'bg-mustard' },
   { label: 'Boredom', value: pet.value.boredom, icon: '🎨', color: pet.value.boredom < 30 ? 'bg-coral' : 'bg-sky' },
-  { label: 'Love', value: pet.value.love, icon: '💕', color: pet.value.love < 30 ? 'bg-coral' : 'bg-pink-400' },
+  { label: 'Love', value: pet.value.love, icon: '💕', color: pet.value.love < 30 ? 'bg-coral' : 'bg-coral/60' },
 ])
 
 const petMood = computed(() => {
@@ -350,7 +350,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-cream p-6">
+  <div class="bg-cream p-6">
     <div class="max-w-2xl mx-auto">
       <div class="bg-warm-surface/90 backdrop-blur-sm rounded-sm shadow-lg p-8">
         <div class="flex items-center justify-between mb-6">
@@ -505,10 +505,10 @@ onUnmounted(() => {
               <h3 class="font-display text-sm font-semibold text-ink mb-2">Mini-games</h3>
               <p class="text-xs text-warm-muted mb-3">Win = Blobby gets bored, Lose = Blobby is happy!</p>
               <div class="flex gap-2">
-                <button @click="playGame('rps')" class="flex-1 px-3 py-2 bg-indigo-100 text-indigo-600 rounded-xl text-sm hover:bg-indigo-200 transition-colors font-medium">
+                <button @click="playGame('rps')" class="flex-1 px-3 py-2 bg-coral/10 text-coral rounded-sm text-sm hover:bg-coral/20 transition-colors font-medium">
                   RPS
                 </button>
-                <button @click="playGame('guess')" class="flex-1 px-3 py-2 bg-indigo-100 text-indigo-600 rounded-xl text-sm hover:bg-indigo-200 transition-colors font-medium">
+                <button @click="playGame('guess')" class="flex-1 px-3 py-2 bg-coral/10 text-coral rounded-sm text-sm hover:bg-coral/20 transition-colors font-medium">
                   Guess
                 </button>
               </div>

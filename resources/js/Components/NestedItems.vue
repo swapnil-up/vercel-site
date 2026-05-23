@@ -1,5 +1,5 @@
 <template>
-  <div class="divide-y divide-gray-100">
+  <div class="divide-y divide-warm-border">
     <div
       v-for="(item, index) in props.items"
       :key="index"
@@ -7,11 +7,11 @@
     >
       <button
         @click="toggleExpand(getKey(index))"
-        class="w-full py-3 px-4 flex items-center gap-2 hover:bg-gray-100 transition-colors text-left"
+        class="w-full py-3 px-4 flex items-center gap-2 hover:bg-warm-surface transition-colors text-left"
       >
         <span
           v-if="item.children && item.children.length > 0"
-          class="flex-shrink-0 w-4 h-4 flex items-center justify-center text-gray-400 transition-transform text-xs"
+          class="flex-shrink-0 w-4 h-4 flex items-center justify-center text-warm-muted transition-transform text-xs"
           :class="{ 'rotate-90': props.expandedItems.has(getKey(index)) }"
         >
           <svg
@@ -33,7 +33,7 @@
           class="flex-shrink-0 w-4"
         />
         <span class="text-ink/80">{{ item.title }}</span>
-        <span v-if="item.children && item.children.length > 0" class="ml-auto text-xs text-gray-400">
+        <span v-if="item.children && item.children.length > 0" class="ml-auto text-xs text-warm-muted">
           {{ item.children.length }}
         </span>
       </button>

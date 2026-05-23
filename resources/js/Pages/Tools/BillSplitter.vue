@@ -417,10 +417,10 @@ onUnmounted(() => {
  <div class="mb-8">
  <div class="flex items-center justify-between">
  <div>
- <h1 class="font-display text-3xl font-bold text-ink text-ink mb-2">
+ <h1 class="font-display text-3xl font-bold text-ink mb-2">
  Bill Splitter
  </h1>
- <div class="flex flex-wrap gap-x-4 gap-y-1 text-warm-muted text-warm-muted text-sm">
+ <div class="flex flex-wrap gap-x-4 gap-y-1 text-warm-muted text-sm">
  <span><kbd class="px-1.5 py-0.5 bg-cream border border-warm-border rounded text-xs font-mono">Ctrl+N</kbd> New item</span>
  <span><kbd class="px-1.5 py-0.5 bg-cream border border-warm-border rounded text-xs font-mono">Ctrl+Shift+N</kbd> New person</span>
  <span><kbd class="px-1.5 py-0.5 bg-cream border border-warm-border rounded text-xs font-mono">Enter</kbd> Next field</span>
@@ -440,11 +440,11 @@ onUnmounted(() => {
  </div>
  </div>
 
- <div v-if="importExportMode === 'import'" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
- <div class="bg-white bg-warm-surface p-6 rounded-sm max-w-md w-full mx-4 shadow-2xl">
- <h3 class="font-display text-lg font-bold text-ink mb-4">Import Bill Data</h3>
- <p class="text-sm text-warm-muted text-warm-muted mb-4">Select a JSON file previously exported from Bill Splitter.</p>
- <input type="file" accept=".json" @change="handleImportFile" class="w-full mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:bg-coral file:text-white hover:file:bg-blue-700 file:cursor-pointer" />
+  <div v-if="importExportMode === 'import'" class="fixed inset-0 bg-ink/50 flex items-center justify-center z-50">
+  <div class="bg-warm-surface p-6 rounded-sm max-w-md w-full mx-4 shadow-2xl">
+  <h3 class="font-display text-lg font-bold text-ink mb-4">Import Bill Data</h3>
+  <p class="text-sm text-warm-muted mb-4">Select a JSON file previously exported from Bill Splitter.</p>
+  <input type="file" accept=".json" @change="handleImportFile" class="w-full mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:bg-coral file:text-white hover:file:bg-coral/80 file:cursor-pointer" />
  <div class="flex justify-end">
  <button @click="importExportMode = null" class="px-4 py-2 bg-warm-surface border border-warm-border rounded-sm hover:bg-cream">Cancel</button>
  </div>
@@ -454,7 +454,7 @@ onUnmounted(() => {
  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
  <div class="space-y-6">
  <div class="bg-warm-surface border border-warm-border p-6 rounded-sm">
- <h2 class="font-display text-xl font-bold text-ink text-ink flex items-center mb-4">
+ <h2 class="font-display text-xl font-bold text-ink flex items-center mb-4">
  <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
  People
  </h2>
@@ -468,7 +468,7 @@ onUnmounted(() => {
  :ref="el => personInputs[index] = el"
  type="text"
  :placeholder="`Person ${index + 1}`"
- class="person-input flex-1 px-3 py-2 border border-warm-border border-warm-border rounded-sm bg-white bg-warm-surface text-ink text-ink focus:ring-2 focus:ring-coral focus:border-coral"
+ class="person-input flex-1 px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral"
  />
  <button
  v-if="people.length > 1"
@@ -490,7 +490,7 @@ onUnmounted(() => {
  </div>
 
  <div class="bg-warm-surface border border-warm-border p-6 rounded-sm">
- <h2 class="font-display text-xl font-bold text-ink text-ink flex items-center mb-4">
+ <h2 class="font-display text-xl font-bold text-ink flex items-center mb-4">
  <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
  Items
  </h2>
@@ -500,7 +500,7 @@ onUnmounted(() => {
  v-for="(item, index) in items"
  :key="item.id"
  :id="`item-${index}`"
- class="border border-warm-border border-warm-border rounded-sm p-4 bg-white bg-warm-surface"
+ class="border border-warm-border rounded-sm p-4 bg-warm-surface"
  >
  <div class="flex items-center justify-between mb-3">
  <span class="text-xs text-warm-muted font-mono">#{{ index + 1 }}</span>
@@ -519,7 +519,7 @@ onUnmounted(() => {
  :ref="el => descriptionInputs[index] = el"
  type="text"
  :placeholder="`Item ${index + 1} description`"
- class="flex-1 px-3 py-2 border border-warm-border border-warm-border rounded-sm bg-white bg-warm-surface text-ink text-ink focus:ring-2 focus:ring-coral focus:border-coral mr-2"
+ class="flex-1 px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral mr-2"
  />
  </div>
 
@@ -535,7 +535,7 @@ onUnmounted(() => {
  type="number"
  step="0.01"
  placeholder="0.00"
- class="w-full px-3 py-2 border border-warm-border border-warm-border rounded-sm bg-white bg-warm-surface text-ink text-ink focus:ring-2 focus:ring-coral focus:border-coral"
+ class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral"
  />
  </div>
  <div>
@@ -546,7 +546,7 @@ onUnmounted(() => {
  v-model="item.paidBy"
  @keydown="handleItemKeydown($event, index, 'paidBy')"
  :ref="el => paidBySelects[index] = el"
- class="w-full px-3 py-2 border border-warm-border border-warm-border rounded-sm bg-white bg-warm-surface text-ink text-ink focus:ring-2 focus:ring-coral focus:border-coral"
+ class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral"
  >
  <option
  v-for="(person, personIndex) in validPeople"
@@ -599,8 +599,8 @@ onUnmounted(() => {
  <span
  class="w-4 h-4 flex items-center justify-center rounded border transition-colors"
  :class="item.sharedBy[personIndex]
- ? 'bg-coral border-blue-600 text-white'
- : 'border-gray-400'"
+  ? 'bg-coral border-coral text-white'
+  : 'border-warm-border'"
  >
  <svg v-if="item.sharedBy[personIndex]" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
  </span>
@@ -618,7 +618,7 @@ onUnmounted(() => {
  Add Item
  </button>
 
- <div v-if="items.length === 0" class="text-center py-8 text-warm-muted text-warm-muted">
+ <div v-if="items.length === 0" class="text-center py-8 text-warm-muted">
  No items yet. Press <kbd class="px-2 py-1 bg-warm-surface border border-warm-border rounded text-xs font-mono">Ctrl+N</kbd> to add one!
  </div>
  </div>
@@ -627,29 +627,29 @@ onUnmounted(() => {
 
  <div class="space-y-6">
  <div class="bg-warm-surface border border-warm-border p-6 rounded-sm">
- <h2 class="font-display text-xl font-bold text-ink text-ink flex items-center mb-4">
+ <h2 class="font-display text-xl font-bold text-ink flex items-center mb-4">
  <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
  Summary
  </h2>
 
  <div class="space-y-3">
  <div class="flex justify-between items-center">
- <span class="text-warm-muted text-warm-muted">Total Amount:</span>
- <span class="text-2xl font-bold text-ink text-ink">
+ <span class="text-warm-muted">Total Amount:</span>
+ <span class="text-2xl font-bold text-ink">
  Rs. {{ totalAmount.toFixed(2) }}
  </span>
  </div>
  <div class="flex justify-between items-center">
- <span class="text-warm-muted text-warm-muted">Items:</span>
- <span class="text-ink text-ink">{{ items.length }}</span>
+ <span class="text-warm-muted">Items:</span>
+ <span class="text-ink">{{ items.length }}</span>
  </div>
  <div class="flex justify-between items-center">
- <span class="text-warm-muted text-warm-muted">People:</span>
- <span class="text-ink text-ink">{{ validPeople.length }}</span>
+ <span class="text-warm-muted">People:</span>
+ <span class="text-ink">{{ validPeople.length }}</span>
  </div>
  <div class="flex justify-between items-center">
- <span class="text-warm-muted text-warm-muted">Per person (avg):</span>
- <span class="text-ink text-ink">
+ <span class="text-warm-muted">Per person (avg):</span>
+ <span class="text-ink">
  {{ validPeople.length > 0 ? 'Rs. ' + (totalAmount / validPeople.length).toFixed(2) : 'Rs. 0.00' }}
  </span>
  </div>
@@ -657,26 +657,26 @@ onUnmounted(() => {
  </div>
 
  <div class="bg-warm-surface border border-warm-border p-6 rounded-sm">
- <h2 class="font-display text-xl font-bold text-ink text-ink mb-4">
+ <h2 class="font-display text-xl font-bold text-ink mb-4">
  Individual Balances
  </h2>
 
- <div v-if="validPeople.length === 0" class="text-center py-4 text-warm-muted text-warm-muted">
+ <div v-if="validPeople.length === 0" class="text-center py-4 text-warm-muted">
  Add people to see balances
  </div>
  <div v-else class="space-y-2">
  <div
  v-for="(person, index) in validPeople"
  :key="index"
- class="flex justify-between items-center py-3 px-4 bg-white bg-warm-surface rounded-sm"
+ class="flex justify-between items-center py-3 px-4 bg-warm-surface rounded-sm"
  >
- <span class="font-medium text-ink text-ink">{{ person }}</span>
+ <span class="font-medium text-ink">{{ person }}</span>
  <span
  :class="[
  'font-bold text-lg',
  balances[index] > 0.01 ? 'text-mint' :
  balances[index] < -0.01 ? 'text-coral' :
- 'text-warm-muted text-warm-muted'
+ 'text-warm-muted'
  ]"
  >
  {{ balances[index] > 0.01 ? '+' : '' }}Rs. {{ balances[index].toFixed(2) }}
@@ -684,7 +684,7 @@ onUnmounted(() => {
  </div>
  </div>
 
- <div class="mt-4 text-xs text-warm-muted text-warm-muted space-y-1">
+ <div class="mt-4 text-xs text-warm-muted space-y-1">
  <p><span class="text-mint font-medium">Green</span> = Gets money back</p>
  <p><span class="text-coral font-medium">Red</span> = Owes money</p>
  <p><span class="text-warm-muted">Gray</span> = Settled up</p>
@@ -692,11 +692,11 @@ onUnmounted(() => {
  </div>
 
  <div class="bg-warm-surface border border-warm-border p-6 rounded-sm">
- <h2 class="font-display text-xl font-bold text-ink text-ink mb-4">
+ <h2 class="font-display text-xl font-bold text-ink mb-4">
  Settlements
  </h2>
 
- <div v-if="settlements.length === 0" class="text-center py-8 text-warm-muted text-warm-muted">
+ <div v-if="settlements.length === 0" class="text-center py-8 text-warm-muted">
  Add items to see who owes whom!
  </div>
 
@@ -704,14 +704,14 @@ onUnmounted(() => {
  <div
  v-for="settlement in settlements"
  :key="`${settlement.from}-${settlement.to}`"
- class="flex items-center justify-between p-4 bg-white bg-warm-surface rounded-sm border-l-4 border-coral"
+ class="flex items-center justify-between p-4 bg-warm-surface rounded-sm border-l-4 border-coral"
  >
  <div class="flex items-center space-x-3">
- <span class="font-medium text-ink text-ink">
+ <span class="font-medium text-ink">
  {{ validPeople[settlement.from] }}
  </span>
  <svg class="h-4 w-4 text-warm-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
- <span class="font-medium text-ink text-ink">
+ <span class="font-medium text-ink">
  {{ validPeople[settlement.to] }}
  </span>
  </div>
@@ -723,13 +723,13 @@ onUnmounted(() => {
  </div>
 
  <div class="bg-warm-surface border border-warm-border p-6 rounded-sm">
- <h2 class="font-display text-xl font-bold text-ink text-ink mb-4">
+ <h2 class="font-display text-xl font-bold text-ink mb-4">
  Quick Actions
  </h2>
  <div class="flex flex-wrap gap-2">
  <button
  @click="clearAll"
- class="px-4 py-2 bg-coral text-white rounded-sm hover:bg-red-700 transition-colors text-sm"
+  class="px-4 py-2 bg-coral text-white rounded-sm hover:bg-coral/80 transition-colors text-sm"
  >
  Clear All
  </button>

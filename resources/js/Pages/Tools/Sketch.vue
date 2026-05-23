@@ -209,7 +209,7 @@
  <!-- Canvas Area -->
  <main
  class="flex-1 overflow-auto p-8"
- style="background-color: #aaa; background-image: linear-gradient(45deg, #999 25%, transparent 25%), linear-gradient(-45deg, #999 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #999 75%), linear-gradient(-45deg, transparent 75%, #999 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0px;"
+  style="background-color: var(--color-warm-border); background-image: linear-gradient(45deg, var(--color-warm-muted) 25%, transparent 25%), linear-gradient(-45deg, var(--color-warm-muted) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--color-warm-muted) 75%), linear-gradient(-45deg, transparent 75%, var(--color-warm-muted) 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0px;"
  @dragover.prevent="isDragging = true"
  @dragleave="isDragging = false"
  @drop.prevent="onDrop"

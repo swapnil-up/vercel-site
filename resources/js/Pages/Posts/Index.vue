@@ -39,7 +39,7 @@ defineProps({
           <p v-if="post.description" class="text-warm-muted mb-4 leading-relaxed">
             {{ post.description }}
           </p>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap gap-2 mt-3">
             <Link 
               v-for="tag in post.tags" 
               :key="tag"

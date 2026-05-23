@@ -46,6 +46,15 @@ body {
   color: white;
 }
 
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.15s ease;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+}
+
 @keyframes fadeSlideUp {
   from {
     opacity: 0;
@@ -55,6 +64,33 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.section-reveal {
+  animation: fadeSlideUp 0.5s ease both;
+}
+
+.hero-section { animation-delay: 0s; }
+.quote-section { animation-delay: 0.15s; }
+.playground-section { animation-delay: 0.3s; }
+
+.card-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-ink) 10%, transparent);
+}
+
+.musings-underline {
+  text-decoration: underline wavy var(--color-coral) 3px;
+  text-underline-offset: 8px;
+  text-decoration-skip-ink: none;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 @keyframes progressPulse {

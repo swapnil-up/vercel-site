@@ -321,17 +321,17 @@ function formatTime(s) {
 </script>
 
 <template>
-  <div class="whisper-page min-h-screen">
+  <div class="whisper-page">
     <div class="max-w-3xl mx-auto px-4 py-10">
 
       <!-- Header -->
       <div class="text-center mb-10">
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase mb-4"
-          :class="modelReady ? 'bg-mint/10 text-mint border border-mint/20' : 'bg-neutral-800 text-warm-muted border border-neutral-700'">
+          :class="modelReady ? 'bg-mint/10 text-mint border border-mint/20' : 'bg-warm-muted/10 text-warm-muted border border-warm-muted/20'">
           <span class="w-1.5 h-1.5 rounded-full" :class="modelReady ? 'bg-mint' : 'bg-warm-muted'" />
           {{ modelReady ? 'Model ready' : 'Engine not loaded' }}
         </div>
-        <h1 class="text-2xl font-bold font-display font-display text-3xl font-bold text-ink tracking-tighter">whisper</h1>
+        <h1 class="font-display text-3xl font-bold text-ink tracking-tighter">whisper</h1>
         <p class="text-sm text-warm-muted mt-1">in-browser speech-to-text via whisper.cpp WASM</p>
       </div>
 
@@ -430,12 +430,12 @@ function formatTime(s) {
 
       <!-- Transcription Output -->
       <div class="rounded-sm bg-warm-surface border border-warm-border overflow-hidden">
-        <div class="flex items-center justify-between px-5 py-3 border-b border-neutral-800">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-warm-border">
           <div class="flex items-center gap-2">
             <div class="flex gap-1">
-              <span class="w-2 h-2 rounded-full bg-neutral-700" />
-              <span class="w-2 h-2 rounded-full bg-neutral-700" />
-              <span class="w-2 h-2 rounded-full bg-neutral-700" />
+              <span class="w-2 h-2 rounded-full bg-warm-border" />
+              <span class="w-2 h-2 rounded-full bg-warm-border" />
+              <span class="w-2 h-2 rounded-full bg-warm-border" />
             </div>
             <span class="text-xs text-warm-muted font-mono ml-2">transcript</span>
           </div>
@@ -451,7 +451,7 @@ function formatTime(s) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
             </button>
-            <button v-if="phase === 'done'" @click="reset" class="toolbar-btn text-mint hover:text-emerald-300" title="Record again">
+            <button v-if="phase === 'done'" @click="reset" class="toolbar-btn text-mint hover:text-mint/80" title="Record again">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -459,7 +459,7 @@ function formatTime(s) {
           </div>
         </div>
 
-        <div v-if="phase === 'transcribing'" class="flex items-center gap-2 px-5 py-3 bg-neutral-950/50">
+        <div v-if="phase === 'transcribing'" class="flex items-center gap-2 px-5 py-3 bg-ink/50">
           <div class="wave">
             <span class="wave-bar" />
             <span class="wave-bar" />
@@ -476,7 +476,7 @@ function formatTime(s) {
           </div>
         </div>
 
-        <div v-else class="flex flex-col items-center justify-center py-16 text-neutral-700">
+        <div v-else class="flex flex-col items-center justify-center py-16 text-warm-muted">
           <svg class="w-8 h-8 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
@@ -484,7 +484,7 @@ function formatTime(s) {
         </div>
       </div>
 
-      <p class="mt-4 text-xs text-neutral-700 text-center">
+      <p class="mt-4 text-xs text-warm-muted text-center">
         whisper.cpp WASM &middot; {{ modelReady ? 'model cached in IndexedDB' : 'no model loaded' }}
       </p>
     </div>
@@ -506,12 +506,12 @@ function formatTime(s) {
   font-weight: 500;
   border-radius: 0.75rem;
   background: var(--color-coral);
-  color: #1c1917;
+  color: var(--color-ink);
   transition: all 0.2s;
 }
 .btn-amber:hover {
-  background: var(--color-coral); opacity: 0.8;
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+  opacity: 0.8;
+  box-shadow: 0 0 20px rgba(255, 90, 61, 0.25);
 }
 
 .input-card {
@@ -535,13 +535,13 @@ function formatTime(s) {
 .record-btn.recording {
   background: var(--color-coral);
   opacity: 0.15;
-  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 0 0 rgba(255, 90, 61, 0.4);
   animation: record-pulse 1.5s infinite;
 }
 @keyframes record-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-  70% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(255, 90, 61, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(255, 90, 61, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 90, 61, 0); }
 }
 
 .record-btn-inner {
@@ -581,7 +581,7 @@ function formatTime(s) {
   transition: all 0.15s;
 }
 .toolbar-btn:hover {
-  color: #d4d4d8;
+  color: var(--color-ink);
   background: var(--color-warm-surface);
   border: 1px solid var(--color-warm-border);
 }
@@ -590,9 +590,9 @@ function formatTime(s) {
   background: var(--color-ink);
   max-height: 28rem;
   overflow-y: auto;
-  color: #4ade80;
+  color: var(--color-mint);
   scrollbar-width: thin;
-  scrollbar-color: #1f1f23 transparent;
+  scrollbar-color: var(--color-ink) transparent;
 }
 .terminal-output::-webkit-scrollbar { width: 6px; }
 .terminal-output::-webkit-scrollbar-track { background: transparent; }

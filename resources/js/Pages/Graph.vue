@@ -183,7 +183,7 @@ export default {
         .data(this.links)
         .join('line')
         .attr('class', 'graph-link')
-        .style('stroke', this.isDarkMode ? '#555' : '#bbb')
+        .style('stroke', this.isDarkMode ? 'var(--color-warm-muted)' : 'var(--color-warm-border)')
         .style('stroke-opacity', 0.6)
         .style('stroke-width', d => Math.sqrt(d.weight) * 2);
       
@@ -194,7 +194,7 @@ export default {
         .data(this.folderLinks)
         .join('line')
         .attr('class', 'folder-link')
-        .style('stroke', '#f97316')
+        .style('stroke', 'var(--color-coral)')
         .style('stroke-opacity', 0.35)
         .style('stroke-width', 1.5);
       
@@ -208,8 +208,8 @@ const folderNodeCircles = folderNodeGroup
         .join('circle')
         .attr('class', 'folder-node')
         .attr('r', 14)
-        .style('fill', '#f97316')
-        .style('stroke', this.isDarkMode ? '#aaa' : '#fff')
+        .style('fill', 'var(--color-coral)')
+        .style('stroke', this.isDarkMode ? 'var(--color-warm-muted)' : 'var(--color-cream)')
         .style('stroke-width', 2)
 
       // Tag nodes
@@ -220,8 +220,8 @@ const folderNodeCircles = folderNodeGroup
         .join('circle')
         .attr('class', 'tag-node')
         .attr('r', 12)
-        .style('fill', '#22c55e')
-        .style('stroke', this.isDarkMode ? '#aaa' : '#fff')
+        .style('fill', 'var(--color-mint)')
+        .style('stroke', this.isDarkMode ? 'var(--color-warm-muted)' : 'var(--color-cream)')
         .style('stroke-width', 2)
         .style('cursor', 'pointer')
         .on('click', this.handleTagNodeClick);
@@ -234,7 +234,7 @@ const folderNodeCircles = folderNodeGroup
         .style('font-size', '10px')
         .style('font-weight', '700')
         .style('text-anchor', 'middle')
-        .style('fill', '#1a1a1a')
+        .style('fill', 'var(--color-ink)')
         .style('pointer-events', 'none')
         .attr('dy', 4);
       
@@ -248,7 +248,7 @@ const folderNodeCircles = folderNodeGroup
         .data(this.tagLinks)
         .join('line')
         .attr('class', 'tag-link')
-        .style('stroke', '#22c55e')
+        .style('stroke', 'var(--color-mint)')
         .style('stroke-opacity', 0.4)
         .style('stroke-width', 1.5);
       
@@ -260,7 +260,7 @@ const folderNodeCircles = folderNodeGroup
         .attr('class', 'graph-node')
         .attr('r', d => this.calculateNodeSize(d))
         .style('fill', d => this.getNodeFillColor(d))
-        .style('stroke', this.isDarkMode ? '#444' : '#fff')
+        .style('stroke', this.isDarkMode ? 'var(--color-warm-muted)' : 'var(--color-cream)')
         .style('stroke-width', 2)
         .style('cursor', 'pointer')
         .call(d3.drag()
@@ -280,8 +280,8 @@ const folderNodeCircles = folderNodeGroup
         .style('font-size', '12px')
         .style('text-anchor', 'middle')
         .style('pointer-events', 'none')
-        .style('fill', this.isDarkMode ? '#ccc' : '#555')
-        .attr('dy', d => (d.size || 8) + 15);
+.style('fill', this.isDarkMode ? 'var(--color-warm-border)' : 'var(--color-warm-muted)')
+.attr('dy', d => (d.size || 8) + 15);
       
       this.simulation.on('tick', () => {
         link
@@ -514,14 +514,14 @@ fitToContent() {
     
     getNodeColor(type) {
       const colors = {
-        'article': '#3b82f6',
-        'thought': '#10b981', 
-        'prediction': '#f59e0b',
-        'reflection': '#8b5cf6',
-        'tag': '#22c55e',
-        'folder': '#f97316'
+        'article': 'var(--color-sky)',
+        'thought': 'var(--color-mint)', 
+        'prediction': 'var(--color-mustard)',
+        'reflection': 'var(--color-sky)',
+        'tag': 'var(--color-mint)',
+        'folder': 'var(--color-coral)'
       };
-      return colors[type] || '#6b7280';
+      return colors[type] || 'var(--color-warm-muted)';
     },
     
     calculateNodeSize(node) {
@@ -655,12 +655,11 @@ computeFolderNodes() {
     },
     
     getNodeFillColor(node) {
-      // Tag and folder nodes always show in their type color
       if (node.type === 'tag') {
-        return '#22c55e';
+        return 'var(--color-mint)';
       }
       if (node.type === 'folder') {
-        return '#f97316';
+        return 'var(--color-coral)';
       }
       return this.getNodeColor(node.type);
     },
@@ -708,7 +707,7 @@ computeFolderNodes() {
       this.container.selectAll('.graph-node')
         .style('opacity', n => connectedIds.has(n.id) ? 1 : 0.2)
         .style('stroke-width', n => connectedIds.has(n.id) ? 4 : 2)
-        .style('stroke', n => connectedIds.has(n.id) ? '#22c55e' : (this.isDarkMode ? '#444' : '#fff'));
+        .style('stroke', n => connectedIds.has(n.id) ? 'var(--color-mint)' : (this.isDarkMode ? 'var(--color-warm-muted)' : 'var(--color-cream)'));
       
       // Highlight tag links (line elements)
       this.container.selectAll('.tag-link line')
@@ -765,7 +764,7 @@ computeFolderNodes() {
       this.container.selectAll('.graph-node')
         .style('opacity', n => connectedIds.has(n.id) ? 1 : 0.2)
         .style('stroke-width', n => connectedIds.has(n.id) ? 4 : 2)
-        .style('stroke', n => connectedIds.has(n.id) ? '#f97316' : (this.isDarkMode ? '#444' : '#fff'));
+        .style('stroke', n => connectedIds.has(n.id) ? 'var(--color-coral)' : (this.isDarkMode ? 'var(--color-warm-muted)' : 'var(--color-cream)'));
       
       // Highlight folder links
       this.container.selectAll('.folder-link')
@@ -987,13 +986,13 @@ dragStarted(event, d) {
       if (!this.container) return;
       
       this.container.selectAll('.graph-link')
-        .style('stroke', this.isDarkMode ? '#555' : '#bbb');
+        .style('stroke', this.isDarkMode ? 'var(--color-warm-muted)' : 'var(--color-warm-border)');
       
       this.container.selectAll('.graph-node')
-        .style('stroke', this.isDarkMode ? '#444' : '#fff');
+        .style('stroke', this.isDarkMode ? 'var(--color-warm-muted)' : 'var(--color-cream)');
       
       this.container.selectAll('.labels text')
-        .style('fill', this.isDarkMode ? '#ccc' : '#555');
+        .style('fill', this.isDarkMode ? 'var(--color-warm-border)' : 'var(--color-warm-muted)');
     }
   }
 }

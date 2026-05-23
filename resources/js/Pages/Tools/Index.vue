@@ -1,4 +1,6 @@
 <script setup>
+import { Link } from '@inertiajs/vue3'
+
 const tools = [
   { name: 'Blobby', path: '/tools/tamagotchi', description: 'Virtual pet' },
   { name: 'Life Optimizer', path: '/tools/clicker', description: 'Click to optimize your life' },
@@ -18,7 +20,7 @@ const tools = [
       </h1>
       
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <a
+        <Link
           v-for="tool in tools"
           :key="tool.path"
           :href="tool.path"
@@ -30,7 +32,7 @@ const tools = [
           <p class="text-warm-muted mt-2">
             {{ tool.description }}
           </p>
-        </a>
+        </Link>
       </div>
     </div>
 </template>
