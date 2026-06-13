@@ -10,6 +10,7 @@ const tools = [
   { name: 'EMOM Timer', path: '/timer', description: 'Interval timer for workouts' },
   { name: 'RanTim', path: '/tools/rantim', description: 'Random timer' },
   { name: 'Bill Splitter', path: '/tools/bill-splitter', description: 'Split bills with friends' },
+  { name: 'Rota Minutes', path: '/tools/rota-minutes', description: 'Generate meeting minutes PDFs' },
 ]
 </script>
 

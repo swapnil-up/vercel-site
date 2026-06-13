@@ -18,7 +18,7 @@ class SitemapController extends Controller
             ->get();
 
         $sitemap = '<?xml version="1.0" encoding="UTF-8"?>';
-        $sitemap .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.8">';
+        $sitemap .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 
         // Homepage
         $sitemap .= $this->buildUrlEntry(

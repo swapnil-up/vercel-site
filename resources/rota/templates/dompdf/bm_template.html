@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @page {
+    size: 8.26in 11.68in;
+    margin: 0.35in;
+  }
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 14pt;
+    line-height: 1.0;
+    margin: 0;
+    padding: {BODY_PADDING_TOP} 0 0 0;
+  }
+  img {
+    display: block;
+  }
+  .meeting-number {
+    text-align: center;
+    font-weight: bold;
+    font-size: 14pt;
+    margin-top: 0.2in;
+    margin-bottom: 0;
+  }
+  .meta-line {
+    margin: 0.09in 0 0 0;
+    font-size: 14pt;
+    line-height: 1.0;
+  }
+  .body-text {
+    font-size: 14pt;
+    line-height: 1.425;
+    margin: 0;
+  }
+  .body-text + .body-text {
+    margin-top: 3pt;
+  }
+  .body-text.small-gap {
+    margin-top: 0.042in;
+  }
+  .section-header {
+    font-weight: bold;
+    font-size: 12pt;
+    margin: 0;
+    line-height: 1.0;
+  }
+  .section-header.attendance {
+    margin-top: 0.2in;
+  }
+  .section-header.agendas {
+    margin-top: 0.2in;
+  }
+  .section-header.summary {
+    margin-top: 0.3in;
+  }
+  .attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12pt;
+    font-family: 'Times New Roman', Times, serif;
+    margin-top: 0.1in;
+  }
+  .attendance-table th {
+    font-weight: bold;
+    border: 1px solid black;
+    padding: 4pt 6pt;
+    text-align: left;
+  }
+  .attendance-table td {
+    border: 1px solid black;
+    padding: 4pt 6pt;
+  }
+  .agenda-title {
+    font-size: 14pt;
+    font-weight: bold;
+    line-height: 1.425;
+    margin: 0.4em 0 0 0;
+  }
+  .agenda-body {
+    font-size: 14pt;
+    line-height: 1.425;
+    margin: 0 0 0.3em 0;
+  }
+  .summary-line {
+    font-size: 14pt;
+    margin: 0;
+    line-height: 1.4;
+  }
+  .signatures {
+    margin-top: 0.5in;
+    page-break-inside: avoid;
+  }
+  .sig-table {
+    width: 100%;
+    border: none;
+    border-collapse: collapse;
+  }
+  .sig-table td {
+    border: none;
+    padding: 0;
+    vertical-align: top;
+  }
+  .sig-table img {
+    display: block;
+  }
+  .sig-left {
+    width: 50%;
+    text-align: left;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12pt;
+    line-height: 1.4375;
+  }
+  .sig-right {
+    width: 50%;
+    text-align: left;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12pt;
+    line-height: 1.4375;
+  }
+  .footer-note {
+    font-size: 10pt;
+    text-align: center;
+    margin-top: 0.15in;
+  }
+</style>
+</head>
+<body>
+
+{LETTERHEAD_HTML}
+
+<p class="meeting-number">BM Meeting no. {BM_NUMBER}</p>
+
+<p class="meta-line">Rota year: {YEAR}</p>
+<p class="meta-line">Meeting Venue: {VENUE}</p>
+<p class="meta-line">Meeting Date: {DATE}</p>
+<p class="meta-line">Meeting From: {TIME_FROM}</p>
+<p class="meta-line">Meeting To: {TIME_TO}</p>
+
+<p class="body-text" style="margin-top:0.1in;">&bull; President {PRESIDENT} presided over the Board Meeting of {CLUB_NAME}, of R.I. District {RID}.</p>
+<p class="body-text small-gap">&bull; Minutes taken by {MINUTE_TAKER}.</p>
+
+<p class="section-header attendance">Attendance:</p>
+{ATTENDANCE_TABLE}
+
+<p class="section-header agendas">Agendas:</p>
+{AGENDA_ITEMS}
+
+<p class="section-header summary">Meeting summary:</p>
+<p class="summary-line">&bull; Meeting From: {SUMMARY_FROM}</p>
+<p class="summary-line">&bull; Meeting To: {SUMMARY_TO}</p>
+<p class="summary-line">&bull; Proposed Members: {SUMMARY_PROPOSED}</p>
+<p class="summary-line">&bull; Rotarians: {SUMMARY_ROTARIANS}</p>
+<p class="summary-line">&bull; Visiting Rotaractors: {SUMMARY_VISITING_ROTARACTORS}</p>
+<p class="summary-line">&bull; Visiting Interactors: {SUMMARY_VISITING_INTERACTORS}</p>
+<p class="summary-line">&bull; Guests: {SUMMARY_GUESTS}</p>
+<p class="summary-line">&bull; Total Present: {SUMMARY_TOTAL}</p>
+
+<div class="signatures">
+  <table class="sig-table">
+    <tr>
+      <td class="sig-left"><img src="{SIG_LEFT_IMAGE}" style="width:1.50in;"/></td>
+      <td class="sig-right"><img src="{SIG_RIGHT_IMAGE}" style="width:1.46in;"/></td>
+    </tr>
+    <tr>
+      <td class="sig-left">_________________________</td>
+      <td class="sig-right">_________________________</td>
+    </tr>
+    <tr>
+      <td class="sig-left">{SIG_LEFT_NAME}</td>
+      <td class="sig-right">{SIG_RIGHT_NAME}</td>
+    </tr>
+    <tr>
+      <td class="sig-left">{SIG_LEFT_TITLE}</td>
+      <td class="sig-right">{SIG_RIGHT_TITLE}</td>
+    </tr>
+    <tr>
+      <td class="sig-left">{CLUB_NAME}</td>
+      <td class="sig-right">{CLUB_NAME}</td>
+    </tr>
+    <tr>
+      <td class="sig-left">{YEAR}</td>
+      <td class="sig-right">{YEAR}</td>
+    </tr>
+  </table>
+  <p style="margin-top:0.3in;">
+    <img src="{STAMP_IMAGE}" style="width:1.24in;"/>
+  </p>
+</div>
+
+<p class="footer-note">{FOOTER_NOTE}</p>
+
+</body>
+</html>

@@ -7,6 +7,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\RotaMinutesController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn() => inertia('Index', [
@@ -72,6 +73,9 @@ Route::get('/tools/bill-splitter', fn() => inertia('Tools/BillSplitter', [
         'title' => 'Bill Splitter — Tools — Swapnil Upadhyay',
     ],
 ]));
+
+Route::get('/tools/rota-minutes', [RotaMinutesController::class, 'create'])->name('rota-minutes');
+Route::post('/tools/rota-minutes/generate-form', [RotaMinutesController::class, 'generateFromForm']);
 
 Route::get('/tools/rantim', fn() => inertia('Tools/RanTim', [
     'meta' => [
