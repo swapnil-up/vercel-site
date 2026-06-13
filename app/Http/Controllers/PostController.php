@@ -24,7 +24,11 @@ class PostController extends Controller
             ]);
         
         return Inertia::render('Posts/Index', [
-            'posts' => $posts
+            'posts' => $posts,
+            'meta' => [
+                'title' => 'Articles — Swapnil Upadhyay',
+                'description' => 'Technical articles and essays by Swapnil Upadhyay about development, career, and productivity.',
+            ],
         ]);
     }
 
@@ -53,6 +57,8 @@ class PostController extends Controller
                 ->toArray();
         }
         
+        $postUrl = route('posts.show', $post->slug);
+
         return Inertia::render('Posts/Show', [
             'post' => [
                 'title' => $post->title,
@@ -66,6 +72,55 @@ class PostController extends Controller
             ],
             'linkedPosts' => $linkedPosts,
             'seriesPosts' => $seriesPosts,
+            'meta' => [
+                'title' => $post->title . ' — Swapnil Upadhyay',
+                'description' => $post->description ?? 'Article by Swapnil Upadhyay',
+                'url' => $postUrl,
+            ],
+            'ldjson' => [
+                '@context' => 'https://schema.org',
+                '@graph' => [
+                    [
+                        '@type' => 'Article',
+                        'headline' => $post->title,
+                        'description' => $post->description,
+                        'author' => [
+                            '@type' => 'Person',
+                            'name' => 'Swapnil Upadhyay',
+                            'url' => url('/'),
+                        ],
+                        'datePublished' => $post->published_date->toIso8601String(),
+                        'dateModified' => $post->content_updated_at?->toIso8601String() ?? $post->published_date->toIso8601String(),
+                        'mainEntityOfPage' => [
+                            '@type' => 'WebPage',
+                            '@id' => $postUrl,
+                        ],
+                    ],
+                    [
+                        '@type' => 'BreadcrumbList',
+                        'itemListElement' => [
+                            [
+                                '@type' => 'ListItem',
+                                'position' => 1,
+                                'name' => 'Home',
+                                'item' => url('/'),
+                            ],
+                            [
+                                '@type' => 'ListItem',
+                                'position' => 2,
+                                'name' => 'Articles',
+                                'item' => route('posts.index'),
+                            ],
+                            [
+                                '@type' => 'ListItem',
+                                'position' => 3,
+                                'name' => $post->title,
+                                'item' => $postUrl,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ]);
     }
 
@@ -88,6 +143,10 @@ class PostController extends Controller
         return Inertia::render('Posts/Index', [
             'posts' => $posts,
             'selectedTag' => $tag,
+            'meta' => [
+                'title' => ucfirst($tag) . ' articles — Swapnil Upadhyay',
+                'description' => 'Articles tagged with "' . $tag . '" by Swapnil Upadhyay.',
+            ],
         ]);
     }
 }

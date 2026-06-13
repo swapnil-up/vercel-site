@@ -46,6 +46,30 @@ class SitemapController extends Controller
             );
         }
 
+        // About
+        $sitemap .= $this->buildUrlEntry(
+            url('/about'),
+            now(),
+            'monthly',
+            '0.5'
+        );
+
+        // Tools
+        $sitemap .= $this->buildUrlEntry(
+            url('/tools'),
+            now(),
+            'monthly',
+            '0.5'
+        );
+
+        // Tracker
+        $sitemap .= $this->buildUrlEntry(
+            route('tracker'),
+            now(),
+            'weekly',
+            '0.4'
+        );
+
         // Graph/Thoughts
         $sitemap .= $this->buildUrlEntry(
             url('/graph'),
