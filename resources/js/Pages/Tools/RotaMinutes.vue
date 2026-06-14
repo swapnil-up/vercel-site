@@ -15,6 +15,7 @@ const generating = ref(false)
 const pdfGenerated = ref(false)
 const pdfFilename = ref('')
 const error = ref('')
+const errors = ref({})
 const importExportMode = ref(null)
 const showRecurring = ref(false)
 const showConfig = ref(false)
@@ -90,14 +91,21 @@ function prefilledForm() {
     sig_left_title: d.sig_left_title || props.config.signatures?.left?.title || '',
     sig_right_name: d.sig_right_name || props.config.signatures?.right?.name || '',
     sig_right_title: d.sig_right_title || props.config.signatures?.right?.title || '',
-    attendance: buildAttendanceList(props.config),
+    attendance: d.attendance || buildAttendanceList(props.config),
     time_from: d.time_from || '',
     time_to: d.time_to || '',
+    happy_sad: d.happy_sad || [''],
+    agenda: d.agenda || [{ title: '', body: '' }],
+    recurring_items: d.recurring_items || [],
     summary_proposed: d.summary_proposed || 0,
     summary_rotarians: d.summary_rotarians || 0,
     summary_visiting_rotaractors: d.summary_visiting_rotaractors || 0,
     summary_visiting_interactors: d.summary_visiting_interactors || 0,
     summary_guests: d.summary_guests || 0,
+    letterhead_data: d.letterhead_data || '',
+    sig_left_data: d.sig_left_data || '',
+    sig_right_data: d.sig_right_data || '',
+    stamp_data: d.stamp_data || '',
   }
 }
 
@@ -124,6 +132,7 @@ const recurringSelected = computed(() => form.value.recurring_items.length)
 
 watch(form, (val) => {
   sessionStorage.setItem(SAVE_KEY, JSON.stringify(val))
+  errors.value = {}
 }, { deep: true })
 
 onMounted(() => {
@@ -281,6 +290,41 @@ function handleImportFile(e) {
   reader.readAsText(file)
 }
 
+function clearError(field) {
+  if (errors.value[field]) {
+    const next = { ...errors.value }
+    delete next[field]
+    errors.value = next
+  }
+}
+
+function validate() {
+  const e = {}
+  if (!form.value.meeting_number || form.value.meeting_number < 1) e.meeting_number = 'Required'
+  if (!form.value.date) e.date = 'Required'
+  if (!form.value.time_from) e.time_from = 'Required'
+  if (!form.value.time_to) e.time_to = 'Required'
+  if (!form.value.venue?.trim()) e.venue = 'Required'
+  if (!form.value.minute_taker?.trim()) e.minute_taker = 'Required'
+  if (!form.value.year?.trim()) e.year = 'Required'
+  if (!form.value.club_name?.trim()) e.club_name = 'Required'
+  if (!form.value.club_number?.trim()) e.club_number = 'Required'
+  if (!form.value.rid?.trim()) e.rid = 'Required'
+  if (!form.value.president?.trim()) e.president = 'Required'
+  if (!form.value.member_prefix?.trim()) e.member_prefix = 'Required'
+  if (!form.value.footer_note?.trim()) e.footer_note = 'Required'
+  if (!form.value.sig_left_name?.trim()) e.sig_left_name = 'Required'
+  if (!form.value.sig_left_title?.trim()) e.sig_left_title = 'Required'
+  if (!form.value.sig_right_name?.trim()) e.sig_right_name = 'Required'
+  if (!form.value.sig_right_title?.trim()) e.sig_right_title = 'Required'
+  const validMembers = form.value.attendance.filter(a => a.present && a.name.trim())
+  if (validMembers.length === 0) e.attendance = 'At least one member must be present and named'
+  const validAgenda = form.value.agenda.filter(a => a.title.trim())
+  if (validAgenda.length === 0) e.agenda = 'At least one agenda item needs a title'
+  errors.value = e
+  return Object.keys(e).length === 0
+}
+
 function formatTime(val) {
   if (!val) return ''
   const parts = val.split(':')
@@ -293,9 +337,11 @@ function formatTime(val) {
 }
 
 async function generateFromForm() {
-  generating.value = true
   error.value = ''
   pdfGenerated.value = false
+  if (!validate()) return
+
+  generating.value = true
 
   await convertFormImages(form.value)
 
@@ -355,32 +401,32 @@ async function generateFromForm() {
 <template>
   <div class="max-w-6xl mx-auto p-6 bg-cream min-h-screen">
     <div class="mb-6">
-      <h1 class="font-display text-3xl font-bold text-ink mb-2">Rota Minutes</h1>
-      <p class="text-warm-muted">Generate meeting minutes PDFs for Rotaract Club of Patan South.</p>
+      <h1 class="font-display text-3xl font-bold text-ink mb-2">Meeting Minutes</h1>
+      <p class="text-warm-muted">Fill in the details below, then generate a PDF or save your work to finish later.</p>
     </div>
 
     <div class="space-y-6">
 
       <div class="flex gap-2">
-        <button @click="exportForm" class="px-4 py-2 bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-          Export JSON
-        </button>
-        <button @click="importExportMode = 'import'" class="px-4 py-2 bg-sky text-white rounded-sm hover:bg-sky/80 transition-colors text-sm flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          Import JSON
-        </button>
         <button @click="loadDefaults" class="px-4 py-2 bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          Load Defaults
+          Fill with example data
         </button>
-        <button @click="resetForm" class="px-4 py-2 bg-coral text-white rounded-sm hover:bg-coral/80 transition-colors text-sm">Reset</button>
+        <button @click="importExportMode = 'import'" class="px-4 py-2 bg-sky text-white rounded-sm hover:bg-sky/80 transition-colors text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Load saved data
+        </button>
+        <button @click="resetForm" class="px-4 py-2 bg-coral text-white rounded-sm hover:bg-coral/80 transition-colors text-sm">Clear all fields</button>
+      </div>
+
+      <div v-if="Object.keys(errors).length" class="bg-coral/10 border border-coral/50 text-coral p-4 rounded-sm text-sm font-medium">
+        Please fill in all required fields (highlighted in red) before generating the PDF.
       </div>
 
       <div v-if="importExportMode === 'import'" class="fixed inset-0 bg-ink/50 flex items-center justify-center z-50">
         <div class="bg-warm-surface p-6 rounded-sm max-w-md w-full mx-4 shadow-2xl">
-          <h3 class="font-display text-lg font-bold text-ink mb-4">Import Form Data</h3>
-          <p class="text-sm text-warm-muted mb-4">Select a JSON file previously exported from Rota Minutes.</p>
+          <h3 class="font-display text-lg font-bold text-ink mb-4">Load saved data</h3>
+          <p class="text-sm text-warm-muted mb-4">Select a file you saved earlier to pick up where you left off.</p>
           <input type="file" accept=".json" @change="handleImportFile" class="w-full mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:bg-coral file:text-white hover:file:bg-coral/80 file:cursor-pointer" />
           <div class="flex justify-end">
             <button @click="importExportMode = null" class="px-4 py-2 bg-warm-surface border border-warm-border rounded-sm hover:bg-cream">Cancel</button>
@@ -393,38 +439,38 @@ async function generateFromForm() {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Type</label>
-            <select v-model="form.type" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral">
+            <select v-model="form.type" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.type ? 'border-coral' : 'border-warm-border']">
               <option value="general">General Meeting</option>
               <option value="board">Board Meeting</option>
             </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Meeting #</label>
-            <input v-model.number="form.meeting_number" type="number" min="1" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model.number="form.meeting_number" type="number" min="1" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.meeting_number ? 'border-coral' : 'border-warm-border']" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Date</label>
-            <input v-model="form.date" type="date" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model="form.date" type="date" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.date ? 'border-coral' : 'border-warm-border']" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Time From</label>
-            <input v-model="form.time_from" type="time" step="60" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model="form.time_from" type="time" step="60" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.time_from ? 'border-coral' : 'border-warm-border']" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Time To</label>
-            <input v-model="form.time_to" type="time" step="60" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model="form.time_to" type="time" step="60" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.time_to ? 'border-coral' : 'border-warm-border']" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Venue</label>
-            <input v-model="form.venue" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model="form.venue" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.venue ? 'border-coral' : 'border-warm-border']" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Minute Taker</label>
-            <input v-model="form.minute_taker" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model="form.minute_taker" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.minute_taker ? 'border-coral' : 'border-warm-border']" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Rota Year</label>
-            <input v-model="form.year" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model="form.year" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.year ? 'border-coral' : 'border-warm-border']" />
           </div>
         </div>
       </div>
@@ -435,27 +481,27 @@ async function generateFromForm() {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div>
               <label class="block text-sm font-medium text-warm-muted mb-1">Club Name</label>
-              <input v-model="form.club_name" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+              <input v-model="form.club_name" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.club_name ? 'border-coral' : 'border-warm-border']" />
             </div>
             <div>
               <label class="block text-sm font-medium text-warm-muted mb-1">Club Number</label>
-              <input v-model="form.club_number" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+              <input v-model="form.club_number" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.club_number ? 'border-coral' : 'border-warm-border']" />
             </div>
             <div>
               <label class="block text-sm font-medium text-warm-muted mb-1">R.I. District</label>
-              <input v-model="form.rid" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+              <input v-model="form.rid" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.rid ? 'border-coral' : 'border-warm-border']" />
             </div>
             <div>
               <label class="block text-sm font-medium text-warm-muted mb-1">President</label>
-              <input v-model="form.president" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+              <input v-model="form.president" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.president ? 'border-coral' : 'border-warm-border']" />
             </div>
             <div>
               <label class="block text-sm font-medium text-warm-muted mb-1">Member Prefix</label>
-              <input v-model="form.member_prefix" type="text" placeholder="Rtr." class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+              <input v-model="form.member_prefix" type="text" placeholder="Rtr." :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.member_prefix ? 'border-coral' : 'border-warm-border']" />
             </div>
             <div>
               <label class="block text-sm font-medium text-warm-muted mb-1">Footer Note</label>
-              <input v-model="form.footer_note" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+              <input v-model="form.footer_note" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.footer_note ? 'border-coral' : 'border-warm-border']" />
             </div>
           </div>
         </details>
@@ -468,11 +514,11 @@ async function generateFromForm() {
           <button @click="toggleAttendanceAll(false)" class="px-3 py-1.5 bg-ink text-white text-xs rounded-sm hover:bg-coral transition-colors">All Absent</button>
           <span class="text-sm text-warm-muted ml-auto self-center">{{ attendancePresent.length }} present</span>
         </div>
-        <div class="border border-warm-border rounded-sm">
+        <div :class="{'border-coral': errors.attendance}" class="border border-warm-border rounded-sm">
           <div v-for="(m, i) in form.attendance" :key="i" class="flex items-center gap-2 px-3 py-2 border-b border-warm-border last:border-b-0 hover:bg-cream/50" :class="m.present ? '' : 'opacity-50'">
             <input type="checkbox" v-model="m.present" class="rounded border-warm-border text-coral focus:ring-coral shrink-0" />
-            <input v-model="m.name" type="text" placeholder="Member name" class="flex-1 min-w-0 px-2 py-1 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-sm" @click.stop />
-            <input v-model="m.designation" type="text" placeholder="Designation" class="w-36 shrink-0 px-2 py-1 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-xs hidden sm:block" @click.stop />
+            <input v-model="m.name" type="text" placeholder="Member name" class="flex-1 min-w-0 px-2 py-1 border border-warm-border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky text-sm" @click.stop />
+            <input v-model="m.designation" type="text" placeholder="Designation" class="w-36 shrink-0 px-2 py-1 border border-warm-border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky text-xs hidden sm:block" @click.stop />
             <button @click="removeMember(i)" class="shrink-0 px-2 py-1 text-coral hover:bg-coral/10 rounded-sm transition-colors text-sm" :disabled="form.attendance.length <= 1">&times;</button>
           </div>
         </div>
@@ -483,7 +529,7 @@ async function generateFromForm() {
         <h2 class="font-display text-lg font-bold text-ink mb-4">Happy &amp; Sad News</h2>
         <div class="space-y-2">
           <div v-for="(_, i) in form.happy_sad" :key="i" class="flex gap-2">
-            <input v-model="form.happy_sad[i]" type="text" placeholder="e.g. Rtr. Aanya shared that she adopted a rescue puppy..." class="flex-1 px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-sm" />
+            <input v-model="form.happy_sad[i]" type="text" placeholder="e.g. Rtr. Aanya shared that she adopted a rescue puppy..." class="flex-1 px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky text-sm" />
             <button @click="removeHappySad(i)" class="px-3 py-2 text-coral hover:bg-coral/10 rounded-sm transition-colors text-sm">&times;</button>
           </div>
         </div>
@@ -493,13 +539,13 @@ async function generateFromForm() {
       <div class="bg-warm-surface border border-warm-border p-6 rounded-sm">
         <h2 class="font-display text-lg font-bold text-ink mb-4">Agenda</h2>
         <div class="space-y-4">
-          <div v-for="(item, i) in form.agenda" :key="i" class="border border-warm-border rounded-sm p-4">
+          <div v-for="(item, i) in form.agenda" :key="i" :class="i === 0 ? {'border-coral': errors.agenda} : {}" class="border border-warm-border rounded-sm p-4">
             <div class="flex items-center justify-between mb-2">
               <span class="text-xs text-warm-muted font-mono">#{{ i + 1 }}</span>
               <button @click="removeAgenda(i)" class="text-xs text-coral hover:bg-coral/10 px-2 py-1 rounded-sm">&times;</button>
             </div>
-            <input v-model="item.title" type="text" placeholder="Agenda title" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral mb-2 text-sm" />
-            <textarea v-model="item.body" rows="3" placeholder="Agenda details..." class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-sm"></textarea>
+            <input v-model="item.title" type="text" placeholder="Agenda title" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky mb-2 text-sm" />
+            <textarea v-model="item.body" rows="3" placeholder="Agenda details..." class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky text-sm"></textarea>
           </div>
         </div>
         <button @click="addAgenda" class="mt-3 px-4 py-2 bg-sky text-white text-sm rounded-sm hover:bg-sky/80 transition-colors">+ Add Item</button>
@@ -531,23 +577,23 @@ async function generateFromForm() {
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Proposed</label>
-            <input v-model.number="form.summary_proposed" type="number" min="0" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model.number="form.summary_proposed" type="number" min="0" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Rotarians</label>
-            <input v-model.number="form.summary_rotarians" type="number" min="0" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model.number="form.summary_rotarians" type="number" min="0" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Visiting Rot.</label>
-            <input v-model.number="form.summary_visiting_rotaractors" type="number" min="0" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model.number="form.summary_visiting_rotaractors" type="number" min="0" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Visiting Int.</label>
-            <input v-model.number="form.summary_visiting_interactors" type="number" min="0" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model.number="form.summary_visiting_interactors" type="number" min="0" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Guests</label>
-            <input v-model.number="form.summary_guests" type="number" min="0" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+            <input v-model.number="form.summary_guests" type="number" min="0" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky" />
           </div>
           <div>
             <label class="block text-sm font-medium text-warm-muted mb-1">Total</label>
@@ -565,11 +611,11 @@ async function generateFromForm() {
               <div class="space-y-3">
                 <div>
                   <label class="block text-sm font-medium text-warm-muted mb-1">Name</label>
-                  <input v-model="form.sig_left_name" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+                  <input v-model="form.sig_left_name" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.sig_left_name ? 'border-coral' : 'border-warm-border']" />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-warm-muted mb-1">Title</label>
-                  <input v-model="form.sig_left_title" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+                  <input v-model="form.sig_left_title" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.sig_left_title ? 'border-coral' : 'border-warm-border']" />
                 </div>
               </div>
             </div>
@@ -578,11 +624,11 @@ async function generateFromForm() {
               <div class="space-y-3">
                 <div>
                   <label class="block text-sm font-medium text-warm-muted mb-1">Name</label>
-                  <input v-model="form.sig_right_name" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+                  <input v-model="form.sig_right_name" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.sig_right_name ? 'border-coral' : 'border-warm-border']" />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-warm-muted mb-1">Title</label>
-                  <input v-model="form.sig_right_title" type="text" class="w-full px-3 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" />
+                  <input v-model="form.sig_right_title" type="text" :class="['w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:outline-none focus:ring-2 focus:ring-sky focus:border-sky', errors.sig_right_title ? 'border-coral' : 'border-warm-border']" />
                 </div>
               </div>
             </div>
@@ -627,6 +673,12 @@ async function generateFromForm() {
           {{ generating ? 'Generating…' : 'Generate PDF' }}
         </button>
         <p v-if="pdfGenerated" class="mt-3 text-sm text-mint text-center font-medium">✓ {{ pdfFilename }} downloaded.</p>
+        <div class="mt-4 flex gap-2 justify-center">
+          <button @click="exportForm" class="px-4 py-2 bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Save draft
+          </button>
+        </div>
       </div>
     </div>
 

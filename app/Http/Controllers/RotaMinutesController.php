@@ -18,8 +18,8 @@ class RotaMinutesController extends Controller
 
         return inertia('Tools/RotaMinutes', [
             'meta' => [
-                'title' => 'Rota Minutes — Tools — Swapnil Upadhyay',
-                'description' => 'Generate meeting minutes PDFs for Rotaract Club of Patan South.',
+                'title' => 'Meeting Minutes — Tools — Swapnil Upadhyay',
+                'description' => 'Create and save meeting minutes PDFs for any club or organisation.',
             ],
             'config' => config('rota'),
             'defaults' => $defaults,
