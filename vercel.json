@@ -50,8 +50,7 @@
 
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "cookie",
-        "PHP_EXTENSIONS": "gd"
+        "SESSION_DRIVER": "cookie"
     },
     "outputDirectory": "public"
 }

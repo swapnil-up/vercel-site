@@ -200,7 +200,18 @@ function handleImageUpload(field, file) {
   }
   const reader = new FileReader()
   reader.onload = (e) => {
-    form.value[field] = e.target?.result ?? ''
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(img, 0, 0)
+      form.value[field] = canvas.toDataURL('image/jpeg', 0.92)
+    }
+    img.src = e.target?.result ?? ''
   }
   reader.readAsDataURL(file)
 }
@@ -208,6 +219,32 @@ function handleImageUpload(field, file) {
 function clearImage(field) {
   form.value[field] = ''
   imageWarnings.value[field] = ''
+}
+
+function convertImageToJpeg(dataUrl) {
+  if (!dataUrl || !dataUrl.startsWith('data:image/png')) return dataUrl
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(img, 0, 0)
+      resolve(canvas.toDataURL('image/jpeg', 0.92))
+    }
+    img.onerror = () => resolve(dataUrl)
+    img.src = dataUrl
+  })
+}
+
+async function convertFormImages(formData) {
+  formData.letterhead_data = await convertImageToJpeg(formData.letterhead_data)
+  formData.sig_left_data = await convertImageToJpeg(formData.sig_left_data)
+  formData.sig_right_data = await convertImageToJpeg(formData.sig_right_data)
+  formData.stamp_data = await convertImageToJpeg(formData.stamp_data)
 }
 
 function exportForm() {
@@ -228,9 +265,12 @@ function handleImportFile(e) {
   const file = e.target.files?.[0]
   if (!file) return
   const reader = new FileReader()
-  reader.onload = (event) => {
+  reader.onload = async (event) => {
     try {
       const data = JSON.parse(event.target?.result)
+      if (data.letterhead_data || data.sig_left_data || data.sig_right_data || data.stamp_data) {
+        await convertFormImages(data)
+      }
       form.value = data
       sessionStorage.setItem(SAVE_KEY, JSON.stringify(data))
       importExportMode.value = null
@@ -256,6 +296,8 @@ async function generateFromForm() {
   generating.value = true
   error.value = ''
   pdfGenerated.value = false
+
+  await convertFormImages(form.value)
 
   const payload = {
     ...form.value,
