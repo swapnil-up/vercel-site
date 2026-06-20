@@ -424,10 +424,10 @@ function handleImportFile(e) {
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto p-6 bg-cream min-h-screen">
+  <div class="max-w-6xl mx-auto p-4 sm:p-6 bg-cream min-h-screen">
     <div class="mb-6">
-      <h1 class="font-display text-3xl font-bold text-ink mb-2">Rota Minutes <span class="text-sm text-warm-muted font-normal">(Standalone)</span></h1>
-      <p class="text-warm-muted">Generate meeting minutes PDFs entirely in your browser. No server-side processing.</p>
+      <h1 class="font-display text-2xl sm:text-3xl font-bold text-ink mb-2">Rota Minutes <span class="text-xs sm:text-sm text-warm-muted font-normal">(Standalone)</span></h1>
+      <p class="text-sm sm:text-base text-warm-muted">Generate meeting minutes PDFs entirely in your browser. No server-side processing.</p>
     </div>
 
     <div class="space-y-6">
@@ -438,19 +438,19 @@ function handleImportFile(e) {
       </div>
 
       <div class="flex gap-2 flex-wrap">
-        <button @click="exportForm" class="px-4 py-2 bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-          Export JSON
+        <button @click="exportForm" class="px-4 py-2 min-h-[44px] bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <span class="hidden xs:inline">Export</span> JSON
         </button>
-        <button @click="importExportMode = 'import'" class="px-4 py-2 bg-sky text-white rounded-sm hover:bg-sky/80 transition-colors text-sm flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          Import JSON
+        <button @click="importExportMode = 'import'" class="px-4 py-2 min-h-[44px] bg-sky text-white rounded-sm hover:bg-sky/80 transition-colors text-sm flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span class="hidden xs:inline">Import</span> JSON
         </button>
-        <button @click="loadDefaults" class="px-4 py-2 bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          Load Defaults
+        <button @click="loadDefaults" class="px-4 py-2 min-h-[44px] bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span class="hidden xs:inline">Load</span> Defaults
         </button>
-        <button @click="resetForm" class="px-4 py-2 bg-coral text-white rounded-sm hover:bg-coral/80 transition-colors text-sm">Reset</button>
+        <button @click="resetForm" class="px-4 py-2 min-h-[44px] bg-coral text-white rounded-sm hover:bg-coral/80 transition-colors text-sm">Reset</button>
       </div>
 
       <div v-if="importExportMode === 'import'" class="fixed inset-0 bg-ink/50 flex items-center justify-center z-50">
@@ -464,17 +464,43 @@ function handleImportFile(e) {
         </div>
       </div>
 
-      <div class="flex items-center justify-between mb-8 overflow-x-auto py-2 gap-2 select-none">
-        <div v-for="(step, i) in steps" :key="i" class="flex items-center gap-2 min-w-0">
+      <!-- Step indicator: mobile compact -->
+      <div class="md:hidden mb-6 select-none">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-sm font-bold text-ink font-display shrink-0">Step {{ currentStep + 1 }}/{{ steps.length }}</span>
+            <span class="text-sm text-warm-muted truncate">{{ steps[currentStep] }}</span>
+          </div>
+          <span class="text-xs text-warm-muted shrink-0 ml-2">{{ Math.round((currentStep + 1) / steps.length * 100) }}%</span>
+        </div>
+        <div class="w-full bg-warm-border rounded-full h-2 overflow-hidden">
+          <div class="bg-coral h-2 rounded-full transition-all duration-500 ease-out" :style="{ width: ((currentStep + 1) / steps.length * 100) + '%' }"></div>
+        </div>
+        <div class="flex justify-between mt-2">
+          <button v-if="currentStep > 0" @click="prevStep" class="text-xs text-warm-muted hover:text-ink transition-colors flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            {{ steps[currentStep - 1] }}
+          </button>
+          <span v-else></span>
+          <button v-if="currentStep < steps.length - 1" @click="nextStep" class="text-xs text-warm-muted hover:text-ink transition-colors flex items-center gap-1">
+            {{ steps[currentStep + 1] }}
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step indicator: desktop full -->
+      <div class="hidden md:flex items-center justify-between mb-8 gap-1 select-none">
+        <div v-for="(step, i) in steps" :key="i" class="flex items-center gap-1 min-w-0 flex-1">
           <div class="flex items-center gap-2 shrink-0">
             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200"
               :class="i === currentStep ? 'bg-coral text-white shadow-md scale-110' : i < currentStep ? 'bg-mint text-ink' : 'bg-warm-border text-warm-muted'">
               <svg v-if="i < currentStep" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
               <span v-else>{{ i + 1 }}</span>
             </div>
-            <span class="text-xs whitespace-nowrap transition-colors duration-200" :class="i === currentStep ? 'text-ink font-semibold' : i < currentStep ? 'text-ink/60' : 'text-warm-muted'">{{ step }}</span>
+            <span class="text-xs whitespace-nowrap transition-colors duration-200 hidden lg:inline" :class="i === currentStep ? 'text-ink font-semibold' : i < currentStep ? 'text-ink/60' : 'text-warm-muted'">{{ step }}</span>
           </div>
-          <div v-if="i < steps.length - 1" class="h-px flex-1 min-w-4 transition-colors duration-200" :class="i < currentStep ? 'bg-mint' : 'bg-warm-border'"></div>
+          <div v-if="i < steps.length - 1" class="h-px flex-1 mx-1 transition-colors duration-200" :class="i < currentStep ? 'bg-mint' : 'bg-warm-border'"></div>
         </div>
       </div>
 
@@ -574,20 +600,20 @@ function handleImportFile(e) {
         <div class="bg-warm-surface border border-warm-border p-6 rounded-sm mt-6" :class="hasError('attendance') ? 'border-coral' : ''">
           <h2 class="font-display text-lg font-bold text-ink mb-4">Attendance</h2>
           <p v-if="fieldError('attendance')" class="mb-3 text-xs text-coral">{{ fieldError('attendance') }}</p>
-          <div class="flex gap-2 mb-3">
-            <button @click="toggleAttendanceAll(true)" class="px-3 py-1.5 bg-mint text-ink text-xs rounded-sm hover:bg-mint/80 transition-colors">All Present</button>
-            <button @click="toggleAttendanceAll(false)" class="px-3 py-1.5 bg-ink text-white text-xs rounded-sm hover:bg-coral transition-colors">All Absent</button>
-            <span class="text-sm text-warm-muted ml-auto self-center">{{ attendancePresent.length }} present</span>
+          <div class="flex gap-2 mb-3 items-center flex-wrap">
+            <button @click="toggleAttendanceAll(true)" class="px-3 py-2 min-h-[38px] bg-mint text-ink text-xs rounded-sm hover:bg-mint/80 transition-colors">All Present</button>
+            <button @click="toggleAttendanceAll(false)" class="px-3 py-2 min-h-[38px] bg-ink text-white text-xs rounded-sm hover:bg-coral transition-colors">All Absent</button>
+            <span class="text-sm text-warm-muted ml-auto">{{ attendancePresent.length }} present</span>
           </div>
-          <div class="border border-warm-border rounded-sm">
-            <div v-for="(m, i) in form.attendance" :key="i" class="flex items-center gap-2 px-3 py-2 border-b border-warm-border last:border-b-0 hover:bg-cream/50" :class="m.present ? '' : 'opacity-50'">
-              <input type="checkbox" v-model="m.present" class="rounded border-warm-border text-coral focus:ring-coral shrink-0" />
-              <input v-model="m.name" type="text" placeholder="Member name" class="flex-1 min-w-0 px-2 py-1 border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-sm" :class="hasError('attendance.' + i + '.name') ? 'border-coral' : 'border-warm-border'" @click.stop />
-              <input v-model="m.designation" type="text" placeholder="Designation" class="w-36 shrink-0 px-2 py-1 border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-xs hidden sm:block" :class="hasError('attendance.' + i + '.designation') ? 'border-coral' : 'border-warm-border'" @click.stop />
-              <button @click="removeMember(i)" class="shrink-0 px-2 py-1 text-coral hover:bg-coral/10 rounded-sm transition-colors text-sm" :disabled="form.attendance.length <= 1">&times;</button>
+          <div class="border border-warm-border rounded-sm overflow-hidden">
+            <div v-for="(m, i) in form.attendance" :key="i" class="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border-b border-warm-border last:border-b-0 hover:bg-cream/50 min-h-[44px]" :class="m.present ? '' : 'opacity-50'">
+              <input type="checkbox" v-model="m.present" class="rounded border-warm-border text-coral focus:ring-coral shrink-0 w-4 h-4 sm:w-auto sm:h-auto" />
+              <input v-model="m.name" type="text" placeholder="Member name" class="flex-1 min-w-0 px-2 py-1.5 sm:py-1 border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-sm" :class="hasError('attendance.' + i + '.name') ? 'border-coral' : 'border-warm-border'" @click.stop />
+              <input v-model="m.designation" type="text" placeholder="Designation" class="w-24 sm:w-36 shrink-0 px-2 py-1.5 sm:py-1 border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-xs hidden sm:block" :class="hasError('attendance.' + i + '.designation') ? 'border-coral' : 'border-warm-border'" @click.stop />
+              <button @click="removeMember(i)" class="shrink-0 px-2.5 py-1.5 sm:py-1 text-coral hover:bg-coral/10 rounded-sm transition-colors text-sm min-h-[36px] flex items-center" :disabled="form.attendance.length <= 1">&times;</button>
             </div>
           </div>
-          <button @click="addMember" class="mt-3 px-4 py-2 bg-sky text-white text-sm rounded-sm hover:bg-sky/80 transition-colors">+ Add Member</button>
+          <button @click="addMember" class="mt-3 px-4 py-2.5 min-h-[44px] bg-sky text-white text-sm rounded-sm hover:bg-sky/80 transition-colors">+ Add Member</button>
         </div>
       </div>
 
@@ -601,7 +627,7 @@ function handleImportFile(e) {
               <button @click="removeHappySad(i)" class="px-3 py-2 text-coral hover:bg-coral/10 rounded-sm transition-colors text-sm">&times;</button>
             </div>
           </div>
-          <button @click="addHappySad" class="mt-3 px-4 py-2 bg-sky text-white text-sm rounded-sm hover:bg-sky/80 transition-colors">+ Add Item</button>
+          <button @click="addHappySad" class="mt-3 px-4 py-2.5 min-h-[44px] bg-sky text-white text-sm rounded-sm hover:bg-sky/80 transition-colors">+ Add Item</button>
         </div>
 
         <div class="bg-warm-surface border border-warm-border p-6 rounded-sm mt-6" :class="hasError('agenda') ? 'border-coral' : ''">
@@ -617,13 +643,13 @@ function handleImportFile(e) {
               <textarea v-model="item.body" rows="3" placeholder="Agenda details..." class="w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-sm" :class="hasError('agenda.' + i + '.body') ? 'border-coral' : 'border-warm-border'"></textarea>
             </div>
           </div>
-          <button @click="addAgenda" class="mt-3 px-4 py-2 bg-sky text-white text-sm rounded-sm hover:bg-sky/80 transition-colors">+ Add Item</button>
+          <button @click="addAgenda" class="mt-3 px-4 py-2.5 min-h-[44px] bg-sky text-white text-sm rounded-sm hover:bg-sky/80 transition-colors">+ Add Item</button>
         </div>
 
         <div class="bg-warm-surface border border-warm-border p-6 rounded-sm mt-6" :class="hasError('recurring_items') ? 'border-coral' : ''">
           <h2 class="font-display text-lg font-bold text-ink mb-4">
             Recurring Items
-            <button @click="showRecurring = !showRecurring" class="ml-2 px-3 py-1 text-xs rounded-sm transition-colors" :class="showRecurring ? 'bg-coral text-white' : 'bg-sky text-white hover:bg-sky/80'">
+            <button @click="showRecurring = !showRecurring" class="ml-2 px-3 py-1.5 min-h-[36px] text-xs rounded-sm transition-colors" :class="showRecurring ? 'bg-coral text-white' : 'bg-sky text-white hover:bg-sky/80'">
               {{ showRecurring ? 'Close' : `Edit (${recurringSelected} selected)` }}
             </button>
           </h2>
@@ -762,54 +788,54 @@ function handleImportFile(e) {
             <p class="text-warm-muted">Review your data and generate the PDF. The document will open in a new tab for you to save via the browser's print dialog.</p>
           </div>
 
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-left">
-            <div class="bg-cream rounded-sm p-3">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 text-left">
+            <div class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Meeting</p>
               <p class="text-sm font-medium text-ink truncate">{{ form.type === 'board' ? 'Board' : 'General' }} #{{ form.meeting_number }}</p>
             </div>
-            <div class="bg-cream rounded-sm p-3">
+            <div class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Date</p>
-              <p class="text-sm font-medium text-ink">{{ form.date || '—' }}</p>
+              <p class="text-sm font-medium text-ink truncate">{{ form.date || '—' }}</p>
             </div>
-            <div class="bg-cream rounded-sm p-3">
+            <div class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Club</p>
               <p class="text-sm font-medium text-ink truncate">{{ form.club_name || '—' }}</p>
             </div>
-            <div class="bg-cream rounded-sm p-3">
+            <div class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Attendance</p>
-              <p class="text-sm font-medium text-ink">{{ attendancePresent.length }} present</p>
+              <p class="text-sm font-medium text-ink truncate">{{ attendancePresent.length }} present</p>
             </div>
-            <div class="bg-cream rounded-sm p-3">
+            <div class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Agenda Items</p>
-              <p class="text-sm font-medium text-ink">{{ form.agenda.length }}</p>
+              <p class="text-sm font-medium text-ink truncate">{{ form.agenda.length }}</p>
             </div>
-            <div class="bg-cream rounded-sm p-3">
+            <div class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Recurring</p>
-              <p class="text-sm font-medium text-ink">{{ form.recurring_items.length }} selected</p>
+              <p class="text-sm font-medium text-ink truncate">{{ form.recurring_items.length }} selected</p>
             </div>
-            <div class="bg-cream rounded-sm p-3">
+            <div class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Total Present</p>
-              <p class="text-sm font-medium text-ink">{{ totalPresent }}</p>
+              <p class="text-sm font-medium text-ink truncate">{{ totalPresent }}</p>
             </div>
-            <div class="bg-cream rounded-sm p-3">
+            <div class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Letterhead</p>
-              <p class="text-sm font-medium text-ink">{{ form.letterhead_data ? 'Yes' : 'No' }}</p>
+              <p class="text-sm font-medium text-ink truncate">{{ form.letterhead_data ? 'Yes' : 'No' }}</p>
             </div>
           </div>
 
-          <div class="flex gap-3">
+          <div class="flex flex-col sm:flex-row gap-3">
             <button
               @click="generatePreview"
               :disabled="previewLoading"
-              class="flex-1 px-6 py-3 bg-sky text-white rounded-sm hover:bg-sky/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+              class="sm:flex-1 px-6 py-3 min-h-[48px] bg-sky text-white rounded-sm hover:bg-sky/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
               {{ previewLoading ? 'Rendering…' : 'Preview' }}
             </button>
             <button
               @click="generateFromForm"
               :disabled="generating"
-              class="flex-1 px-6 py-3 bg-coral text-white rounded-sm hover:bg-coral/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2 text-lg"
+              class="sm:flex-1 px-6 py-3 min-h-[48px] bg-coral text-white rounded-sm hover:bg-coral/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2 text-lg"
             >
               <svg v-if="generating" class="animate-spin h-5 w-5" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
@@ -823,31 +849,31 @@ function handleImportFile(e) {
       </div>
 
       <!-- Preview Modal -->
-      <div v-if="previewHtml" class="fixed inset-0 bg-ink/70 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-sm w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-warm-border bg-cream rounded-sm rounded-b-none">
-            <h3 class="font-display text-lg font-bold text-ink">Document Preview</h3>
-            <div class="flex items-center gap-2">
-              <button @click="generateFromForm" class="px-4 py-1.5 bg-coral text-white text-sm rounded-sm hover:bg-coral/80 transition-colors flex items-center gap-1.5">
+      <div v-if="previewHtml" class="fixed inset-0 bg-ink/70 z-50 flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-white rounded-sm w-full max-w-4xl max-h-[98dvh] sm:max-h-[90vh] flex flex-col shadow-2xl">
+          <div class="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-warm-border bg-cream rounded-sm rounded-b-none">
+            <h3 class="font-display text-sm sm:text-lg font-bold text-ink truncate">Document Preview</h3>
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <button @click="generateFromForm" class="px-3 sm:px-4 py-2 sm:py-1.5 bg-coral text-white text-xs sm:text-sm rounded-sm hover:bg-coral/80 transition-colors flex items-center gap-1.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                Print / PDF
+                <span class="hidden xs:inline">Print /</span> PDF
               </button>
-              <button @click="closePreview" class="p-2 text-warm-muted hover:text-ink hover:bg-warm-border/50 rounded-sm transition-colors">
+              <button @click="closePreview" class="p-2 min-h-[36px] text-warm-muted hover:text-ink hover:bg-warm-border/50 rounded-sm transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
           </div>
           <div class="flex-1 overflow-auto bg-white">
-            <iframe :srcdoc="previewHtml" class="w-full h-full min-h-[70vh]" style="border: none;"></iframe>
+            <iframe :srcdoc="previewHtml" class="w-full h-full min-h-[50vh] sm:min-h-[70vh]" style="border: none;"></iframe>
           </div>
-          <div class="flex justify-end px-4 py-2 border-t border-warm-border bg-cream rounded-sm rounded-t-none">
-            <button @click="closePreview" class="px-4 py-1.5 border border-warm-border text-ink text-sm rounded-sm hover:bg-white transition-colors">Close Preview</button>
+          <div class="flex justify-end px-3 sm:px-4 py-2 border-t border-warm-border bg-cream rounded-sm rounded-t-none">
+            <button @click="closePreview" class="px-4 py-2 min-h-[44px] border border-warm-border text-ink text-sm rounded-sm hover:bg-white transition-colors">Close Preview</button>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center justify-between gap-4 pt-4 border-t border-warm-border">
-        <button v-if="currentStep > 0" @click="prevStep" class="px-5 py-2.5 border border-warm-border text-ink rounded-sm hover:bg-cream transition-colors text-sm flex items-center gap-1.5">
+      <div class="flex items-center justify-between gap-3 pt-4 border-t border-warm-border">
+        <button v-if="currentStep > 0" @click="prevStep" class="px-5 py-3 min-h-[48px] border border-warm-border text-ink rounded-sm hover:bg-cream transition-colors text-sm flex items-center gap-1.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
           Back
         </button>
@@ -855,7 +881,7 @@ function handleImportFile(e) {
         <button
           v-if="currentStep < steps.length - 1"
           @click="nextStep"
-          class="px-5 py-2.5 bg-coral text-white rounded-sm hover:bg-coral/80 transition-colors text-sm flex items-center gap-1.5"
+          class="px-5 py-3 min-h-[48px] bg-coral text-white rounded-sm hover:bg-coral/80 transition-colors text-sm flex items-center gap-1.5"
         >
           Next
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
