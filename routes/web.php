@@ -90,6 +90,12 @@ Route::get('/tools/rota-minutes-standalone', function () {
     ]);
 });
 
+Route::get('/tools/family-tree', fn() => inertia('Tools/FamilyTree', [
+    'meta' => [
+        'title' => 'Family Tree — Tools — Swapnil Upadhyay',
+    ],
+]));
+
 Route::get('/tools/rantim', fn() => inertia('Tools/RanTim', [
     'meta' => [
         'title' => 'RanTim — Tools — Swapnil Upadhyay',

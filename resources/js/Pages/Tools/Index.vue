@@ -12,6 +12,7 @@ const tools = [
   { name: 'Bill Splitter', path: '/tools/bill-splitter', description: 'Split bills with friends' },
   { name: 'Rota Minutes', path: '/tools/rota-minutes', description: 'Generate meeting minutes PDFs' },
   { name: 'Rota Minutes (Standalone)', path: '/tools/rota-minutes-standalone', description: 'Generate meeting minutes PDFs – entirely in your browser' },
+  { name: 'Family Tree', path: '/tools/family-tree', description: 'Map your family tree visually' },
 ]
 </script>
 
