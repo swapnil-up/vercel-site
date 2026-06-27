@@ -8,11 +8,19 @@ import PersonDetails from './PersonDetails.vue'
 const store = useFamilyTreeStore()
 
 function onGlobalKeyDown(e) {
+  const inInput = e.target.closest('input,textarea')
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    if (inInput) return
+    e.preventDefault()
+    store.undo()
+  }
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    if (inInput) return
     e.preventDefault()
     store.exportData()
   }
   if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+    if (inInput) return
     e.preventDefault()
     store.state.importExportMode = 'import'
   }
@@ -55,6 +63,7 @@ onUnmounted(() => {
               <div class="flex justify-between"><span>Add child</span><kbd class="font-mono bg-white/10 px-1.5 rounded text-[10px]">C</kbd></div>
               <div class="flex justify-between"><span>Add parent</span><kbd class="font-mono bg-white/10 px-1.5 rounded text-[10px]">P</kbd></div>
               <div class="flex justify-between"><span>Delete person</span><kbd class="font-mono bg-white/10 px-1.5 rounded text-[10px]">Delete</kbd></div>
+              <div class="flex justify-between"><span>Undo</span><kbd class="font-mono bg-white/10 px-1.5 rounded text-[10px]">^Z</kbd></div>
               <div class="flex justify-between"><span>Export JSON</span><kbd class="font-mono bg-white/10 px-1.5 rounded text-[10px]">^S</kbd></div>
               <div class="flex justify-between"><span>Import JSON</span><kbd class="font-mono bg-white/10 px-1.5 rounded text-[10px]">^O</kbd></div>
             </div>
@@ -63,6 +72,13 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="flex gap-2">
+        <button
+          @click="store.resetLayout()"
+          class="px-3 py-1.5 text-xs bg-warm-surface border border-warm-border text-warm-muted rounded-sm hover:bg-cream transition-colors"
+          title="Clear manually dragged positions"
+        >
+          Reset Layout
+        </button>
         <button
           @click="store.exportData()"
           class="px-3 py-1.5 text-xs bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors"

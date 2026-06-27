@@ -33,7 +33,33 @@ watch(
   { deep: true }
 )
 
+const undoStack = []
+const MAX_UNDO = 50
+
+function snapshot() {
+  return {
+    people: JSON.parse(JSON.stringify(state.people)),
+    relationships: JSON.parse(JSON.stringify(state.relationships)),
+    nodePositions: JSON.parse(JSON.stringify(state.nodePositions)),
+  }
+}
+
+function pushUndo() {
+  undoStack.push(snapshot())
+  if (undoStack.length > MAX_UNDO) undoStack.shift()
+}
+
+function undo() {
+  if (undoStack.length === 0) return
+  const s = undoStack.pop()
+  state.people = s.people
+  state.relationships = s.relationships
+  state.nodePositions = s.nodePositions
+  state.selectedId = null
+}
+
 function addPerson(name, select = true) {
+  pushUndo()
   const id = generateId()
   state.people[id] = { id, name: name || 'New Person', notes: '' }
   if (select) state.selectedId = id
@@ -42,11 +68,13 @@ function addPerson(name, select = true) {
 
 function updatePerson(id, data) {
   if (!state.people[id]) return
+  pushUndo()
   Object.assign(state.people[id], data)
 }
 
 function deletePerson(id) {
   if (!state.people[id]) return
+  pushUndo()
   state.relationships = state.relationships.filter(
     r => r.from !== id && r.to !== id
   )
@@ -60,10 +88,18 @@ function addRelationship(from, to, type) {
     r => r.from === from && r.to === to && r.type === type
   )
   if (exists) return
+  if (type === 'spouse') {
+    const reverse = state.relationships.some(
+      r => r.from === to && r.to === from && r.type === 'spouse'
+    )
+    if (reverse) return
+  }
+  pushUndo()
   state.relationships.push({ from, to, type })
 }
 
 function removeRelationship(from, to, type) {
+  pushUndo()
   state.relationships = state.relationships.filter(
     r => !(r.from === from && r.to === to && r.type === type)
   )
@@ -123,6 +159,7 @@ function importData(json) {
     if (!data.people || !data.relationships) {
       throw new Error('Invalid format')
     }
+    pushUndo()
     state.people = data.people
     state.relationships = data.relationships
     state.nodePositions = data.nodePositions || {}
@@ -131,6 +168,11 @@ function importData(json) {
   } catch (e) {
     throw new Error('Failed to import: ' + e.message)
   }
+}
+
+function resetLayout() {
+  pushUndo()
+  state.nodePositions = {}
 }
 
 export function useFamilyTreeStore() {
@@ -149,5 +191,7 @@ export function useFamilyTreeStore() {
     exportData,
     importData,
     generateId,
+    undo,
+    resetLayout,
   }
 }

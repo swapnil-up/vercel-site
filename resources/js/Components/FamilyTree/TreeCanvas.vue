@@ -23,6 +23,8 @@ const dragStart = ref({ x: 0, y: 0, nodeX: 0, nodeY: 0 })
 
 const hoveredId = ref(null)
 const contextMenu = ref(null)
+const linkingFor = ref(null)
+const linkingQuery = ref('')
 
 const svgWidth = ref(2000)
 const svgHeight = ref(2000)
@@ -39,7 +41,9 @@ const lines = computed(() => {
     const toPos = pos[rel.to]
     if (!fromPos || !toPos) continue
 
-    const key = [rel.from, rel.to, rel.type].sort().join('|')
+    const key = rel.type === 'parent'
+      ? `${rel.from}|${rel.to}|${rel.type}`
+      : [rel.from, rel.to, rel.type].sort().join('|')
     if (seen.has(key)) continue
     seen.add(key)
 
@@ -52,12 +56,6 @@ const lines = computed(() => {
         type: 'spouse',
       })
     } else {
-      const fromCenterX = fromPos.x + NODE_WIDTH / 2
-      const fromCenterY = fromPos.y + NODE_HEIGHT / 2
-      const toCenterX = toPos.x + NODE_WIDTH / 2
-      const toCenterY = toPos.y + NODE_HEIGHT / 2
-
-      const childIsFrom = rel.from === rel.to
       const childPos = rel.type === 'parent' ? pos[rel.from] : pos[rel.to]
       const parentPos = rel.type === 'parent' ? pos[rel.to] : pos[rel.from]
 
@@ -84,131 +82,166 @@ function computeLayout() {
 
   if (Object.keys(people).length === 0) return {}
 
-  const parents = {}
-  const children = {}
-  const spouses = {}
+  const parentMap = {}
+  const childMap = {}
+  const spouseMap = {}
 
   for (const id of Object.keys(people)) {
-    parents[id] = new Set()
-    children[id] = new Set()
-    spouses[id] = new Set()
+    parentMap[id] = new Set()
+    childMap[id] = new Set()
+    spouseMap[id] = new Set()
   }
 
   for (const r of relationships) {
     if (r.type === 'parent') {
-      parents[r.from].add(r.to)
-      children[r.to].add(r.from)
+      parentMap[r.from].add(r.to)
+      childMap[r.to].add(r.from)
     } else if (r.type === 'spouse') {
-      spouses[r.from].add(r.to)
-      spouses[r.to].add(r.from)
+      spouseMap[r.from].add(r.to)
+      spouseMap[r.to].add(r.from)
     }
   }
 
-  const roots = Object.keys(people).filter(id => parents[id].size === 0)
+  const roots = Object.keys(people).filter(id => parentMap[id].size === 0)
+  if (roots.length === 0 && Object.keys(people).length > 0) {
+    roots.push(Object.keys(people)[0])
+  }
+
   const level = {}
-  const queue = []
-
-  if (roots.length > 0) {
-    for (const root of roots) {
-      level[root] = 0
-      queue.push(root)
-    }
-  } else if (Object.keys(people).length > 0) {
-    const first = Object.keys(people)[0]
-    level[first] = 0
-    queue.push(first)
-  }
-
+  for (const root of roots) level[root] = 0
+  const queue = [...roots]
   while (queue.length > 0) {
     const id = queue.shift()
-    const currentLevel = level[id]
-    const nextLevel = currentLevel + 1
-
-    for (const childId of children[id]) {
-      if (level[childId] === undefined || nextLevel < level[childId]) {
-        level[childId] = nextLevel
+    const lvl = level[id]
+    for (const childId of childMap[id]) {
+      if (level[childId] === undefined || lvl + 1 < level[childId]) {
+        level[childId] = lvl + 1
         queue.push(childId)
       }
     }
-    for (const spouseId of spouses[id]) {
+    for (const spouseId of spouseMap[id]) {
       if (level[spouseId] === undefined) {
-        level[spouseId] = currentLevel
+        level[spouseId] = lvl
         queue.push(spouseId)
       }
     }
   }
-
   for (const id of Object.keys(people)) {
     if (level[id] === undefined) level[id] = 0
   }
 
-  const byLevel = {}
-  for (const [id, lvl] of Object.entries(level)) {
-    if (!byLevel[lvl]) byLevel[lvl] = []
-    byLevel[lvl].push(id)
-  }
-
   const positions = {}
-  const sortedLevels = Object.keys(byLevel).map(Number).sort((a, b) => a - b)
+  const positioned = new Set()
 
-  for (const lvl of sortedLevels) {
-    const ids = byLevel[lvl]
+  const SPACING = NODE_WIDTH + H_GAP
+  const PAD = 80
 
-    const withParent = []
-    const withoutParent = []
-
-    for (const id of ids) {
-      if (lvl > 0 && parents[id].size > 0) {
-        let hasPositionedParent = false
-        for (const pid of parents[id]) {
-          if (positions[pid]) { hasPositionedParent = true; break }
-        }
-        if (hasPositionedParent) withParent.push(id)
-        else withoutParent.push(id)
-      } else {
-        withoutParent.push(id)
+  function collisionOffset(fx, memberWidth, y) {
+    let ox = fx
+    for (const pp of Object.values(positions)) {
+      if (pp.y !== y) continue
+      const rightEdge = pp.x + NODE_WIDTH + H_GAP
+      if (ox < rightEdge && ox + memberWidth + H_GAP > pp.x) {
+        ox = rightEdge
       }
     }
+    return ox
+  }
 
-    let offset = 0
-    const allIds = [...withParent, ...withoutParent]
-
-    for (const id of allIds) {
-      if (storedPos[id] && storedPos[id].y === lvl * (NODE_HEIGHT + V_GAP)) {
-        positions[id] = { ...storedPos[id] }
-        continue
-      }
+  function layoutFamily(id, leftX, depth) {
+    if (positioned.has(id)) {
+      return (1 + [...spouseMap[id]].filter(s => positioned.has(s)).length) * SPACING
     }
 
-    let x = -(allIds.length * (NODE_WIDTH + H_GAP)) / 2
-    for (const id of allIds) {
-      if (!positions[id]) {
-        positions[id] = {
-          x: x + (NODE_WIDTH + H_GAP) / 2,
-          y: lvl * (NODE_HEIGHT + V_GAP),
+    const y = depth * (NODE_HEIGHT + V_GAP) + PAD
+
+    const members = [id, ...spouseMap[id]].filter(m => !positioned.has(m))
+
+    const allKids = new Set()
+    for (const member of members) {
+      for (const childId of childMap[member]) {
+        allKids.add(childId)
+      }
+    }
+    const kidList = [...allKids].filter(k => !positioned.has(k))
+    const allKidsPositioned = allKids.size > 0 && kidList.length === 0
+
+    const memberWidth = members.length * SPACING - H_GAP
+
+    if (allKidsPositioned) {
+      let minX = Infinity, maxX = -Infinity
+      for (const kidId of allKids) {
+        const kp = positions[kidId]
+        if (kp) {
+          minX = Math.min(minX, kp.x)
+          maxX = Math.max(maxX, kp.x + NODE_WIDTH)
         }
       }
-      x += NODE_WIDTH + H_GAP
+      const childrenCenter = (minX + maxX) / 2
+      let fx = childrenCenter - memberWidth / 2
+      fx = collisionOffset(fx, memberWidth, y)
+
+      for (const member of members) {
+        positions[member] = { x: fx, y }
+        positioned.add(member)
+        fx += SPACING
+      }
+      return Math.max(memberWidth, maxX - minX)
     }
 
-    for (const id of withParent) {
-      if (positions[id] && !storedPos[id]) {
-        let parentCenter = 0
-        let parentCount = 0
-        for (const pid of parents[id]) {
-          if (positions[pid]) {
-            parentCenter += positions[pid].x
-            parentCount++
-          }
-        }
-        if (parentCount > 0) {
-          positions[id].x = parentCenter / parentCount
-        }
+    if (kidList.length === 0) {
+      let fx = leftX
+      for (const member of members) {
+        positions[member] = { x: fx, y }
+        positioned.add(member)
+        fx += SPACING
       }
+      return memberWidth
+    }
+
+    let childLeft = leftX
+    for (const kidId of kidList) {
+      childLeft += layoutFamily(kidId, childLeft, depth + 1)
+    }
+
+    const childrenSpan = childLeft - leftX
+    const totalSpan = Math.max(memberWidth, childrenSpan)
+    const childrenCenter = leftX + childrenSpan / 2
+
+    let fx = childrenCenter - memberWidth / 2
+    for (const member of members) {
+      positions[member] = { x: fx, y }
+      positioned.add(member)
+      fx += SPACING
+    }
+
+    return totalSpan
+  }
+
+  let globalX = PAD
+  for (const root of roots) {
+    if (!positioned.has(root)) {
+      globalX += layoutFamily(root, globalX, 0) + H_GAP
     }
   }
 
-  const padding = 100
+  for (const id of Object.keys(people)) {
+    if (!positioned.has(id)) {
+      positions[id] = {
+        x: globalX,
+        y: level[id] * (NODE_HEIGHT + V_GAP) + PAD,
+      }
+      positioned.add(id)
+      globalX += SPACING
+    }
+  }
+
+  for (const [id, pos] of Object.entries(storedPos)) {
+    if (positions[id] && Math.abs(pos.y - positions[id].y) < 5) {
+      positions[id].x = pos.x
+    }
+  }
+
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
   for (const pos of Object.values(positions)) {
     minX = Math.min(minX, pos.x)
@@ -218,14 +251,15 @@ function computeLayout() {
   }
 
   if (minX !== Infinity) {
-    const offsetX = -minX + padding
-    const offsetY = -minY + padding
+    const pad = 100
+    const ox = -minX + pad
+    const oy = -minY + pad
     for (const id of Object.keys(positions)) {
-      positions[id].x += offsetX
-      positions[id].y += offsetY
+      positions[id].x += ox
+      positions[id].y += oy
     }
-    svgWidth.value = Math.max(2000, maxX - minX + padding * 2)
-    svgHeight.value = Math.max(2000, maxY - minY + padding * 2)
+    svgWidth.value = Math.max(2000, maxX - minX + pad * 2)
+    svgHeight.value = Math.max(2000, maxY - minY + pad * 2)
   }
 
   return positions
@@ -339,6 +373,8 @@ function onContextMenu(personId, e) {
 
 function closeContextMenu() {
   contextMenu.value = null
+  linkingFor.value = null
+  linkingQuery.value = ''
 }
 
 function quickAddChild(parentId) {
@@ -357,6 +393,61 @@ function quickAddSpouse(personId) {
   const id = store.addPerson('Spouse', false)
   store.addRelationship(personId, id, 'spouse')
   closeContextMenu()
+}
+
+const availableForLinking = computed(() => {
+  if (!linkingFor.value) return []
+  const { personId, type } = linkingFor.value
+  const query = linkingQuery.value.toLowerCase().trim()
+  const excludeIds = new Set([personId])
+  if (type === 'spouse') {
+    for (const s of store.getSpouses(personId)) excludeIds.add(s.id)
+  } else if (type === 'parent') {
+    for (const p of store.getParents(personId)) excludeIds.add(p.id)
+  } else if (type === 'child') {
+    for (const c of store.getChildren(personId)) excludeIds.add(c.id)
+  } else if (type === 'sibling') {
+    for (const p of store.getParents(personId)) {
+      for (const c of store.getChildren(p.id)) {
+        if (c.id !== personId) excludeIds.add(c.id)
+      }
+    }
+  }
+  return Object.values(store.state.people)
+    .filter(p => !excludeIds.has(p.id))
+    .filter(p => !query || p.name.toLowerCase().includes(query))
+    .sort((a, b) => a.name.localeCompare(b.name))
+})
+
+function openLinkPicker(personId, type) {
+  linkingFor.value = { personId, type }
+  linkingQuery.value = ''
+}
+
+function confirmLink(targetId) {
+  if (!linkingFor.value) return
+  const { personId, type } = linkingFor.value
+  if (type === 'parent') {
+    store.addRelationship(personId, targetId, 'parent')
+  } else if (type === 'child') {
+    store.addRelationship(targetId, personId, 'parent')
+  } else if (type === 'spouse') {
+    store.addRelationship(personId, targetId, 'spouse')
+  } else if (type === 'sibling') {
+    for (const p of store.getParents(personId)) {
+      store.addRelationship(targetId, p.id, 'parent')
+    }
+  }
+  linkingFor.value = null
+  linkingQuery.value = ''
+  closeContextMenu()
+}
+
+function createAndLink() {
+  const name = linkingQuery.value.trim()
+  if (!name || !linkingFor.value) return
+  const newId = store.addPerson(name, false)
+  confirmLink(newId)
 }
 
 function deleteWithConfirm(personId) {
@@ -389,6 +480,7 @@ function onKeyDown(e) {
   }
 
   if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault()
     if (store.state.selectedId) {
       const person = store.state.people[store.state.selectedId]
       if (person && confirm(`Delete "${person.name}"?`)) {
@@ -479,15 +571,55 @@ onUnmounted(() => {
 
     <div
       v-if="contextMenu"
-      class="fixed z-50 bg-warm-surface border border-warm-border rounded-sm shadow-lg py-1 text-sm min-w-[140px]"
+      class="fixed z-50 bg-warm-surface border border-warm-border rounded-sm shadow-lg py-1 text-sm min-w-[160px] max-h-80 overflow-y-auto"
       :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
     >
-      <button @mousedown.stop @click="quickAddChild(contextMenu.personId)" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Add Child</button>
-      <button @mousedown.stop @click="quickAddParent(contextMenu.personId)" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Add Parent</button>
-      <button @mousedown.stop @click="quickAddSpouse(contextMenu.personId)" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Add Spouse</button>
-      <div class="border-t border-warm-border my-1"></div>
-      <button @mousedown.stop @click="store.state.selectedId = contextMenu.personId; closeContextMenu()" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Edit</button>
-      <button @mousedown.stop @click="deleteWithConfirm(contextMenu.personId)" class="w-full text-left px-3 py-1.5 text-coral hover:bg-coral/5 transition-colors">Delete</button>
+      <template v-if="!linkingFor">
+        <button @mousedown.stop @click="openLinkPicker(contextMenu.personId, 'child')" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Add Child</button>
+        <button @mousedown.stop @click="openLinkPicker(contextMenu.personId, 'parent')" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Add Parent</button>
+        <button @mousedown.stop @click="openLinkPicker(contextMenu.personId, 'spouse')" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Add Spouse</button>
+        <button @mousedown.stop @click="openLinkPicker(contextMenu.personId, 'sibling')" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Add Sibling</button>
+        <div class="border-t border-warm-border my-1"></div>
+        <button @mousedown.stop @click="store.state.selectedId = contextMenu.personId; closeContextMenu()" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Edit</button>
+        <button @mousedown.stop @click="deleteWithConfirm(contextMenu.personId)" class="w-full text-left px-3 py-1.5 text-coral hover:bg-coral/5 transition-colors">Delete</button>
+      </template>
+      <template v-else>
+        <div class="px-3 py-1.5 border-b border-warm-border">
+          <input
+            v-model="linkingQuery"
+            placeholder="Search..."
+            class="w-full px-2 py-1 border border-warm-border rounded-sm text-sm bg-white"
+            @mousedown.stop
+          />
+        </div>
+        <div v-if="availableForLinking.length > 0" class="max-h-32 overflow-y-auto">
+          <button
+            v-for="p in availableForLinking"
+            :key="p.id"
+            @mousedown.stop @click="confirmLink(p.id)"
+            class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors truncate"
+          >
+            {{ p.name }}
+          </button>
+        </div>
+        <div v-else-if="linkingQuery.trim()" class="px-3 py-1.5 text-xs text-warm-muted">
+          No matches
+        </div>
+        <div v-else class="px-3 py-1.5 text-xs text-warm-muted">
+          Type to search or create
+        </div>
+        <div class="border-t border-warm-border my-1"></div>
+        <button
+          v-if="linkingQuery.trim()"
+          @mousedown.stop @click="createAndLink"
+          class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors"
+        >
+          + Create "{{ linkingQuery.trim() }}"
+        </button>
+        <button @mousedown.stop @click="closeContextMenu" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">
+          Cancel
+        </button>
+      </template>
     </div>
   </div>
 </template>
