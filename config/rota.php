@@ -41,11 +41,9 @@ return [
         'Liza Sthapit' => 'Joint Secretary Rtr. Liza Sthapit',
     ],
     'signatures' => [
-        'left' => ['name' => 'Rtr. Aakrity Rijal', 'title' => 'President', 'image' => 'assets/aakrity_sig.png'],
-        'right' => ['name' => 'Rtr. Suprim Dahal', 'title' => 'Secretary', 'image' => 'assets/suprim_sig.png'],
+        'left' => ['name' => 'Rtr. Aakrity Rijal', 'title' => 'President'],
+        'right' => ['name' => 'Rtr. Suprim Dahal', 'title' => 'Secretary'],
     ],
-    'stamp_image' => 'assets/rotary_stamp.png',
-    'letterhead' => 'assets/letterhead.png',
     'footer_note' => 'Meeting Time: 11:00 am, Saturdays (bimonthly) E-mail: racpatansouth@gmail.com',
 
     'happy_sad_pool' => [

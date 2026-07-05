@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { useRotaForm } from '../../Composables/useRotaForm.js'
 import { buildPrintHtml } from '../../Utils/rotaMinutesPrintHtml.js'
+import { prepareFormData, printHtml } from '../../Utils/rotaMinutesPrint.js'
+import { downloadJson } from '../../Utils/rotaFormIO.js'
 import PreviewModal from '../../Components/PreviewModal.vue'
 
 const SAVE_KEY = 'rota-minutes-standalone-form'
@@ -36,7 +38,6 @@ const {
   toggleRecurring,
   handleImageUpload,
   clearImage,
-  exportForm,
   importForm,
 } = useRotaForm(props.config, props.defaults, SAVE_KEY)
 
@@ -53,6 +54,11 @@ function prevStep() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+function goToStep(i) {
+  if (i >= 0 && i < steps.length) currentStep.value = i
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 const generating = ref(false)
 const showRecurring = ref(false)
 const showAttendance = ref(true)
@@ -63,46 +69,21 @@ function generateFromForm() {
   if (!validate(showAttendance.value)) return
   generating.value = true
   error.value = ''
-
-  const formData = {
-    ...form.value,
-    attendance: !showAttendance.value
-      ? form.value.attendance.map(a => ({ ...a, present: false }))
-      : form.value.attendance,
-  }
-  const html = buildPrintHtml(formData)
-
-  const printWin = window.open('', '_blank')
-  if (!printWin) {
+  const formData = prepareFormData(form.value, showAttendance.value)
+  const ok = printHtml(buildPrintHtml(formData), {
+    onComplete: () => { generating.value = false },
+  })
+  if (!ok) {
     error.value = 'Popup blocked. Please allow popups for this site to use PDF generation.'
     generating.value = false
-    return
   }
-
-  printWin.document.write(html)
-  printWin.document.close()
-  printWin.focus()
-
-  printWin.onafterprint = () => {
-    printWin.close()
-    generating.value = false
-  }
-
-  setTimeout(() => {
-    printWin.print()
-  }, 500)
 }
 
 function generatePreview() {
   if (!validate(showAttendance.value)) return
   previewLoading.value = true
   error.value = ''
-  const formData = {
-    ...form.value,
-    attendance: !showAttendance.value
-      ? form.value.attendance.map(a => ({ ...a, present: false }))
-      : form.value.attendance,
-  }
+  const formData = prepareFormData(form.value, showAttendance.value)
   previewHtml.value = buildPrintHtml(formData)
   previewLoading.value = false
 }
@@ -119,20 +100,13 @@ function handleImportFile(e) {
 function printFromPreview() {
   if (!previewHtml.value) return
   generating.value = true
-  const printWin = window.open('', '_blank')
-  if (!printWin) {
+  const ok = printHtml(previewHtml.value, {
+    onComplete: () => { generating.value = false },
+  })
+  if (!ok) {
     error.value = 'Popup blocked. Please allow popups for this site to use PDF generation.'
     generating.value = false
-    return
   }
-  printWin.document.write(previewHtml.value)
-  printWin.document.close()
-  printWin.focus()
-  printWin.onafterprint = () => {
-    printWin.close()
-    generating.value = false
-  }
-  setTimeout(() => printWin.print(), 500)
   previewHtml.value = null
 }
 </script>
@@ -152,7 +126,7 @@ function printFromPreview() {
       </div>
 
       <div class="flex gap-2 flex-wrap">
-        <button @click="exportForm" class="px-4 py-2 min-h-[44px] bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
+        <button @click="downloadJson(form)" class="px-4 py-2 min-h-[44px] bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
           <span class="hidden xs:inline">Export</span> JSON
         </button>
@@ -183,7 +157,12 @@ function printFromPreview() {
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2 min-w-0">
             <span class="text-sm font-bold text-ink font-display shrink-0">Step {{ currentStep + 1 }}/{{ steps.length }}</span>
-            <span class="text-sm text-warm-muted truncate">{{ steps[currentStep] }}</span>
+            <div class="flex gap-1">
+              <button v-for="(_, i) in steps" :key="i" @click="goToStep(i)"
+                class="w-2.5 h-2.5 rounded-full transition-all duration-200"
+                :class="i === currentStep ? 'bg-coral scale-125' : i < currentStep ? 'bg-mint' : 'bg-warm-border'"
+              ></button>
+            </div>
           </div>
           <span class="text-xs text-warm-muted shrink-0 ml-2">{{ Math.round((currentStep + 1) / steps.length * 100) }}%</span>
         </div>
@@ -206,14 +185,14 @@ function printFromPreview() {
       <!-- Step indicator: desktop full -->
       <div class="hidden md:flex items-center justify-between mb-8 gap-1 select-none">
         <div v-for="(step, i) in steps" :key="i" class="flex items-center gap-1 min-w-0 flex-1">
-          <div class="flex items-center gap-2 shrink-0">
+          <button @click="goToStep(i)" class="flex items-center gap-2 shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200"
               :class="i === currentStep ? 'bg-coral text-white shadow-md scale-110' : i < currentStep ? 'bg-mint text-ink' : 'bg-warm-border text-warm-muted'">
               <svg v-if="i < currentStep" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
               <span v-else>{{ i + 1 }}</span>
             </div>
             <span class="text-xs whitespace-nowrap transition-colors duration-200 hidden lg:inline" :class="i === currentStep ? 'text-ink font-semibold' : i < currentStep ? 'text-ink/60' : 'text-warm-muted'">{{ step }}</span>
-          </div>
+          </button>
           <div v-if="i < steps.length - 1" class="h-px flex-1 mx-1 transition-colors duration-200" :class="i < currentStep ? 'bg-mint' : 'bg-warm-border'"></div>
         </div>
       </div>
@@ -525,7 +504,7 @@ function printFromPreview() {
               <p class="text-xs text-warm-muted">Club</p>
               <p class="text-sm font-medium text-ink truncate">{{ form.club_name || '—' }}</p>
             </div>
-            <div v-if="form.type !== 'zonal' && showAttendance" class="bg-cream rounded-sm p-3 min-w-0">
+            <div v-if="showAttendance" class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Attendance</p>
               <p class="text-sm font-medium text-ink truncate">{{ attendancePresent.length }} present</p>
             </div>
@@ -537,7 +516,7 @@ function printFromPreview() {
               <p class="text-xs text-warm-muted">Recurring</p>
               <p class="text-sm font-medium text-ink truncate">{{ form.recurring_items.length }} selected</p>
             </div>
-            <div v-if="form.type !== 'zonal' && showAttendance" class="bg-cream rounded-sm p-3 min-w-0">
+            <div v-if="showAttendance && form.type !== 'zonal'" class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Total Present</p>
               <p class="text-sm font-medium text-ink truncate">{{ totalPresent }}</p>
             </div>

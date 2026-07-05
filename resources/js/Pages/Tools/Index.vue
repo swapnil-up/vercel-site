@@ -11,7 +11,6 @@ const tools = [
   { name: 'RanTim', path: '/tools/rantim', description: 'Random timer' },
   { name: 'Bill Splitter', path: '/tools/bill-splitter', description: 'Split bills with friends' },
   { name: 'Rota Minutes', path: '/tools/rota-minutes', description: 'Generate meeting minutes PDFs – entirely in your browser' },
-  { name: 'Rota Minutes (Server)', path: '/tools/rota-minutes-server', description: 'Server-based PDF generation via Dompdf' },
   { name: 'Family Tree', path: '/tools/family-tree', description: 'Map your family tree visually' },
 ]
 </script>

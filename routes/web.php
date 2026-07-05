@@ -1,13 +1,13 @@
 <?php
 
 use App\Http\Controllers\GraphDataController;
+use App\Http\Controllers\RotaMinutesController;
 use App\Http\Controllers\NodeDataController;
 use App\Http\Controllers\NowController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\SitemapController;
-use App\Http\Controllers\RotaMinutesController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn() => inertia('Index', [
@@ -74,21 +74,7 @@ Route::get('/tools/bill-splitter', fn() => inertia('Tools/BillSplitter', [
     ],
 ]));
 
-Route::get('/tools/rota-minutes', function () {
-    $defaultsPath = resource_path('rota/assets/rota-defaults.json');
-    $defaults = file_exists($defaultsPath) ? json_decode(file_get_contents($defaultsPath), true) ?? [] : [];
-    return inertia('Tools/RotaMinutesStandalone', [
-        'meta' => [
-            'title' => 'Rota Minutes — Tools — Swapnil Upadhyay',
-            'description' => 'Generate meeting minutes PDFs entirely in your browser — no server-side processing.',
-        ],
-        'config' => config('rota'),
-        'defaults' => $defaults,
-    ]);
-})->name('rota-minutes');
-
-Route::get('/tools/rota-minutes-server', [RotaMinutesController::class, 'create'])->name('rota-minutes-server');
-Route::post('/tools/rota-minutes/generate-form', [RotaMinutesController::class, 'generateFromForm']);
+Route::get('/tools/rota-minutes', RotaMinutesController::class)->name('rota-minutes');
 
 Route::get('/tools/family-tree', fn() => inertia('Tools/FamilyTree', [
     'meta' => [

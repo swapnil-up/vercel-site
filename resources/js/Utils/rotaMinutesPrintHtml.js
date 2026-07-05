@@ -44,7 +44,7 @@ function isZonal(form) {
 }
 
 function meetingTypeLabel(form) {
-  if (isZonal(form)) return 'ZM'
+  if (isZonal(form)) return 'Zonal'
   return isBoard(form) ? 'BM' : 'GM'
 }
 
@@ -78,7 +78,7 @@ export function buildPrintHtml(form) {
   }
   const hasAttendance = attRows.length > 0
   const attTable = hasAttendance
-    ? `<table class="attendance-table"><tr><th>S.N.</th><th>Name</th><th>Designation</th></tr>${attRows}</table>`
+    ? `<table class="attendance-table"><tr><th>S.N.</th><th>Name</th><th>${isZm ? 'Club and Designation' : 'Designation'}</th></tr>${attRows}</table>`
     : ''
 
   let happyHtml = ''
@@ -175,20 +175,20 @@ ${letterheadHtml ? `<thead><tr><td style="border:none;padding:0;">${letterheadHt
 
 <p class="meeting-number">${mtgLabel} Meeting no. ${form.meeting_number}</p>
 
-<p class="meta-line">Rota year: ${escapeHtml(form.year)}</p>
+<p class="meta-line">Rotary year: ${escapeHtml(form.year)}</p>
 <p class="meta-line">Meeting Venue: ${escapeHtml(form.venue)}</p>
 <p class="meta-line">Meeting Date: ${dateStr}</p>
 <p class="meta-line">Meeting From: ${timeFrom}</p>
 <p class="meta-line">Meeting To: ${timeTo}</p>
 
-<p class="body-text" style="margin-top:0.1in;">&bull; President ${escapeHtml(form.president)} presided over the ${mtgName} Meeting of ${escapeHtml(clubName)}, of R.I. District ${escapeHtml(form.rid)}.</p>
+<p class="body-text" style="margin-top:0.1in;">&bull; ${isZm ? '' : 'President '}${escapeHtml(form.president)} presided over the ${mtgName} Meeting of ${escapeHtml(clubName)}, of R.I. District ${escapeHtml(form.rid)}.</p>
 <p class="body-text small-gap">&bull; Minutes taken by ${escapeHtml(form.minute_taker)}.</p>
 
-${isBm || isZm || !hasAttendance ? '' : `<p class="section-header attendance">Meeting Attendance:</p>`}
-${isBm || isZm || !hasAttendance ? '' : attTable}
+${isBm || !hasAttendance ? '' : `<p class="section-header attendance">Meeting Attendance:</p>`}
+${isBm || !hasAttendance ? '' : attTable}
 
-${isBm || isZm || !happyHtml ? '' : `<p class="section-header happy-sad">Happy &amp; Sad News Sharing (Sunshine Fund):</p>`}
-${isBm || isZm || !happyHtml ? '' : happyHtml}
+${isBm || !happyHtml ? '' : `<p class="section-header happy-sad">Happy &amp; Sad News Sharing (Sunshine Fund):</p>`}
+${isBm || !happyHtml ? '' : happyHtml}
 
 ${agendaHtml ? `<p class="section-header agendas">Agendas:</p>` : ''}
 ${agendaHtml || '<p class="body-text">No agenda items.</p>'}

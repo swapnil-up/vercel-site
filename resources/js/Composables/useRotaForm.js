@@ -1,58 +1,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { checkImageSize, readImageAsJpeg, convertImageToJpeg } from '../Utils/rotaMinutesImages.js'
 import { validateRotaForm, getFieldLabels } from '../Utils/rotaMinutesValidation.js'
-
-function emptyForm() {
-  return {
-    type: 'general',
-    meeting_number: '',
-    date: '',
-    time_from: '',
-    time_to: '',
-    venue: '',
-    minute_taker: '',
-    year: '',
-    club_name: '',
-    club_number: '',
-    rid: '',
-    president: '',
-    member_prefix: '',
-    footer_note: '',
-    sig_left_name: '',
-    sig_left_title: '',
-    sig_right_name: '',
-    sig_right_title: '',
-    attendance: [],
-    happy_sad: [''],
-    agenda: [{ title: '', body: '' }],
-    recurring_items: [],
-    summary_proposed: 0,
-    summary_rotarians: 0,
-    summary_visiting_rotaractors: 0,
-    summary_visiting_interactors: 0,
-    summary_guests: 0,
-    letterhead_data: '',
-    sig_left_data: '',
-    sig_right_data: '',
-    stamp_data: '',
-  }
-}
-
-function buildAttendanceList(config) {
-  const list = []
-  for (const m of config.bod ?? []) {
-    list.push({ name: m.name, designation: m.position, present: true })
-  }
-  for (const n of config.general_members ?? []) {
-    list.push({ name: n, designation: 'General Member', present: true })
-  }
-  if (config.members_from_date) {
-    for (const n of config.members_from_date.members ?? []) {
-      list.push({ name: n, designation: 'General Member', present: true })
-    }
-  }
-  return list
-}
+import { emptyForm, buildAttendanceList, prefilledForm } from '../Utils/rotaFormData.js'
 
 export function useRotaForm(config, defaults, saveKey) {
   const form = ref(emptyForm())
@@ -104,47 +53,8 @@ export function useRotaForm(config, defaults, saveKey) {
     fieldErrors.value = {}
   }
 
-  function prefilledForm() {
-    const d = defaults || {}
-    const c = config || {}
-    return {
-      ...emptyForm(),
-      type: d.type || 'general',
-      meeting_number: d.meeting_number || 1,
-      date: d.date || '',
-      time_from: d.time_from || '',
-      time_to: d.time_to || '',
-      venue: d.venue || c.venue || '',
-      minute_taker: d.minute_taker || Object.values(c.minute_takers ?? {}).join(', ') || '',
-      year: d.year || c.year || '',
-      club_name: d.club_name || c.club_name || '',
-      club_number: d.club_number || c.club_number || '',
-      rid: d.rid || c.rid || '',
-      president: d.president || c.president || '',
-      member_prefix: d.member_prefix || c.member_prefix || '',
-      footer_note: d.footer_note || c.footer_note || '',
-      sig_left_name: d.sig_left_name || c.signatures?.left?.name || '',
-      sig_left_title: d.sig_left_title || c.signatures?.left?.title || '',
-      sig_right_name: d.sig_right_name || c.signatures?.right?.name || '',
-      sig_right_title: d.sig_right_title || c.signatures?.right?.title || '',
-      happy_sad: d.happy_sad || [''],
-      agenda: d.agenda || [{ title: '', body: '' }],
-      recurring_items: d.recurring_items || [],
-      attendance: d.attendance || buildAttendanceList(c),
-      letterhead_data: d.letterhead_data || '',
-      sig_left_data: d.sig_left_data || '',
-      sig_right_data: d.sig_right_data || '',
-      stamp_data: d.stamp_data || '',
-      summary_proposed: d.summary_proposed || 0,
-      summary_rotarians: d.summary_rotarians || 0,
-      summary_visiting_rotaractors: d.summary_visiting_rotaractors || 0,
-      summary_visiting_interactors: d.summary_visiting_interactors || 0,
-      summary_guests: d.summary_guests || 0,
-    }
-  }
-
   function loadDefaults() {
-    form.value = prefilledForm()
+    form.value = prefilledForm(config, defaults)
     saveToSession()
     clearErrors()
   }
@@ -225,20 +135,6 @@ export function useRotaForm(config, defaults, saveKey) {
     imageWarnings.value[field] = ''
   }
 
-  function exportForm() {
-    const data = JSON.stringify(form.value, null, 2)
-    const blob = new Blob([data], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    const label = form.value.type === 'general' ? 'GM' : form.value.type === 'board' ? 'BM' : 'ZM'
-    a.download = `rota-minutes-${label}${form.value.meeting_number}-${form.value.date || 'nodate'}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
   async function importForm(file) {
     try {
       const text = await file.text()
@@ -277,7 +173,7 @@ export function useRotaForm(config, defaults, saveKey) {
         return
       } catch { /* ignore */ }
     }
-    form.value = prefilledForm()
+    form.value = prefilledForm(config, defaults)
   })
 
   return {
@@ -307,7 +203,6 @@ export function useRotaForm(config, defaults, saveKey) {
     toggleRecurring,
     handleImageUpload,
     clearImage,
-    exportForm,
     importForm,
   }
 }

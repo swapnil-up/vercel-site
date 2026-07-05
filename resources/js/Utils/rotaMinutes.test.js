@@ -210,13 +210,13 @@ describe('buildPrintHtml', () => {
     expect(html).toContain('Meeting summary:')
   })
 
-  it('generates HTML for a zonal meeting (minimal output)', () => {
+  it('generates HTML for a zonal meeting (attendance + happy/sad, no summary/signatures)', () => {
     const html = buildPrintHtml({ ...baseForm, type: 'zonal' })
-    expect(html).toContain('ZM Meeting no. 5')
-    expect(html).not.toContain('Meeting Attendance:')
-    expect(html).not.toContain('Happy &amp; Sad News Sharing')
+    expect(html).toContain('Zonal Meeting no. 5')
+    expect(html).toContain('Meeting Attendance:')
     expect(html).not.toContain('Meeting summary:')
     expect(html).not.toContain('class="signatures"')
+    expect(html).toContain('Happy &amp; Sad News Sharing')
     expect(html).toContain('Agendas:')
   })
 
