@@ -74,21 +74,21 @@ Route::get('/tools/bill-splitter', fn() => inertia('Tools/BillSplitter', [
     ],
 ]));
 
-Route::get('/tools/rota-minutes', [RotaMinutesController::class, 'create'])->name('rota-minutes');
-Route::post('/tools/rota-minutes/generate-form', [RotaMinutesController::class, 'generateFromForm']);
-
-Route::get('/tools/rota-minutes-standalone', function () {
+Route::get('/tools/rota-minutes', function () {
     $defaultsPath = resource_path('rota/assets/rota-defaults.json');
     $defaults = file_exists($defaultsPath) ? json_decode(file_get_contents($defaultsPath), true) ?? [] : [];
     return inertia('Tools/RotaMinutesStandalone', [
         'meta' => [
-            'title' => 'Rota Minutes (Standalone) — Tools — Swapnil Upadhyay',
+            'title' => 'Rota Minutes — Tools — Swapnil Upadhyay',
             'description' => 'Generate meeting minutes PDFs entirely in your browser — no server-side processing.',
         ],
         'config' => config('rota'),
         'defaults' => $defaults,
     ]);
-});
+})->name('rota-minutes');
+
+Route::get('/tools/rota-minutes-server', [RotaMinutesController::class, 'create'])->name('rota-minutes-server');
+Route::post('/tools/rota-minutes/generate-form', [RotaMinutesController::class, 'generateFromForm']);
 
 Route::get('/tools/family-tree', fn() => inertia('Tools/FamilyTree', [
     'meta' => [

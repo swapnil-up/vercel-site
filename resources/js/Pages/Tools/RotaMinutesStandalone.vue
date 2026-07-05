@@ -1,14 +1,44 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { buildPrintHtml, escapeHtml, formatTime } from '../../Utils/rotaMinutesPrintHtml.js'
+import { ref } from 'vue'
+import { useRotaForm } from '../../Composables/useRotaForm.js'
+import { buildPrintHtml } from '../../Utils/rotaMinutesPrintHtml.js'
+import PreviewModal from '../../Components/PreviewModal.vue'
 
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024
 const SAVE_KEY = 'rota-minutes-standalone-form'
 
 const props = defineProps({
   config: { type: Object, default: () => ({}) },
   defaults: { type: Object, default: () => ({}) },
 })
+
+const {
+  form,
+  error,
+  fieldErrors,
+  imageWarnings,
+  importExportMode,
+  attendancePresent,
+  totalPresent,
+  recurringPool,
+  recurringSelected,
+  hasError,
+  fieldError,
+  validate,
+  loadDefaults,
+  resetForm,
+  toggleAttendanceAll,
+  addMember,
+  removeMember,
+  addHappySad,
+  removeHappySad,
+  addAgenda,
+  removeAgenda,
+  toggleRecurring,
+  handleImageUpload,
+  clearImage,
+  exportForm,
+  importForm,
+} = useRotaForm(props.config, props.defaults, SAVE_KEY)
 
 const currentStep = ref(0)
 const steps = ['Meeting', 'Club & People', 'Agenda', 'Summary & Sign', 'Generate']
@@ -24,184 +54,22 @@ function prevStep() {
 }
 
 const generating = ref(false)
-const error = ref('')
-const fieldErrors = ref({})
-const importExportMode = ref(null)
 const showRecurring = ref(false)
 const showAttendance = ref(true)
 const previewHtml = ref(null)
 const previewLoading = ref(false)
 
-const fieldLabels = {
-  type: 'Meeting Type',
-  meeting_number: 'Meeting Number',
-  date: 'Date',
-  time_from: 'Time From',
-  time_to: 'Time To',
-  venue: 'Venue',
-  minute_taker: 'Minute Taker',
-  year: 'Rota Year',
-  club_name: 'Club Name',
-  club_number: 'Club Number',
-  rid: 'R.I. District',
-  president: 'President',
-  member_prefix: 'Member Prefix',
-  footer_note: 'Footer Note',
-  sig_left_name: 'Left Signature Name',
-  sig_left_title: 'Left Signature Title',
-  sig_right_name: 'Right Signature Name',
-  sig_right_title: 'Right Signature Title',
-  attendance: 'Attendance',
-  happy_sad: 'Happy & Sad News',
-  agenda: 'Agenda Items',
-  recurring_items: 'Recurring Items',
-  summary_proposed: 'Proposed Members',
-  summary_rotarians: 'Rotarians',
-  summary_visiting_rotaractors: 'Visiting Rotaractors',
-  summary_visiting_interactors: 'Visiting Interactors',
-  summary_guests: 'Summary – Guests',
-}
-
-function hasError(field) {
-  return Object.keys(fieldErrors.value).some(k => k === field || k.startsWith(field + '.'))
-}
-
-function fieldError(field) {
-  const keys = Object.keys(fieldErrors.value).filter(k => k === field || k.startsWith(field + '.'))
-  return keys.map(k => fieldErrors.value[k]).join('; ')
-}
-
-function emptyForm() {
-  return {
-    type: 'general',
-    meeting_number: '',
-    date: '',
-    time_from: '',
-    time_to: '',
-    venue: '',
-    minute_taker: '',
-    year: '',
-    club_name: '',
-    club_number: '',
-    rid: '',
-    president: '',
-    member_prefix: '',
-    footer_note: '',
-    sig_left_name: '',
-    sig_left_title: '',
-    sig_right_name: '',
-    sig_right_title: '',
-    attendance: [],
-    happy_sad: [''],
-    agenda: [{ title: '', body: '' }],
-    recurring_items: [],
-    summary_proposed: 0,
-    summary_rotarians: 0,
-    summary_visiting_rotaractors: 0,
-    summary_visiting_interactors: 0,
-    summary_guests: 0,
-    letterhead_data: '',
-    sig_left_data: '',
-    sig_right_data: '',
-    stamp_data: '',
-  }
-}
-
-const form = ref(emptyForm())
-
-const attendancePresent = computed(() => form.value.attendance.filter(a => a.present))
-const totalPresent = computed(() => attendancePresent.value.length
-  + (form.value.summary_proposed ?? 0)
-  + (form.value.summary_rotarians ?? 0)
-  + (form.value.summary_visiting_rotaractors ?? 0)
-  + (form.value.summary_visiting_interactors ?? 0)
-  + (form.value.summary_guests ?? 0),
-)
-
-const recurringPool = computed(() => {
-  const groups = []
-  for (const [key, items] of Object.entries(props.config.recurring_items ?? {})) {
-    groups.push({ label: key, items })
-  }
-  return groups
-})
-
-const recurringSelected = computed(() => form.value.recurring_items.length)
-
-watch(form, (val) => {
-  sessionStorage.setItem(SAVE_KEY, JSON.stringify(val))
-  if (error.value || Object.keys(fieldErrors.value).length) {
-    error.value = ''
-    fieldErrors.value = {}
-  }
-}, { deep: true })
-
-onMounted(() => {
-  const saved = sessionStorage.getItem(SAVE_KEY)
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved)
-      form.value = parsed
-      return
-    } catch { /* ignore */ }
-  }
-  loadDefaults()
-})
-
-function validate() {
-  const errs = {}
-  const f = form.value
-
-  if (!f.type) errs.type = 'Select meeting type'
-  if (!f.meeting_number || f.meeting_number < 1 || !Number.isInteger(Number(f.meeting_number))) errs.meeting_number = 'Enter a valid meeting number'
-  if (!f.date) errs.date = 'Select a date'
-  if (!f.time_from) errs.time_from = 'Enter start time'
-  if (!f.time_to) errs.time_to = 'Enter end time'
-  if (!f.venue?.trim()) errs.venue = 'Enter venue'
-  if (!f.minute_taker?.trim()) errs.minute_taker = 'Enter minute taker'
-  if (!f.year?.trim()) errs.year = 'Enter rota year'
-  if (!f.club_name?.trim()) errs.club_name = 'Enter club name'
-  if (f.type !== 'zonal' && !f.club_number?.trim()) errs.club_number = 'Enter club number'
-  if (!f.rid?.trim()) errs.rid = 'Enter R.I. District'
-  if (!f.president?.trim()) errs.president = 'Enter president name'
-  if (!f.member_prefix?.trim()) errs.member_prefix = 'Enter member prefix'
-  if (f.type !== 'zonal' && !f.footer_note?.trim()) errs.footer_note = 'Enter footer note'
-
-  if (f.type !== 'zonal') {
-    if (!f.sig_left_name?.trim()) errs.sig_left_name = 'Enter left signature name'
-    if (!f.sig_left_title?.trim()) errs.sig_left_title = 'Enter left signature title'
-    if (!f.sig_right_name?.trim()) errs.sig_right_name = 'Enter right signature name'
-    if (!f.sig_right_title?.trim()) errs.sig_right_title = 'Enter right signature title'
-  }
-
-  if (showAttendance.value) {
-    const present = f.attendance.filter(a => a.present && a.name?.trim())
-    if (present.length === 0) errs.attendance = 'At least one member must be present and marked present'
-  }
-
-  if (f.type !== 'zonal') {
-    if (f.summary_proposed < 0) errs.summary_proposed = 'Cannot be negative'
-    if (f.summary_rotarians < 0) errs.summary_rotarians = 'Cannot be negative'
-    if (f.summary_visiting_rotaractors < 0) errs.summary_visiting_rotaractors = 'Cannot be negative'
-    if (f.summary_visiting_interactors < 0) errs.summary_visiting_interactors = 'Cannot be negative'
-    if (f.summary_guests < 0) errs.summary_guests = 'Cannot be negative'
-  }
-
-  if (Object.keys(errs).length > 0) {
-    fieldErrors.value = errs
-    const names = Object.keys(errs).map(fld => fieldLabels[fld] || fld)
-    error.value = 'Please fix these fields: ' + [...new Set(names)].join(', ')
-    return false
-  }
-  return true
-}
-
 function generateFromForm() {
-  if (!validate()) return
+  if (!validate(showAttendance.value)) return
   generating.value = true
   error.value = ''
 
-  const formData = { ...form.value, attendance: !showAttendance.value ? form.value.attendance.map(a => ({ ...a, present: false })) : form.value.attendance }
+  const formData = {
+    ...form.value,
+    attendance: !showAttendance.value
+      ? form.value.attendance.map(a => ({ ...a, present: false }))
+      : form.value.attendance,
+  }
   const html = buildPrintHtml(formData)
 
   const printWin = window.open('', '_blank')
@@ -226,10 +94,15 @@ function generateFromForm() {
 }
 
 function generatePreview() {
-  if (!validate()) return
+  if (!validate(showAttendance.value)) return
   previewLoading.value = true
   error.value = ''
-  const formData = { ...form.value, attendance: !showAttendance.value ? form.value.attendance.map(a => ({ ...a, present: false })) : form.value.attendance }
+  const formData = {
+    ...form.value,
+    attendance: !showAttendance.value
+      ? form.value.attendance.map(a => ({ ...a, present: false }))
+      : form.value.attendance,
+  }
   previewHtml.value = buildPrintHtml(formData)
   previewLoading.value = false
 }
@@ -238,198 +111,29 @@ function closePreview() {
   previewHtml.value = null
 }
 
-function buildAttendanceList(config) {
-  const list = []
-  for (const m of config.bod ?? []) {
-    list.push({ name: m.name, designation: m.position, present: true })
-  }
-  for (const n of config.general_members ?? []) {
-    list.push({ name: n, designation: 'General Member', present: true })
-  }
-  if (config.members_from_date) {
-    for (const n of config.members_from_date.members ?? []) {
-      list.push({ name: n, designation: 'General Member', present: true })
-    }
-  }
-  return list
-}
-
-function loadDefaults() {
-  const d = props.defaults
-  const c = props.config
-  form.value = {
-    ...emptyForm(),
-    type: d.type || 'general',
-    meeting_number: d.meeting_number || 1,
-    date: d.date || '',
-    time_from: d.time_from || '',
-    time_to: d.time_to || '',
-    venue: d.venue || c.venue || '',
-    minute_taker: d.minute_taker || Object.values(c.minute_takers ?? {}).join(', ') || '',
-    year: d.year || c.year || '',
-    club_name: d.club_name || c.club_name || '',
-    club_number: d.club_number || c.club_number || '',
-    rid: d.rid || c.rid || '',
-    president: d.president || c.president || '',
-    member_prefix: d.member_prefix || c.member_prefix || '',
-    footer_note: d.footer_note || c.footer_note || '',
-    sig_left_name: d.sig_left_name || c.signatures?.left?.name || '',
-    sig_left_title: d.sig_left_title || c.signatures?.left?.title || '',
-    sig_right_name: d.sig_right_name || c.signatures?.right?.name || '',
-    sig_right_title: d.sig_right_title || c.signatures?.right?.title || '',
-    happy_sad: d.happy_sad || [''],
-    agenda: d.agenda || [{ title: '', body: '' }],
-    recurring_items: d.recurring_items || [],
-    attendance: d.attendance || buildAttendanceList(c),
-    letterhead_data: d.letterhead_data || '',
-    sig_left_data: d.sig_left_data || '',
-    sig_right_data: d.sig_right_data || '',
-    stamp_data: d.stamp_data || '',
-    summary_proposed: d.summary_proposed || 0,
-    summary_rotarians: d.summary_rotarians || 0,
-    summary_visiting_rotaractors: d.summary_visiting_rotaractors || 0,
-    summary_visiting_interactors: d.summary_visiting_interactors || 0,
-    summary_guests: d.summary_guests || 0,
-  }
-  sessionStorage.setItem(SAVE_KEY, JSON.stringify(form.value))
-}
-
-function resetForm() {
-  form.value = emptyForm()
-  sessionStorage.removeItem(SAVE_KEY)
-}
-
-function toggleAttendanceAll(val) {
-  form.value.attendance.forEach(a => { a.present = val })
-}
-
-function addMember() {
-  form.value.attendance.push({ name: '', designation: 'General Member', present: true })
-}
-
-function removeMember(i) {
-  if (form.value.attendance.length > 1) form.value.attendance.splice(i, 1)
-}
-
-function addHappySad() {
-  form.value.happy_sad.push('')
-}
-
-function removeHappySad(i) {
-  if (form.value.happy_sad.length > 1) form.value.happy_sad.splice(i, 1)
-}
-
-function addAgenda() {
-  form.value.agenda.push({ title: '', body: '' })
-}
-
-function removeAgenda(i) {
-  if (form.value.agenda.length > 1) form.value.agenda.splice(i, 1)
-}
-
-function toggleRecurring(item) {
-  const idx = form.value.recurring_items.indexOf(item)
-  if (idx >= 0) {
-    form.value.recurring_items.splice(idx, 1)
-  } else {
-    form.value.recurring_items.push(item)
-  }
-}
-
-const imageWarnings = ref({})
-
-function handleImageUpload(field, file) {
-  if (!file) {
-    form.value[field] = ''
-    imageWarnings.value[field] = ''
-    return
-  }
-  if (file.size > MAX_IMAGE_SIZE) {
-    imageWarnings.value[field] = `Image is ${(file.size / 1024 / 1024).toFixed(1)}MB (limit: 2MB). Consider resizing.`
-  } else {
-    imageWarnings.value[field] = ''
-  }
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      ctx.fillStyle = '#FFFFFF'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(img, 0, 0)
-      form.value[field] = canvas.toDataURL('image/jpeg', 0.92)
-    }
-    img.src = e.target?.result ?? ''
-  }
-  reader.readAsDataURL(file)
-}
-
-function clearImage(field) {
-  form.value[field] = ''
-  imageWarnings.value[field] = ''
-}
-
-function convertImageToJpeg(dataUrl) {
-  if (!dataUrl || !dataUrl.startsWith('data:image/png')) return dataUrl
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      ctx.fillStyle = '#FFFFFF'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(img, 0, 0)
-      resolve(canvas.toDataURL('image/jpeg', 0.92))
-    }
-    img.onerror = () => resolve(dataUrl)
-    img.src = dataUrl
-  })
-}
-
-async function convertFormImages(formData) {
-  formData.letterhead_data = await convertImageToJpeg(formData.letterhead_data)
-  formData.sig_left_data = await convertImageToJpeg(formData.sig_left_data)
-  formData.sig_right_data = await convertImageToJpeg(formData.sig_right_data)
-  formData.stamp_data = await convertImageToJpeg(formData.stamp_data)
-}
-
-function exportForm() {
-  const data = JSON.stringify(form.value, null, 2)
-  const blob = new Blob([data], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  const label = form.value.type === 'general' ? 'GM' : form.value.type === 'board' ? 'BM' : 'ZM'
-  a.download = `rota-minutes-${label}${form.value.meeting_number}-${form.value.date || 'nodate'}.json`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-}
-
 function handleImportFile(e) {
   const file = e.target.files?.[0]
-  if (!file) return
-  const reader = new FileReader()
-  reader.onload = async (event) => {
-    try {
-      const data = JSON.parse(event.target?.result)
-      if (data.letterhead_data || data.sig_left_data || data.sig_right_data || data.stamp_data) {
-        await convertFormImages(data)
-      }
-      form.value = data
-      sessionStorage.setItem(SAVE_KEY, JSON.stringify(data))
-      importExportMode.value = null
-    } catch {
-      error.value = 'Failed to parse JSON file.'
-    }
+  if (file) importForm(file)
+}
+
+function printFromPreview() {
+  if (!previewHtml.value) return
+  generating.value = true
+  const printWin = window.open('', '_blank')
+  if (!printWin) {
+    error.value = 'Popup blocked. Please allow popups for this site to use PDF generation.'
+    generating.value = false
+    return
   }
-  reader.readAsText(file)
+  printWin.document.write(previewHtml.value)
+  printWin.document.close()
+  printWin.focus()
+  printWin.onafterprint = () => {
+    printWin.close()
+    generating.value = false
+  }
+  setTimeout(() => printWin.print(), 500)
+  previewHtml.value = null
 }
 </script>
 
@@ -869,28 +573,12 @@ function handleImportFile(e) {
       </div>
 
       <!-- Preview Modal -->
-      <div v-if="previewHtml" class="fixed inset-0 bg-ink/70 z-50 flex items-center justify-center p-2 sm:p-4">
-        <div class="bg-white rounded-sm w-full max-w-4xl max-h-[98dvh] sm:max-h-[90vh] flex flex-col shadow-2xl">
-          <div class="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-warm-border bg-cream rounded-sm rounded-b-none">
-            <h3 class="font-display text-sm sm:text-lg font-bold text-ink truncate">Document Preview</h3>
-            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <button @click="generateFromForm" class="px-3 sm:px-4 py-2 sm:py-1.5 bg-coral text-white text-xs sm:text-sm rounded-sm hover:bg-coral/80 transition-colors flex items-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                <span class="hidden xs:inline">Print /</span> PDF
-              </button>
-              <button @click="closePreview" class="p-2 min-h-[36px] text-warm-muted hover:text-ink hover:bg-warm-border/50 rounded-sm transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
-            </div>
-          </div>
-          <div class="flex-1 overflow-auto bg-white">
-            <iframe :srcdoc="previewHtml" class="w-full h-full min-h-[50vh] sm:min-h-[70vh]" style="border: none;"></iframe>
-          </div>
-          <div class="flex justify-end px-3 sm:px-4 py-2 border-t border-warm-border bg-cream rounded-sm rounded-t-none">
-            <button @click="closePreview" class="px-4 py-2 min-h-[44px] border border-warm-border text-ink text-sm rounded-sm hover:bg-white transition-colors">Close Preview</button>
-          </div>
-        </div>
-      </div>
+      <PreviewModal
+        v-if="previewHtml"
+        :html="previewHtml"
+        @close="closePreview"
+        @print="printFromPreview"
+      />
 
       <div class="flex items-center justify-between gap-3 pt-4 border-t border-warm-border">
         <button v-if="currentStep > 0" @click="prevStep" class="px-5 py-3 min-h-[48px] border border-warm-border text-ink rounded-sm hover:bg-cream transition-colors text-sm flex items-center gap-1.5">

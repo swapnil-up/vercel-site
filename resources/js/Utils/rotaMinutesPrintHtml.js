@@ -184,11 +184,11 @@ ${letterheadHtml ? `<thead><tr><td style="border:none;padding:0;">${letterheadHt
 <p class="body-text" style="margin-top:0.1in;">&bull; President ${escapeHtml(form.president)} presided over the ${mtgName} Meeting of ${escapeHtml(clubName)}, of R.I. District ${escapeHtml(form.rid)}.</p>
 <p class="body-text small-gap">&bull; Minutes taken by ${escapeHtml(form.minute_taker)}.</p>
 
-${isBm || !hasAttendance ? '' : `<p class="section-header attendance">Meeting Attendance:</p>`}
-${isBm || !hasAttendance ? '' : attTable}
+${isBm || isZm || !hasAttendance ? '' : `<p class="section-header attendance">Meeting Attendance:</p>`}
+${isBm || isZm || !hasAttendance ? '' : attTable}
 
-${isBm || !happyHtml ? '' : `<p class="section-header happy-sad">Happy &amp; Sad News Sharing (Sunshine Fund):</p>`}
-${isBm || !happyHtml ? '' : happyHtml}
+${isBm || isZm || !happyHtml ? '' : `<p class="section-header happy-sad">Happy &amp; Sad News Sharing (Sunshine Fund):</p>`}
+${isBm || isZm || !happyHtml ? '' : happyHtml}
 
 ${agendaHtml ? `<p class="section-header agendas">Agendas:</p>` : ''}
 ${agendaHtml || '<p class="body-text">No agenda items.</p>'}

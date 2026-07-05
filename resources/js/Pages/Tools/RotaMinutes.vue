@@ -1,329 +1,48 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref } from 'vue'
+import { useRotaForm } from '../../Composables/useRotaForm.js'
 
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024
+const SAVE_KEY = 'rota-minutes-form'
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
 
 const props = defineProps({
   config: { type: Object, default: () => ({}) },
   defaults: { type: Object, default: () => ({}) },
 })
 
-const SAVE_KEY = 'rota-minutes-form'
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+const {
+  form,
+  error,
+  fieldErrors,
+  imageWarnings,
+  importExportMode,
+  attendancePresent,
+  totalPresent,
+  recurringPool,
+  recurringSelected,
+  hasError,
+  fieldError,
+  loadDefaults,
+  resetForm,
+  toggleAttendanceAll,
+  addMember,
+  removeMember,
+  addHappySad,
+  removeHappySad,
+  addAgenda,
+  removeAgenda,
+  toggleRecurring,
+  handleImageUpload,
+  clearImage,
+  exportForm,
+  importForm,
+} = useRotaForm(props.config, props.defaults, SAVE_KEY)
 
 const generating = ref(false)
 const pdfGenerated = ref(false)
 const pdfFilename = ref('')
-const error = ref('')
-const fieldErrors = ref({})
-const importExportMode = ref(null)
 const showRecurring = ref(false)
 const showConfig = ref(false)
-
-const fieldLabels = {
-  type: 'Meeting Type',
-  meeting_number: 'Meeting Number',
-  date: 'Date',
-  time_from: 'Time From',
-  time_to: 'Time To',
-  venue: 'Venue',
-  minute_taker: 'Minute Taker',
-  year: 'Rota Year',
-  club_name: 'Club Name',
-  club_number: 'Club Number',
-  rid: 'R.I. District',
-  president: 'President',
-  member_prefix: 'Member Prefix',
-  footer_note: 'Footer Note',
-  sig_left_name: 'Left Signature Name',
-  sig_left_title: 'Left Signature Title',
-  sig_right_name: 'Right Signature Name',
-  sig_right_title: 'Right Signature Title',
-  attendance: 'Attendance',
-  happy_sad: 'Happy & Sad News',
-  agenda: 'Agenda Items',
-  recurring_items: 'Recurring Items',
-  summary_proposed: 'Summary – Proposed',
-  summary_rotarians: 'Summary – Rotarians',
-  summary_visiting_rotaractors: 'Summary – Visiting Rotaractors',
-  summary_visiting_interactors: 'Summary – Visiting Interactors',
-  summary_guests: 'Summary – Guests',
-}
-
-function hasError(field) {
-  return Object.keys(fieldErrors.value).some(k => k === field || k.startsWith(field + '.'))
-}
-
-function fieldError(field) {
-  const keys = Object.keys(fieldErrors.value).filter(k => k === field || k.startsWith(field + '.'))
-  return keys.map(k => fieldErrors.value[k]).join('; ')
-}
-
-function emptyForm() {
-  return {
-    type: 'general',
-    meeting_number: '',
-    date: '',
-    time_from: '',
-    time_to: '',
-    venue: '',
-    minute_taker: '',
-    year: '',
-    club_name: '',
-    club_number: '',
-    rid: '',
-    president: '',
-    member_prefix: '',
-    footer_note: '',
-    sig_left_name: '',
-    sig_left_title: '',
-    sig_right_name: '',
-    sig_right_title: '',
-    attendance: [],
-    happy_sad: [''],
-    agenda: [{ title: '', body: '' }],
-    recurring_items: [],
-    summary_proposed: 0,
-    summary_rotarians: 0,
-    summary_visiting_rotaractors: 0,
-    summary_visiting_interactors: 0,
-    summary_guests: 0,
-    letterhead_data: '',
-    sig_left_data: '',
-    sig_right_data: '',
-    stamp_data: '',
-  }
-}
-
-function buildAttendanceList(config) {
-  const list = []
-  for (const m of config.bod ?? []) {
-    list.push({ name: m.name, designation: m.position, present: true })
-  }
-  for (const n of config.general_members ?? []) {
-    list.push({ name: n, designation: 'General Member', present: true })
-  }
-  if (config.members_from_date) {
-    for (const n of config.members_from_date.members ?? []) {
-      list.push({ name: n, designation: 'General Member', present: true })
-    }
-  }
-  return list
-}
-
-function prefilledForm() {
-  const d = props.defaults
-  return {
-    ...emptyForm(),
-    meeting_number: d.meeting_number || 1,
-    date: d.date || '',
-    venue: d.venue || props.config.venue || '',
-    minute_taker: d.minute_taker || Object.values(props.config.minute_takers ?? {}).join(', ') || '',
-    year: d.year || props.config.year || '',
-    club_name: d.club_name || props.config.club_name || '',
-    club_number: d.club_number || props.config.club_number || '',
-    rid: d.rid || props.config.rid || '',
-    president: d.president || props.config.president || '',
-    member_prefix: d.member_prefix || props.config.member_prefix || '',
-    footer_note: d.footer_note || props.config.footer_note || '',
-    sig_left_name: d.sig_left_name || props.config.signatures?.left?.name || '',
-    sig_left_title: d.sig_left_title || props.config.signatures?.left?.title || '',
-    sig_right_name: d.sig_right_name || props.config.signatures?.right?.name || '',
-    sig_right_title: d.sig_right_title || props.config.signatures?.right?.title || '',
-    attendance: buildAttendanceList(props.config),
-    time_from: d.time_from || '',
-    time_to: d.time_to || '',
-    summary_proposed: d.summary_proposed || 0,
-    summary_rotarians: d.summary_rotarians || 0,
-    summary_visiting_rotaractors: d.summary_visiting_rotaractors || 0,
-    summary_visiting_interactors: d.summary_visiting_interactors || 0,
-    summary_guests: d.summary_guests || 0,
-  }
-}
-
-const form = ref(emptyForm())
-
-const attendancePresent = computed(() => form.value.attendance.filter(a => a.present))
-const totalPresent = computed(() => attendancePresent.value.length
-  + (form.value.summary_proposed ?? 0)
-  + (form.value.summary_rotarians ?? 0)
-  + (form.value.summary_visiting_rotaractors ?? 0)
-  + (form.value.summary_visiting_interactors ?? 0)
-  + (form.value.summary_guests ?? 0),
-)
-
-const recurringPool = computed(() => {
-  const groups = []
-  for (const [key, items] of Object.entries(props.config.recurring_items ?? {})) {
-    groups.push({ label: key, items })
-  }
-  return groups
-})
-
-const recurringSelected = computed(() => form.value.recurring_items.length)
-
-watch(form, (val) => {
-  sessionStorage.setItem(SAVE_KEY, JSON.stringify(val))
-  if (error.value || Object.keys(fieldErrors.value).length) {
-    error.value = ''
-    fieldErrors.value = {}
-  }
-}, { deep: true })
-
-onMounted(() => {
-  const saved = sessionStorage.getItem(SAVE_KEY)
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved)
-      form.value = parsed
-      return
-    } catch { /* ignore */ }
-  }
-  form.value = prefilledForm()
-})
-
-function resetForm() {
-  form.value = emptyForm()
-  sessionStorage.removeItem(SAVE_KEY)
-}
-
-function loadDefaults() {
-  form.value = prefilledForm()
-  sessionStorage.setItem(SAVE_KEY, JSON.stringify(form.value))
-}
-
-function toggleAttendanceAll(val) {
-  form.value.attendance.forEach(a => { a.present = val })
-}
-
-function addMember() {
-  form.value.attendance.push({ name: '', designation: 'General Member', present: true })
-}
-
-function removeMember(i) {
-  if (form.value.attendance.length > 1) form.value.attendance.splice(i, 1)
-}
-
-function addHappySad() {
-  form.value.happy_sad.push('')
-}
-
-function removeHappySad(i) {
-  if (form.value.happy_sad.length > 1) form.value.happy_sad.splice(i, 1)
-}
-
-function addAgenda() {
-  form.value.agenda.push({ title: '', body: '' })
-}
-
-function removeAgenda(i) {
-  if (form.value.agenda.length > 1) form.value.agenda.splice(i, 1)
-}
-
-function toggleRecurring(item) {
-  const idx = form.value.recurring_items.indexOf(item)
-  if (idx >= 0) {
-    form.value.recurring_items.splice(idx, 1)
-  } else {
-    form.value.recurring_items.push(item)
-  }
-}
-
-const imageWarnings = ref({})
-
-function handleImageUpload(field, file) {
-  if (!file) {
-    form.value[field] = ''
-    imageWarnings.value[field] = ''
-    return
-  }
-  if (file.size > MAX_IMAGE_SIZE) {
-    imageWarnings.value[field] = `Image is ${(file.size / 1024 / 1024).toFixed(1)}MB (limit: 2MB). Consider resizing.`
-  } else {
-    imageWarnings.value[field] = ''
-  }
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      ctx.fillStyle = '#FFFFFF'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(img, 0, 0)
-      form.value[field] = canvas.toDataURL('image/jpeg', 0.92)
-    }
-    img.src = e.target?.result ?? ''
-  }
-  reader.readAsDataURL(file)
-}
-
-function clearImage(field) {
-  form.value[field] = ''
-  imageWarnings.value[field] = ''
-}
-
-function convertImageToJpeg(dataUrl) {
-  if (!dataUrl || !dataUrl.startsWith('data:image/png')) return dataUrl
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      ctx.fillStyle = '#FFFFFF'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(img, 0, 0)
-      resolve(canvas.toDataURL('image/jpeg', 0.92))
-    }
-    img.onerror = () => resolve(dataUrl)
-    img.src = dataUrl
-  })
-}
-
-async function convertFormImages(formData) {
-  formData.letterhead_data = await convertImageToJpeg(formData.letterhead_data)
-  formData.sig_left_data = await convertImageToJpeg(formData.sig_left_data)
-  formData.sig_right_data = await convertImageToJpeg(formData.sig_right_data)
-  formData.stamp_data = await convertImageToJpeg(formData.stamp_data)
-}
-
-function exportForm() {
-  const data = JSON.stringify(form.value, null, 2)
-  const blob = new Blob([data], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  const label = form.value.type === 'general' ? 'GM' : 'BM'
-  a.download = `rota-minutes-${label}${form.value.meeting_number}-${form.value.date || 'nodate'}.json`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-}
-
-function handleImportFile(e) {
-  const file = e.target.files?.[0]
-  if (!file) return
-  const reader = new FileReader()
-  reader.onload = async (event) => {
-    try {
-      const data = JSON.parse(event.target?.result)
-      if (data.letterhead_data || data.sig_left_data || data.sig_right_data || data.stamp_data) {
-        await convertFormImages(data)
-      }
-      form.value = data
-      sessionStorage.setItem(SAVE_KEY, JSON.stringify(data))
-      importExportMode.value = null
-    } catch {
-      error.value = 'Failed to parse JSON file.'
-    }
-  }
-  reader.readAsText(file)
-}
 
 function formatTime(val) {
   if (!val) return ''
@@ -342,15 +61,19 @@ async function generateFromForm() {
   fieldErrors.value = {}
   pdfGenerated.value = false
 
-  await convertFormImages(form.value)
+  const formData = { ...form.value }
+  for (const field of ['letterhead_data', 'sig_left_data', 'sig_right_data', 'stamp_data']) {
+    const { convertImageToJpeg } = await import('../../Utils/rotaMinutesImages.js')
+    formData[field] = await convertImageToJpeg(formData[field])
+  }
 
   const payload = {
-    ...form.value,
-    time_from: formatTime(form.value.time_from),
-    time_to: formatTime(form.value.time_to),
-    attendance: form.value.attendance.filter(a => a.present && a.name.trim() !== ''),
-    happy_sad: form.value.happy_sad.filter(s => s.trim() !== ''),
-    agenda: form.value.agenda.filter(a => a.title.trim() !== '' || a.body.trim() !== ''),
+    ...formData,
+    time_from: formatTime(formData.time_from),
+    time_to: formatTime(formData.time_to),
+    attendance: formData.attendance.filter(a => a.present && a.name.trim() !== ''),
+    happy_sad: formData.happy_sad.filter(s => s.trim() !== ''),
+    agenda: formData.agenda.filter(a => a.title.trim() !== '' || a.body.trim() !== ''),
   }
 
   try {
@@ -367,13 +90,14 @@ async function generateFromForm() {
     if (!resp.ok) {
       if (resp.status === 422) {
         const json = await resp.json()
-        console.error('Rota Minutes – Validation Errors:', json)
         const errs = json.errors || {}
         fieldErrors.value = {}
         for (const [f, msgs] of Object.entries(errs)) {
           fieldErrors.value[f] = msgs.join(', ')
         }
-        const names = Object.keys(fieldErrors.value).map(f => fieldLabels[f] || f)
+        const { getFieldLabels } = await import('../../Utils/rotaMinutesValidation.js')
+        const labels = getFieldLabels()
+        const names = Object.keys(fieldErrors.value).map(f => labels[f] || f)
         error.value = 'Please fix these fields: ' + [...new Set(names)].join(', ')
       } else {
         const text = await resp.text()
@@ -411,6 +135,11 @@ async function generateFromForm() {
   } finally {
     generating.value = false
   }
+}
+
+function handleImportFile(e) {
+  const file = e.target.files?.[0]
+  if (file) importForm(file)
 }
 </script>
 
