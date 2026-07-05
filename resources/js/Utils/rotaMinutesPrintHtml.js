@@ -8,6 +8,11 @@ export function escapeHtml(str) {
     .replace(/'/g, '&#039;')
 }
 
+function nl2br(str) {
+  if (!str) return ''
+  return str.replace(/\n/g, '<br/>')
+}
+
 export function formatDate(dateStr) {
   if (!dateStr) return ''
   const parts = dateStr.split('-')
@@ -34,8 +39,18 @@ function isBoard(form) {
   return form.type === 'board'
 }
 
+function isZonal(form) {
+  return form.type === 'zonal'
+}
+
 function meetingTypeLabel(form) {
+  if (isZonal(form)) return 'ZM'
   return isBoard(form) ? 'BM' : 'GM'
+}
+
+function meetingTypeName(form) {
+  if (isZonal(form)) return 'Zonal'
+  return isBoard(form) ? 'Board' : 'General'
 }
 
 export function buildPrintHtml(form) {
@@ -45,7 +60,9 @@ export function buildPrintHtml(form) {
   const timeFrom = formatTime(form.time_from)
   const timeTo = formatTime(form.time_to)
   const isBm = isBoard(form)
+  const isZm = isZonal(form)
   const mtgLabel = meetingTypeLabel(form)
+  const mtgName = meetingTypeName(form)
 
   const letterheadHtml = form.letterhead_data
     ? `<img src="${form.letterhead_data}" style="width: 100%; display: block;" alt="Letterhead"/>`
@@ -59,31 +76,30 @@ export function buildPrintHtml(form) {
       idx++
     }
   }
-  const attTable = attRows
+  const hasAttendance = attRows.length > 0
+  const attTable = hasAttendance
     ? `<table class="attendance-table"><tr><th>S.N.</th><th>Name</th><th>Designation</th></tr>${attRows}</table>`
-    : '<p>No attendance recorded.</p>'
+    : ''
 
   let happyHtml = ''
   for (const item of form.happy_sad) {
     if (item?.trim()) {
-      happyHtml += `<p class="body-text">&bull; ${escapeHtml(item)}</p>`
+      happyHtml += `<p class="body-text">&bull; ${nl2br(escapeHtml(item))}</p>`
     }
   }
-  happyHtml = happyHtml || '<p class="body-text">No happy &amp; sad news shared.</p>'
 
   let agendaHtml = ''
   for (let i = 0; i < form.agenda.length; i++) {
     const num = i + 1
     const item = form.agenda[i]
     agendaHtml += `<p class="agenda-title">${num}. ${escapeHtml(item.title)}</p>`
-    agendaHtml += `<p class="agenda-body">${escapeHtml(item.body)}</p>`
+    agendaHtml += `<p class="agenda-body">${nl2br(escapeHtml(item.body))}</p>`
   }
   for (const item of form.recurring_items) {
     if (item?.trim()) {
-      agendaHtml += `<p class="agenda-body">- ${escapeHtml(item)}</p>`
+      agendaHtml += `<p class="agenda-body">- ${nl2br(escapeHtml(item))}</p>`
     }
   }
-  agendaHtml = agendaHtml || '<p class="body-text">No agenda items.</p>'
 
   const presentCount = form.attendance.filter(a => a.present && a.name?.trim()).length
   const total = presentCount
@@ -165,19 +181,19 @@ ${letterheadHtml ? `<thead><tr><td style="border:none;padding:0;">${letterheadHt
 <p class="meta-line">Meeting From: ${timeFrom}</p>
 <p class="meta-line">Meeting To: ${timeTo}</p>
 
-<p class="body-text" style="margin-top:0.1in;">&bull; President ${escapeHtml(form.president)} presided over the ${isBm ? 'Board' : 'General'} Meeting of ${escapeHtml(clubName)}, of R.I. District ${escapeHtml(form.rid)}.</p>
+<p class="body-text" style="margin-top:0.1in;">&bull; President ${escapeHtml(form.president)} presided over the ${mtgName} Meeting of ${escapeHtml(clubName)}, of R.I. District ${escapeHtml(form.rid)}.</p>
 <p class="body-text small-gap">&bull; Minutes taken by ${escapeHtml(form.minute_taker)}.</p>
 
-${isBm ? '' : `<p class="section-header attendance">Meeting Attendance:</p>`}
-${isBm ? '' : attTable}
+${isBm || !hasAttendance ? '' : `<p class="section-header attendance">Meeting Attendance:</p>`}
+${isBm || !hasAttendance ? '' : attTable}
 
-${isBm ? '' : `<p class="section-header happy-sad">Happy &amp; Sad News Sharing (Sunshine Fund):</p>`}
-${isBm ? '' : happyHtml}
+${isBm || !happyHtml ? '' : `<p class="section-header happy-sad">Happy &amp; Sad News Sharing (Sunshine Fund):</p>`}
+${isBm || !happyHtml ? '' : happyHtml}
 
-<p class="section-header agendas">Agendas:</p>
-${agendaHtml}
+${agendaHtml ? `<p class="section-header agendas">Agendas:</p>` : ''}
+${agendaHtml || '<p class="body-text">No agenda items.</p>'}
 
-<p class="section-header summary">Meeting summary:</p>
+${isZm ? '' : `<p class="section-header summary">Meeting summary:</p>
 <p class="summary-line">&bull; Meeting From: ${timeFrom}</p>
 <p class="summary-line">&bull; Meeting To: ${timeTo}</p>
 <p class="summary-line">&bull; Proposed Members: ${form.summary_proposed}</p>
@@ -185,9 +201,9 @@ ${agendaHtml}
 <p class="summary-line">&bull; Visiting Rotaractors: ${form.summary_visiting_rotaractors}</p>
 <p class="summary-line">&bull; Visiting Interactors: ${form.summary_visiting_interactors}</p>
 <p class="summary-line">&bull; Guests: ${form.summary_guests}</p>
-<p class="summary-line">&bull; Total Present: ${total}</p>
+<p class="summary-line">&bull; Total Present: ${total}</p>`}
 
-<div class="signatures">
+${isZm ? '' : `<div class="signatures">
   <table class="sig-table">
     <tr>
       <td class="sig-left">${sigLeftImg}</td>
@@ -217,7 +233,7 @@ ${agendaHtml}
   <p style="margin-top:0.3in;">
     ${stampImg}
   </p>
-</div>
+</div>`}
 
 </td></tr></tbody>
 <tfoot><tr><td style="border:none;padding:0;">

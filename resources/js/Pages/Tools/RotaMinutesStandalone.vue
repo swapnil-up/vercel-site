@@ -28,6 +28,7 @@ const error = ref('')
 const fieldErrors = ref({})
 const importExportMode = ref(null)
 const showRecurring = ref(false)
+const showAttendance = ref(true)
 const previewHtml = ref(null)
 const previewLoading = ref(false)
 
@@ -160,24 +161,31 @@ function validate() {
   if (!f.minute_taker?.trim()) errs.minute_taker = 'Enter minute taker'
   if (!f.year?.trim()) errs.year = 'Enter rota year'
   if (!f.club_name?.trim()) errs.club_name = 'Enter club name'
-  if (!f.club_number?.trim()) errs.club_number = 'Enter club number'
+  if (f.type !== 'zonal' && !f.club_number?.trim()) errs.club_number = 'Enter club number'
   if (!f.rid?.trim()) errs.rid = 'Enter R.I. District'
   if (!f.president?.trim()) errs.president = 'Enter president name'
   if (!f.member_prefix?.trim()) errs.member_prefix = 'Enter member prefix'
-  if (!f.footer_note?.trim()) errs.footer_note = 'Enter footer note'
-  if (!f.sig_left_name?.trim()) errs.sig_left_name = 'Enter left signature name'
-  if (!f.sig_left_title?.trim()) errs.sig_left_title = 'Enter left signature title'
-  if (!f.sig_right_name?.trim()) errs.sig_right_name = 'Enter right signature name'
-  if (!f.sig_right_title?.trim()) errs.sig_right_title = 'Enter right signature title'
+  if (f.type !== 'zonal' && !f.footer_note?.trim()) errs.footer_note = 'Enter footer note'
 
-  const present = f.attendance.filter(a => a.present && a.name?.trim())
-  if (present.length === 0) errs.attendance = 'At least one member must be present and marked present'
+  if (f.type !== 'zonal') {
+    if (!f.sig_left_name?.trim()) errs.sig_left_name = 'Enter left signature name'
+    if (!f.sig_left_title?.trim()) errs.sig_left_title = 'Enter left signature title'
+    if (!f.sig_right_name?.trim()) errs.sig_right_name = 'Enter right signature name'
+    if (!f.sig_right_title?.trim()) errs.sig_right_title = 'Enter right signature title'
+  }
 
-  if (f.summary_proposed < 0) errs.summary_proposed = 'Cannot be negative'
-  if (f.summary_rotarians < 0) errs.summary_rotarians = 'Cannot be negative'
-  if (f.summary_visiting_rotaractors < 0) errs.summary_visiting_rotaractors = 'Cannot be negative'
-  if (f.summary_visiting_interactors < 0) errs.summary_visiting_interactors = 'Cannot be negative'
-  if (f.summary_guests < 0) errs.summary_guests = 'Cannot be negative'
+  if (showAttendance.value) {
+    const present = f.attendance.filter(a => a.present && a.name?.trim())
+    if (present.length === 0) errs.attendance = 'At least one member must be present and marked present'
+  }
+
+  if (f.type !== 'zonal') {
+    if (f.summary_proposed < 0) errs.summary_proposed = 'Cannot be negative'
+    if (f.summary_rotarians < 0) errs.summary_rotarians = 'Cannot be negative'
+    if (f.summary_visiting_rotaractors < 0) errs.summary_visiting_rotaractors = 'Cannot be negative'
+    if (f.summary_visiting_interactors < 0) errs.summary_visiting_interactors = 'Cannot be negative'
+    if (f.summary_guests < 0) errs.summary_guests = 'Cannot be negative'
+  }
 
   if (Object.keys(errs).length > 0) {
     fieldErrors.value = errs
@@ -193,7 +201,8 @@ function generateFromForm() {
   generating.value = true
   error.value = ''
 
-  const html = buildPrintHtml(form.value)
+  const formData = { ...form.value, attendance: !showAttendance.value ? form.value.attendance.map(a => ({ ...a, present: false })) : form.value.attendance }
+  const html = buildPrintHtml(formData)
 
   const printWin = window.open('', '_blank')
   if (!printWin) {
@@ -220,7 +229,8 @@ function generatePreview() {
   if (!validate()) return
   previewLoading.value = true
   error.value = ''
-  previewHtml.value = buildPrintHtml(form.value)
+  const formData = { ...form.value, attendance: !showAttendance.value ? form.value.attendance.map(a => ({ ...a, present: false })) : form.value.attendance }
+  previewHtml.value = buildPrintHtml(formData)
   previewLoading.value = false
 }
 
@@ -394,7 +404,7 @@ function exportForm() {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  const label = form.value.type === 'general' ? 'GM' : 'BM'
+  const label = form.value.type === 'general' ? 'GM' : form.value.type === 'board' ? 'BM' : 'ZM'
   a.download = `rota-minutes-${label}${form.value.meeting_number}-${form.value.date || 'nodate'}.json`
   document.body.appendChild(a)
   a.click()
@@ -513,6 +523,7 @@ function handleImportFile(e) {
               <select v-model="form.type" class="w-full px-3 py-2 border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral" :class="hasError('type') ? 'border-coral' : 'border-warm-border'">
                 <option value="general">General Meeting</option>
                 <option value="board">Board Meeting</option>
+                <option value="zonal">Zonal Meeting</option>
               </select>
               <p v-if="fieldError('type')" class="mt-1 text-xs text-coral">{{ fieldError('type') }}</p>
             </div>
@@ -597,23 +608,32 @@ function handleImportFile(e) {
           </details>
         </div>
 
-        <div class="bg-warm-surface border border-warm-border p-6 rounded-sm mt-6" :class="hasError('attendance') ? 'border-coral' : ''">
-          <h2 class="font-display text-lg font-bold text-ink mb-4">Attendance</h2>
-          <p v-if="fieldError('attendance')" class="mb-3 text-xs text-coral">{{ fieldError('attendance') }}</p>
-          <div class="flex gap-2 mb-3 items-center flex-wrap">
-            <button @click="toggleAttendanceAll(true)" class="px-3 py-2 min-h-[38px] bg-mint text-ink text-xs rounded-sm hover:bg-mint/80 transition-colors">All Present</button>
-            <button @click="toggleAttendanceAll(false)" class="px-3 py-2 min-h-[38px] bg-ink text-white text-xs rounded-sm hover:bg-coral transition-colors">All Absent</button>
-            <span class="text-sm text-warm-muted ml-auto">{{ attendancePresent.length }} present</span>
+        <div class="bg-warm-surface border border-warm-border p-6 rounded-sm mt-6">
+          <div class="flex items-center gap-3 mb-4">
+            <h2 class="font-display text-lg font-bold text-ink">Attendance</h2>
+            <label class="flex items-center gap-2 text-sm text-warm-muted cursor-pointer select-none ml-auto">
+              <input type="checkbox" v-model="showAttendance" class="rounded border-warm-border text-coral focus:ring-coral" />
+              Include attendance tracking
+            </label>
           </div>
-          <div class="border border-warm-border rounded-sm overflow-hidden">
-            <div v-for="(m, i) in form.attendance" :key="i" class="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border-b border-warm-border last:border-b-0 hover:bg-cream/50 min-h-[44px]" :class="m.present ? '' : 'opacity-50'">
-              <input type="checkbox" v-model="m.present" class="rounded border-warm-border text-coral focus:ring-coral shrink-0 w-4 h-4 sm:w-auto sm:h-auto" />
-              <input v-model="m.name" type="text" placeholder="Member name" class="flex-1 min-w-0 px-2 py-1.5 sm:py-1 border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-sm" :class="hasError('attendance.' + i + '.name') ? 'border-coral' : 'border-warm-border'" @click.stop />
-              <input v-model="m.designation" type="text" placeholder="Designation" class="w-24 sm:w-36 shrink-0 px-2 py-1.5 sm:py-1 border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-xs hidden sm:block" :class="hasError('attendance.' + i + '.designation') ? 'border-coral' : 'border-warm-border'" @click.stop />
-              <button @click="removeMember(i)" class="shrink-0 px-2.5 py-1.5 sm:py-1 text-coral hover:bg-coral/10 rounded-sm transition-colors text-sm min-h-[36px] flex items-center" :disabled="form.attendance.length <= 1">&times;</button>
+          <div v-if="showAttendance" :class="hasError('attendance') ? 'border-coral' : ''">
+            <p v-if="fieldError('attendance')" class="mb-3 text-xs text-coral">{{ fieldError('attendance') }}</p>
+            <div class="flex gap-2 mb-3 items-center flex-wrap">
+              <button @click="toggleAttendanceAll(true)" class="px-3 py-2 min-h-[38px] bg-mint text-ink text-xs rounded-sm hover:bg-mint/80 transition-colors">All Present</button>
+              <button @click="toggleAttendanceAll(false)" class="px-3 py-2 min-h-[38px] bg-ink text-white text-xs rounded-sm hover:bg-coral transition-colors">All Absent</button>
+              <span class="text-sm text-warm-muted ml-auto">{{ attendancePresent.length }} present</span>
             </div>
+            <div class="border border-warm-border rounded-sm overflow-hidden">
+              <div v-for="(m, i) in form.attendance" :key="i" class="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border-b border-warm-border last:border-b-0 hover:bg-cream/50 min-h-[44px]" :class="m.present ? '' : 'opacity-50'">
+                <input type="checkbox" v-model="m.present" class="rounded border-warm-border text-coral focus:ring-coral shrink-0 w-4 h-4 sm:w-auto sm:h-auto" />
+                <input v-model="m.name" type="text" placeholder="Member name" class="flex-1 min-w-0 px-2 py-1.5 sm:py-1 border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-sm" :class="hasError('attendance.' + i + '.name') ? 'border-coral' : 'border-warm-border'" @click.stop />
+                <input v-model="m.designation" type="text" placeholder="Designation" class="w-24 sm:w-36 shrink-0 px-2 py-1.5 sm:py-1 border rounded-sm bg-warm-surface text-ink focus:ring-2 focus:ring-coral focus:border-coral text-xs hidden sm:block" :class="hasError('attendance.' + i + '.designation') ? 'border-coral' : 'border-warm-border'" @click.stop />
+                <button @click="removeMember(i)" class="shrink-0 px-2.5 py-1.5 sm:py-1 text-coral hover:bg-coral/10 rounded-sm transition-colors text-sm min-h-[36px] flex items-center" :disabled="form.attendance.length <= 1">&times;</button>
+              </div>
+            </div>
+            <button @click="addMember" class="mt-3 px-4 py-2.5 min-h-[44px] bg-sky text-white text-sm rounded-sm hover:bg-sky/80 transition-colors">+ Add Member</button>
           </div>
-          <button @click="addMember" class="mt-3 px-4 py-2.5 min-h-[44px] bg-sky text-white text-sm rounded-sm hover:bg-sky/80 transition-colors">+ Add Member</button>
+          <p v-else class="text-sm text-warm-muted">Attendance tracking is disabled. Member list and summary counts will not appear in the output.</p>
         </div>
       </div>
 
@@ -670,7 +690,7 @@ function handleImportFile(e) {
       </div>
 
       <div v-show="currentStep === 3">
-        <div class="bg-warm-surface border border-warm-border p-6 rounded-sm">
+        <div v-if="showAttendance && form.type !== 'zonal'" class="bg-warm-surface border border-warm-border p-6 rounded-sm">
           <h2 class="font-display text-lg font-bold text-ink mb-4">Summary</h2>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div>
@@ -710,7 +730,7 @@ function handleImportFile(e) {
           </div>
         </div>
 
-        <div class="bg-warm-surface border border-warm-border p-6 rounded-sm mt-6">
+        <div v-if="form.type !== 'zonal'" class="bg-warm-surface border border-warm-border p-6 rounded-sm mt-6">
           <details :open="['sig_left_name','sig_left_title','sig_right_name','sig_right_title'].some(f => hasError(f))">
             <summary class="font-display text-lg font-bold text-ink mb-2 cursor-pointer select-none">Signatures</summary>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -791,7 +811,7 @@ function handleImportFile(e) {
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 text-left">
             <div class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Meeting</p>
-              <p class="text-sm font-medium text-ink truncate">{{ form.type === 'board' ? 'Board' : 'General' }} #{{ form.meeting_number }}</p>
+              <p class="text-sm font-medium text-ink truncate">{{ form.type === 'general' ? 'General' : form.type === 'board' ? 'Board' : 'Zonal' }} #{{ form.meeting_number }}</p>
             </div>
             <div class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Date</p>
@@ -801,7 +821,7 @@ function handleImportFile(e) {
               <p class="text-xs text-warm-muted">Club</p>
               <p class="text-sm font-medium text-ink truncate">{{ form.club_name || '—' }}</p>
             </div>
-            <div class="bg-cream rounded-sm p-3 min-w-0">
+            <div v-if="form.type !== 'zonal' && showAttendance" class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Attendance</p>
               <p class="text-sm font-medium text-ink truncate">{{ attendancePresent.length }} present</p>
             </div>
@@ -813,7 +833,7 @@ function handleImportFile(e) {
               <p class="text-xs text-warm-muted">Recurring</p>
               <p class="text-sm font-medium text-ink truncate">{{ form.recurring_items.length }} selected</p>
             </div>
-            <div class="bg-cream rounded-sm p-3 min-w-0">
+            <div v-if="form.type !== 'zonal' && showAttendance" class="bg-cream rounded-sm p-3 min-w-0">
               <p class="text-xs text-warm-muted">Total Present</p>
               <p class="text-sm font-medium text-ink truncate">{{ totalPresent }}</p>
             </div>
