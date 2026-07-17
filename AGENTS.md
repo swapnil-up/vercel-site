@@ -20,12 +20,14 @@ Then use `php artisan serve` or your preferred Laravel local server.
 
 ```
 vercel-site/
-├── articles/           # Old article storage (markdown files with frontmatter)
+├── articles/           # Only now.md (manually kept)
 ├── app/
-│   ├── Console/Commands/ImportPosts.php  # Primary command: posts:import
-│   └── Models/Post.php                  # New post model
+│   ├── Console/Commands/ImportPosts.php  # Import command: posts:import
+│   ├── Console/Commands/ExportPosts.php  # Export command: posts:export
+│   └── Models/Post.php                  # Post model
 ├── database/database.sqlite             # SQLite database
 ├── graph/              # Graph data (JSON files for connections/thoughts)
+├── posts/              # Exported markdown files (gitignored)
 ├── public/achievements.txt  # Tracker data source
 ├── resources/js/
 │   ├── Pages/         # Vue pages (Components, Tools, Posts subdirs)
@@ -56,6 +58,18 @@ php artisan posts:import <path> [--prune]
 - Arguments:
   - `<path>` - Directory to scan for .md files (recursive)
   - Supports multiple import sources
+
+### Posts Export
+```bash
+php artisan posts:export [--dir=<path>] [--dry-run]
+```
+- **Reverse of import**: Writes all DB posts back to markdown files with YAML frontmatter
+- **Content preserved**: Exports raw wikilink content (not HTML), preserving `[[slug]]` syntax
+- **Idempotent**: Skips files that haven't changed (compares against existing content)
+- **Default directory**: `posts/` (project root)
+- **--dir**: Specify a custom output directory
+- **--dry-run**: Preview which files would be written
+- **Cross-device workflow**: Run after import to materialize files, then import on another machine (gitignored, use for backup/snapshot purposes)
 
 ### Database Seeding
 ```bash
@@ -122,6 +136,21 @@ The tracker at `/tracker` reads from `public/achievements.txt` - a plain text fi
   - Tag highlighting - click tags to highlight related nodes
 
 ## Common Tasks
+
+### Cross-device sync workflow
+```bash
+# On device A: write/edit markdown files in articles/
+php artisan posts:import articles/  # Load into local DB
+# Then commit and push articles/ to git
+
+# On device B: pull git, then
+php artisan posts:import articles/  # Load into local DB
+```
+
+### Export DB back to files (e.g., after manual DB edits)
+```bash
+php artisan posts:export --dir=./posts
+```
 
 ### Import articles from a new source
 ```bash
