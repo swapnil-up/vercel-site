@@ -54,23 +54,10 @@ $kernel->call('migrate', [
     '--force' => true,
 ]);
 
-// Clone data repo if needed
-$repoPath = '/tmp/nepal-news-data';
-$repoUrl = $_ENV['NEPAL_NEWS_REPO_URL'] ?? 'https://github.com/swapnil-up/nepal-news-data.git';
-
-if (! is_dir("{$repoPath}/.git")) {
-    exec("git clone {$repoUrl} {$repoPath} 2>&1", $output, $exitCode);
-    if ($exitCode !== 0) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Failed to clone data repo', 'output' => $output]);
-        exit;
-    }
-}
-
-// Run pipeline: scrape → process → publish
+// Run pipeline: scrape → process → publish (to GitHub via API)
 $kernel->call('nepal:scrape');
 $kernel->call('nepal:process', ['--limit' => 100]);
-$kernel->call('nepal:publish', ['--repo' => $repoPath]);
+$kernel->call('nepal:publish');
 
 http_response_code(200);
 echo json_encode([

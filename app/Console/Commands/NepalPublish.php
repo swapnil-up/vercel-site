@@ -4,23 +4,25 @@ namespace App\Console\Commands;
 
 use App\Models\Article;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class NepalPublish extends Command
 {
-    protected $signature = 'nepal:publish {--repo= : Path to local clone of data repo}';
+    protected $signature = 'nepal:publish';
 
-    protected $description = 'Publish processed articles to GitHub data repo';
+    protected $description = 'Publish processed articles to GitHub data repo via API';
 
-    private string $repoPath;
+    private string $owner = 'swapnil-up';
+    private string $repo = 'nepal-news-data';
+    private string $branch = 'main';
 
     public function handle(): int
     {
-        $this->repoPath = $this->option('repo') ?? env('NEPAL_NEWS_REPO', '/tmp/nepal-news-data');
+        $token = env('GITHUB_TOKEN', '');
 
-        if (! is_dir($this->repoPath . '/.git')) {
-            $this->error("Not a git repo: {$this->repoPath}");
+        if (! $token) {
+            $this->error('GITHUB_TOKEN not set');
             return 1;
         }
 
@@ -33,16 +35,14 @@ class NepalPublish extends Command
             return 0;
         }
 
-        // Ensure directories exist
-        File::makeDirectory($this->repoPath . '/articles', 0755, true, true);
-
-        // Write each article as markdown with frontmatter
+        // Build index
         $index = [];
+        $files = [];
 
         foreach ($articles as $article) {
             $slug = $this->slugify($article);
             $filename = "{$slug}.md";
-            $filepath = $this->repoPath . '/articles/' . $filename;
+            $path = "articles/{$filename}";
 
             $frontmatter = [
                 'id' => $article->id,
@@ -59,8 +59,7 @@ class NepalPublish extends Command
             ];
 
             $content = $this->buildFrontmatter($frontmatter) . "\n\n" . ($article->body ?? '');
-
-            File::put($filepath, $content);
+            $files[$path] = $content;
 
             $index[] = [
                 'id' => $article->id,
@@ -73,27 +72,71 @@ class NepalPublish extends Command
                 'importance_score' => $article->importance_score,
                 'published_at' => $article->published_at?->toIso8601String(),
                 'keywords' => $article->keywords_json ?? [],
-                'file' => "articles/{$filename}",
+                'file' => $path,
             ];
         }
 
-        // Write index
+        // Add index.json
         $indexData = [
             'articles' => $index,
             'count' => count($index),
             'last_updated' => now()->toIso8601String(),
         ];
+        $files['index.json'] = json_encode($indexData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-        File::put(
-            $this->repoPath . '/index.json',
-            json_encode($indexData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-        );
+        // Upload each file
+        $uploaded = 0;
 
-        // Git commit and push
-        $this->gitCommit($articles->count());
+        foreach ($files as $path => $content) {
+            $success = $this->uploadFile($path, $content, $token);
 
-        $this->info("Published {$articles->count()} articles to data repo.");
+            if ($success) {
+                $this->info("  ✓ {$path}");
+                $uploaded++;
+            } else {
+                $this->error("  ✗ {$path}");
+            }
+
+            // Rate limit: GitHub allows 5000 req/hour, be conservative
+            usleep(100_000);
+        }
+
+        $this->info("Published {$uploaded}/" . count($files) . " files to GitHub.");
         return 0;
+    }
+
+    private function uploadFile(string $path, string $content, string $token): bool
+    {
+        $apiUrl = "https://api.github.com/repos/{$this->owner}/{$this->repo}/contents/{$path}";
+
+        // Get existing file SHA (needed for updates)
+        $sha = null;
+        $existing = Http::withHeaders([
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/vnd.github.v3+json',
+        ])->get($apiUrl);
+
+        if ($existing->successful()) {
+            $sha = $existing->json('sha');
+        }
+
+        // Create or update
+        $payload = [
+            'message' => 'Update ' . basename($path),
+            'content' => base64_encode($content),
+            'branch' => $this->branch,
+        ];
+
+        if ($sha) {
+            $payload['sha'] = $sha;
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/vnd.github.v3+json',
+        ])->put($apiUrl, $payload);
+
+        return $response->successful() || $response->status() === 201;
     }
 
     private function slugify(Article $article): string
@@ -134,33 +177,11 @@ class NepalPublish extends Command
         if (is_bool($value)) return $value ? 'true' : 'false';
         if (is_numeric($value)) return (string) $value;
 
-        // Quote strings that could be misinterpreted
         $str = (string) $value;
         if (in_array(strtolower($str), ['true', 'false', 'null', 'yes', 'no']) || str_contains($str, ':')) {
             return '"' . $str . '"';
         }
 
         return $str;
-    }
-
-    private function gitCommit(int $count): void
-    {
-        $repo = $this->repoPath;
-
-        exec("cd {$repo} && git add -A", $output, $exitCode);
-        if ($exitCode !== 0) {
-            $this->error('git add failed');
-            return;
-        }
-
-        $timestamp = now()->format('Y-m-d H:i:s');
-        exec("cd {$repo} && git commit -m 'Update: {$count} articles ({$timestamp})'", $output, $exitCode);
-
-        if ($exitCode === 0) {
-            exec("cd {$repo} && git push", $output, $exitCode);
-            if ($exitCode !== 0) {
-                $this->error('git push failed');
-            }
-        }
     }
 }
