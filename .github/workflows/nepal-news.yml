@@ -2,8 +2,8 @@ name: Nepal News Cron
 
 on:
   schedule:
-    - cron: '15 0 * * *'  # 00:15 UTC = 06:00 NPT
-  workflow_dispatch:  # Allow manual trigger
+    - cron: '30 0 * * *'  # 00:30 UTC = 06:15 NPT (after Groq daily reset)
+  workflow_dispatch:
 
 jobs:
   scrape-and-publish:
@@ -24,9 +24,7 @@ jobs:
         run: composer install --no-dev --optimize-autoloader
 
       - name: Setup SQLite
-        run: |
-          mkdir -p /tmp
-          touch /tmp/nepal_news.sqlite
+        run: touch /tmp/nepal_news.sqlite
 
       - name: Run migrations
         run: php artisan migrate --database=nepal_news --path=database/migrations_nepal_news --force
@@ -35,7 +33,7 @@ jobs:
         run: php artisan nepal:scrape
 
       - name: Process with Groq AI
-        run: php artisan nepal:process --limit=90
+        run: php artisan nepal:process --limit=25
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
 
