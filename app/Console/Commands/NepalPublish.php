@@ -125,6 +125,10 @@ class NepalPublish extends Command
             'message' => 'Update ' . basename($path),
             'content' => base64_encode($content),
             'branch' => $this->branch,
+            'committer' => [
+                'name' => 'github-actions[bot]',
+                'email' => '41898282+github-actions[bot]@users.noreply.github.com',
+            ],
         ];
 
         if ($sha) {
