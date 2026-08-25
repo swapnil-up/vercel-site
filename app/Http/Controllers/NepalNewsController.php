@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
-use Artisan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,11 +12,6 @@ class NepalNewsController extends Controller
 {
     public function index(Request $request): Response
     {
-        // Auto-seed if DB is empty (handles Vercel cold starts)
-        if (Article::count() === 0) {
-            $this->seedDatabase();
-        }
-
         $query = Article::processed()
             ->orderBy('published_at', 'desc');
 
@@ -96,28 +89,5 @@ class NepalNewsController extends Controller
             'count' => $articles->count(),
             'articles' => $articles,
         ]);
-    }
-
-    private function seedDatabase(): void
-    {
-        $dbPath = config('database.connections.nepal_news.database');
-        $dbDir = dirname($dbPath);
-
-        if (! File::isDirectory($dbDir)) {
-            File::makeDirectory($dbDir, 0755, true);
-        }
-
-        if (! File::exists($dbPath)) {
-            File::put($dbPath, '');
-        }
-
-        Artisan::call('migrate', [
-            '--database' => 'nepal_news',
-            '--path' => 'database/migrations_nepal_news',
-            '--force' => true,
-        ]);
-
-        Artisan::call('nepal:scrape');
-        Artisan::call('nepal:process', ['--limit' => 50]);
     }
 }
