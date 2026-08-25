@@ -1,8 +1,9 @@
 <?php
 
-// Vercel Cron endpoint for Nepal news scraping + processing
-// Triggers: nepal:scrape → nepal:process → nepal:publish
+// Vercel Cron endpoint for Nepal news
 // Schedule: daily at 00:15 UTC (= 06:00 NPT)
+
+define('LARAVEL_START', microtime(true));
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -10,7 +11,7 @@ $app = require_once __DIR__ . '/../bootstrap/app.php';
 
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 
-// Only allow Vercel cron invocations
+// Auth check
 $authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
 
 if (! str_starts_with($authorization, 'Bearer ')) {
@@ -34,8 +35,8 @@ if ($token !== $expectedToken) {
     exit;
 }
 
-// Ensure nepal_news DB exists
-$dbPath = config('database.connections.nepal_news.database');
+// Ensure DB file exists
+$dbPath = $_ENV['NEPAL_NEWS_DB'] ?? '/tmp/nepal_news.sqlite';
 $dbDir = dirname($dbPath);
 
 if (! is_dir($dbDir)) {
@@ -58,21 +59,17 @@ $repoPath = '/tmp/nepal-news-data';
 $repoUrl = $_ENV['NEPAL_NEWS_REPO_URL'] ?? 'https://github.com/swapnil-up/nepal-news-data.git';
 
 if (! is_dir("{$repoPath}/.git")) {
-    exec("git clone {$repoUrl} {$repoPath}", $output, $exitCode);
+    exec("git clone {$repoUrl} {$repoPath} 2>&1", $output, $exitCode);
     if ($exitCode !== 0) {
         http_response_code(500);
-        echo json_encode(['error' => 'Failed to clone data repo']);
+        echo json_encode(['error' => 'Failed to clone data repo', 'output' => $output]);
         exit;
     }
 }
 
-// Run scrape
+// Run pipeline: scrape → process → publish
 $kernel->call('nepal:scrape');
-
-// Run process
 $kernel->call('nepal:process', ['--limit' => 100]);
-
-// Run publish (writes to GitHub repo)
 $kernel->call('nepal:publish', ['--repo' => $repoPath]);
 
 http_response_code(200);
