@@ -34,6 +34,25 @@ if ($token !== $expectedToken) {
     exit;
 }
 
+// Ensure DB file exists
+$dbPath = config('database.connections.nepal_news.database');
+$dbDir = dirname($dbPath);
+
+if (! is_dir($dbDir)) {
+    mkdir($dbDir, 0755, true);
+}
+
+if (! file_exists($dbPath)) {
+    touch($dbPath);
+}
+
+// Run migration on nepal_news connection
+$kernel->call('migrate', [
+    '--database' => 'nepal_news',
+    '--path' => 'database/migrations_nepal_news',
+    '--force' => true,
+]);
+
 // Run scrape
 $status = $kernel->call('nepal:scrape');
 
