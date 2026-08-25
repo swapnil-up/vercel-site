@@ -2,6 +2,8 @@
 
 // Vercel Cron endpoint for Nepal news
 // Schedule: daily at 00:15 UTC (= 06:00 NPT)
+// Scrapes RSS and publishes raw articles to GitHub data repo.
+// AI processing runs separately via nepal:process.
 
 define('LARAVEL_START', microtime(true));
 
@@ -54,9 +56,10 @@ $kernel->call('migrate', [
     '--force' => true,
 ]);
 
-// Run pipeline: scrape → process → publish (to GitHub via API)
+// Scrape RSS
 $kernel->call('nepal:scrape');
-$kernel->call('nepal:process', ['--limit' => 15]);
+
+// Publish raw articles (no AI processing — too slow for serverless)
 $kernel->call('nepal:publish');
 
 http_response_code(200);
