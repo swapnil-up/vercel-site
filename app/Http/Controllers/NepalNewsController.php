@@ -99,10 +99,14 @@ class NepalNewsController extends Controller
     private function fetchIndex(): array
     {
         $cacheKey = 'nepal_news_index';
-        $cached = cache()->get($cacheKey);
 
-        if ($cached) {
-            return $cached;
+        try {
+            $cached = cache()->get($cacheKey);
+            if ($cached) {
+                return $cached;
+            }
+        } catch (\Throwable $e) {
+            // Cache not available, continue without it
         }
 
         $response = Http::timeout(10)
@@ -114,8 +118,11 @@ class NepalNewsController extends Controller
 
         $data = $response->json('articles', []);
 
-        // Cache for 5 minutes
-        cache()->put($cacheKey, $data, 300);
+        try {
+            cache()->put($cacheKey, $data, 300);
+        } catch (\Throwable $e) {
+            // Cache not available, continue without it
+        }
 
         return $data;
     }
