@@ -6,7 +6,8 @@
             "runtime": "vercel-php@0.7.1"
         },
         "api/nepal-news-cron.php": {
-            "runtime": "vercel-php@0.7.1"
+            "runtime": "vercel-php@0.7.1",
+            "maxDuration": 120
         }
     },
     "redirects": [

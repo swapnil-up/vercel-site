@@ -56,7 +56,7 @@ $kernel->call('migrate', [
 
 // Run pipeline: scrape → process → publish (to GitHub via API)
 $kernel->call('nepal:scrape');
-$kernel->call('nepal:process', ['--limit' => 100]);
+$kernel->call('nepal:process', ['--limit' => 15]);
 $kernel->call('nepal:publish');
 
 http_response_code(200);
