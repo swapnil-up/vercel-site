@@ -14,6 +14,14 @@ return [
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
 
+        'nepal_news' => [
+            'driver' => 'sqlite',
+            'url' => env('NEPAL_NEWS_DB_URL'),
+            'database' => env('NEPAL_NEWS_DB', '/tmp/nepal_news.sqlite'),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+        ],
+
     ],
 
     'migrations' => [

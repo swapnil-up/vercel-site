@@ -124,5 +124,4 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
 Route::get('/nepal-news', [NepalNewsController::class, 'index'])->name('nepal-news.index');
 Route::get('/nepal-news/api', [NepalNewsController::class, 'api'])->name('nepal-news.api');
-Route::get('/nepal-news/{id}', [NepalNewsController::class, 'show'])->name('nepal-news.show');
-Route::get('/nepal-news/setup', NepalNewsSetupController::class)->name('nepal-news.setup');
+Route::get('/nepal-news/{slug}', [NepalNewsController::class, 'show'])->name('nepal-news.show');

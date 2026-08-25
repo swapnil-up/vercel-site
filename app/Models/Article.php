@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Article extends Model
 {
+    protected $connection = 'nepal_news';
+
     protected $fillable = [
         'source',
         'source_url',

@@ -166,7 +166,7 @@ function formatDate(date) {
 
         <h2 class="font-display text-xl font-bold text-ink mb-2">
           <Link
-            :href="`/nepal-news/${article.id}`"
+            :href="`/nepal-news/${article.slug}`"
             class="hover:text-coral transition-colors"
           >
             {{ article.title }}
