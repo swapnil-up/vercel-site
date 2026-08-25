@@ -1,0 +1,45 @@
+name: Nepal News Cron
+
+on:
+  schedule:
+    - cron: '15 0 * * *'  # 00:15 UTC = 06:00 NPT
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  scrape-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout vercel-site
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: simplexml, mbstring, dom
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Setup SQLite
+        run: |
+          mkdir -p /tmp
+          touch /tmp/nepal_news.sqlite
+
+      - name: Run migrations
+        run: php artisan migrate --database=nepal_news --path=database/migrations_nepal_news --force
+
+      - name: Scrape RSS feeds
+        run: php artisan nepal:scrape
+
+      - name: Process with Groq AI
+        run: php artisan nepal:process --limit=90
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
+      - name: Publish to data repo
+        run: php artisan nepal:publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
