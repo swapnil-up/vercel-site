@@ -4,6 +4,9 @@
     "functions": {
         "api/index.php": {
             "runtime": "vercel-php@0.7.1"
+        },
+        "api/nepal-news-cron.php": {
+            "runtime": "vercel-php@0.7.1"
         }
     },
     "redirects": [
@@ -32,6 +35,10 @@
             "dest": "/$1"
         },
         {
+            "src": "/api/nepal-news/cron",
+            "dest": "/api/nepal-news-cron.php"
+        },
+        {
             "src": "/(.*)",
             "dest": "/api/index.php"
         }
@@ -52,5 +59,11 @@
         "LOG_CHANNEL": "stderr",
         "SESSION_DRIVER": "cookie"
     },
-    "outputDirectory": "public"
+    "outputDirectory": "public",
+    "crons": [
+        {
+            "path": "/api/nepal-news/cron",
+            "schedule": "15 0 * * *"
+        }
+    ]
 }
