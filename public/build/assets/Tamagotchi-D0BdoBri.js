@@ -1,1 +1,0 @@
-import{T as t}from"./Tamagotchi-D-aUNErN.js";import{c as o,o as a,b as e}from"./app-CoO_P7hW.js";import"./_plugin-vue_export-helper-DlAUqK2U.js";/* empty css            */const c={class:"pt-12"},l={__name:"Tamagotchi",setup(r){return(s,m)=>(a(),o("div",c,[e(t)]))}};export{l as default};

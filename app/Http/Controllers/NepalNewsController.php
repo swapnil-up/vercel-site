@@ -25,6 +25,10 @@ class NepalNewsController extends Controller
             $articles = collect($articles)->where('source', $request->input('source'))->values()->all();
         }
 
+        if ($request->filled('sentiment')) {
+            $articles = collect($articles)->where('sentiment', $request->input('sentiment'))->values()->all();
+        }
+
         if ($request->filled('days')) {
             $since = now()->subDays((int) $request->input('days'));
             $articles = collect($articles)->filter(function ($a) use ($since) {
@@ -53,7 +57,7 @@ class NepalNewsController extends Controller
             ],
             'categories' => $categories,
             'sources' => $sources,
-            'filters' => $request->only(['category', 'source', 'days']),
+            'filters' => $request->only(['category', 'source', 'sentiment', 'days']),
         ]);
     }
 

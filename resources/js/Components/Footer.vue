@@ -18,6 +18,7 @@ import { Link } from '@inertiajs/vue3';
           <h4 class="font-display text-sm font-bold text-mustard mb-3">Navigate</h4>
           <ul class="space-y-2 text-sm text-white/70">
             <li><Link href="/posts" class="hover:text-coral transition-colors">Writing</Link></li>
+            <li><Link href="/nepal-news" class="hover:text-coral transition-colors">Nepal News</Link></li>
             <li><Link href="/graph" class="hover:text-coral transition-colors">Graph</Link></li>
             <li><Link href="/tracker" class="hover:text-coral transition-colors">Tracker</Link></li>
             <li><Link href="/now" class="hover:text-coral transition-colors">Now</Link></li>
