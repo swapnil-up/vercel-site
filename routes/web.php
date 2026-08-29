@@ -90,6 +90,12 @@ Route::get('/tools/rantim', fn() => inertia('Tools/RanTim', [
     ],
 ]));
 
+Route::get('/tools/particle-life', fn() => inertia('Tools/ParticleLife', [
+    'meta' => [
+        'title' => 'Particle Life — Tools — Swapnil Upadhyay',
+    ],
+]));
+
 Route::get('/tracker', fn() => inertia('Tracker', [
     'meta' => [
         'title' => 'Tracker — Swapnil Upadhyay',
