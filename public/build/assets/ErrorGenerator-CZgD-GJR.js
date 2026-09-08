@@ -1,1 +1,0 @@
-import{_ as e}from"./ErrorMessageGenerator-BYnjIDpo.js";import{c as r,o,b as t}from"./app-vq2m5wbf.js";/* empty css            */const a={class:"pt-12"},i={__name:"ErrorGenerator",setup(s){return(c,_)=>(o(),r("div",a,[t(e)]))}};export{i as default};
