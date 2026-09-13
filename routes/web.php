@@ -96,6 +96,12 @@ Route::get('/tools/particle-life', fn() => inertia('Tools/ParticleLife', [
     ],
 ]));
 
+Route::get('/tools/space-explorer', fn() => inertia('Tools/SpaceExplorer', [
+    'meta' => [
+        'title' => 'Space Explorer — Tools — Swapnil Upadhyay',
+    ],
+]));
+
 Route::get('/tracker', fn() => inertia('Tracker', [
     'meta' => [
         'title' => 'Tracker — Swapnil Upadhyay',
