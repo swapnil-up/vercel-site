@@ -727,7 +727,7 @@ const loadProgress = () => {
     pet.value = { ...pet.value, ...data }
     const timePassed = Math.floor((Date.now() - data.lastSeen) / 60000)
     pet.value.hunger = Math.max(0, pet.value.hunger - timePassed * 2)
-    pet.value.boredom = Math.max(0, pet.value.boredom - timePassed)
+    pet.value.boredom = Math.min(100, pet.value.boredom + timePassed)
     pet.value.love = Math.max(0, pet.value.love - timePassed)
   }
   const bestMemory = localStorage.getItem('blobbyMemoryBest')
@@ -740,7 +740,7 @@ const startDecay = () => {
   decayInterval.value = setInterval(() => {
     if (!isSleeping.value) {
       pet.value.hunger = Math.max(0, pet.value.hunger - 1)
-      pet.value.boredom = Math.max(0, pet.value.boredom - 1)
+      pet.value.boredom = Math.min(100, pet.value.boredom + 1)
       pet.value.love = Math.max(0, pet.value.love - 1)
     } else {
       pet.value.love = Math.min(100, pet.value.love + 0.5)
