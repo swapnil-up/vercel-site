@@ -14,6 +14,7 @@ const isRecording = ref(false)
 const recordingDuration = ref(0)
 const engineReady = ref(false)
 const modelReady = ref(false)
+const audioSupported = ref(true)
 
 let whisperInstance = null
 let audioData = null
@@ -66,6 +67,10 @@ function checkCachedModel() {
 }
 
 onMounted(async () => {
+  audioSupported.value = typeof window.AudioContext !== 'undefined' || typeof window.webkitAudioContext !== 'undefined'
+  if (!audioSupported.value) {
+    error.value = 'This browser does not support Web Audio — recording and transcription are unavailable.'
+  }
   await loadCOI()
 
   phase.value = 'loading-engine'
@@ -132,6 +137,7 @@ onMounted(async () => {
     }
   } catch (e) {
     error.value = e.message
+    phase.value = 'init'
   }
 })
 
@@ -179,9 +185,22 @@ async function loadModel() {
   )
 }
 
+function retryLoad() {
+  error.value = ''
+  if (engineReady.value) {
+    loadModel()
+  } else {
+    window.location.reload()
+  }
+}
+
 async function handleFileUpload(e) {
   const file = e.target.files?.[0]
   if (!file) return
+  if (!audioSupported.value) {
+    error.value = 'Web Audio is not supported in this browser.'
+    return
+  }
 
   phase.value = 'transcribing'
   status.value = 'Decoding audio...'
@@ -195,6 +214,10 @@ async function handleFileUpload(e) {
 }
 
 async function startRecording() {
+  if (!audioSupported.value) {
+    error.value = 'Web Audio is not supported in this browser.'
+    return
+  }
   try {
     if (!audioContext) {
       audioContext = new AudioContext({ sampleRate: kSampleRate })
@@ -342,7 +365,11 @@ function formatTime(s) {
       </div>
 
       <div v-if="error" class="mb-6 p-4 bg-coral/10 border border-coral/20 rounded-sm text-coral text-sm">
-        {{ error }}
+        <p class="mb-3">{{ error }}</p>
+        <p class="text-xs opacity-70 mb-3">The engine runs locally via WASM; only the model file downloads from Hugging Face. Check your connection and try again.</p>
+        <button @click="retryLoad" class="px-3 py-1.5 bg-coral text-white text-xs font-medium rounded-sm hover:bg-coral/80 transition-colors">
+          Retry
+        </button>
       </div>
 
       <!-- Model Section -->
@@ -391,7 +418,11 @@ function formatTime(s) {
 
       <!-- Input Section -->
       <div class="mb-6 transition-opacity duration-300"
-        :class="{ 'opacity-30 pointer-events-none': !modelReady && phase !== 'recording' }">
+        :class="{ 'opacity-30 pointer-events-none': (!modelReady && phase !== 'recording') || !audioSupported }">
+
+        <div v-if="!audioSupported" class="mb-3 p-3 bg-coral/10 border border-coral/20 rounded-sm text-coral text-xs">
+          Web Audio is not available in this browser — recording and file transcription are disabled.
+        </div>
 
         <div class="grid grid-cols-2 gap-3">
           <!-- Record Card -->

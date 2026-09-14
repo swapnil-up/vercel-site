@@ -45,6 +45,7 @@
  type="range" min="0" max="255"
  :disabled="!hasImage"
  class="w-full accent-coral cursor-pointer disabled:opacity-30 mb-3"
+ @mousedown="saveUndoState"
  @input="applyFilter"
  />
  <div class="flex items-center justify-between text-xs mb-1">
@@ -189,9 +190,20 @@
  </div>
  </section>
 
- <!-- 06 Export -->
+ <!-- 06 Undo -->
  <section>
- <h3 class="sidebar-heading">06 — Export</h3>
+ <button
+ :disabled="!canUndo || cropMode"
+ class="font-display w-full text-left px-3 py-2 text-xs font-bold tracking-wide border-2 border-warm-border hover:border-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+ @click="undo"
+ >
+ ↩ Undo <span class="text-warm-muted">Ctrl+Z</span>
+ </button>
+ </section>
+
+ <!-- 07 Export -->
+ <section>
+ <h3 class="sidebar-heading">07 — Export</h3>
  <button
  :disabled="!hasImage || cropMode"
  class="font-display w-full text-left px-3 py-2 text-xs font-bold tracking-wide border-2 border-coral bg-coral text-white hover:bg-coral/80 hover:border-coral/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
@@ -239,6 +251,7 @@
  class="relative inline-block shadow-[4px_4px_0_rgba(0,0,0,0.3),8px_8px_0_rgba(0,0,0,0.1)]"
  :class="cropMode ? 'cursor-crosshair' : textMode ? 'cursor-text' : 'cursor-default'"
  @mousedown="onContainerMousedown"
+ @touchstart.passive="cropMode ? startCropDragTouch($event) : null"
  @click="onContainerClick"
  >
  <canvas ref="canvasRef" class="block" />
@@ -376,6 +389,49 @@ const labelBold = ref(false)
 const labelItalic = ref(false)
 const labelFont = ref("'Space Mono', monospace")
 
+// ─── Undo history ────────────────────────────────────────────────────────────
+const undoStack = []
+const MAX_UNDO = 20
+
+function saveUndoState() {
+ const canvas = canvasRef.value
+ if (!canvas) return
+ const ctx = canvas.getContext('2d')
+ const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+ const labelsCopy = JSON.parse(JSON.stringify(labels))
+ undoStack.push({
+ imageData,
+ labels: labelsCopy,
+ labelCounter,
+ threshold: threshold.value,
+ invert: invert.value,
+ cropRect: cropRect.value ? { ...cropRect.value } : null,
+ })
+ if (undoStack.length > MAX_UNDO) undoStack.shift()
+}
+
+function undo() {
+ if (undoStack.length === 0) return
+ const canvas = canvasRef.value
+ if (!canvas) return
+ const ctx = canvas.getContext('2d')
+ const s = undoStack.pop()
+ canvas.width = s.imageData.width
+ canvas.height = s.imageData.height
+ ctx.putImageData(s.imageData, 0, 0)
+ labels.length = 0
+ s.labels.forEach(l => labels.push(l))
+ labelCounter = s.labelCounter
+ threshold.value = s.threshold
+ invert.value = s.invert
+ cropRect.value = s.cropRect
+ cropMode.value = false
+ cropSelection.value = null
+ selectedLabelId.value = null
+}
+
+const canUndo = computed(() => undoStack.length > 0)
+
 // ─── Image loading ────────────────────────────────────────────────────────────
 function onFileChange(e) {
  const file = e.target.files?.[0]
@@ -449,6 +505,7 @@ function enterCropMode() {
 function confirmCrop() {
  const sel = cropSelection.value
  if (sel && sel.w > 2 && sel.h > 2) {
+ saveUndoState()
  cropRect.value = { ...sel }
  }
  cropMode.value = false
@@ -478,6 +535,43 @@ function startCropDrag(e) {
  cropSelection.value = { x, y, w: 0, h: 0 }
  window.addEventListener('mousemove', onCropMove)
  window.addEventListener('mouseup', onCropUp)
+}
+
+function startCropDragTouch(e) {
+ if (!cropMode.value || !containerRef.value || !e.touches?.[0]) return
+ const touch = e.touches[0]
+ const rect = containerRef.value.getBoundingClientRect()
+ const z = zoom.value
+ const x = Math.max(0, (touch.clientX - rect.left) / z)
+ const y = Math.max(0, (touch.clientY - rect.top) / z)
+ cropDragState = { startX: x, startY: y }
+ cropSelection.value = { x, y, w: 0, h: 0 }
+ window.addEventListener('touchmove', onCropMoveTouch, { passive: true })
+ window.addEventListener('touchend', onCropUpTouch)
+ e.preventDefault()
+}
+
+function onCropMoveTouch(e) {
+ if (!cropDragState || !containerRef.value || !e.touches?.[0]) return
+ const touch = e.touches[0]
+ const rect = containerRef.value.getBoundingClientRect()
+ const z = zoom.value
+ const canvas = canvasRef.value
+ const cx = Math.max(0, Math.min(canvas.width, (touch.clientX - rect.left) / z))
+ const cy = Math.max(0, Math.min(canvas.height, (touch.clientY - rect.top) / z))
+ const { startX, startY } = cropDragState
+ cropSelection.value = {
+ x: Math.round(Math.min(cx, startX)),
+ y: Math.round(Math.min(cy, startY)),
+ w: Math.round(Math.abs(cx - startX)),
+ h: Math.round(Math.abs(cy - startY)),
+ }
+}
+
+function onCropUpTouch() {
+ cropDragState = null
+ window.removeEventListener('touchmove', onCropMoveTouch)
+ window.removeEventListener('touchend', onCropUpTouch)
 }
 
 function onCropMove(e) {
@@ -686,6 +780,10 @@ function onKeyDown(e) {
  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedLabelId.value) {
  if (document.activeElement?.tagName === 'INPUT') return
  deleteLabel(selectedLabelId.value)
+ }
+ if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+ e.preventDefault()
+ undo()
  }
 }
 

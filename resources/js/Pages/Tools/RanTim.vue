@@ -62,11 +62,35 @@ let scene: THREE.Scene | null = null
 let dice: THREE.Mesh | null = null
 let renderer: THREE.WebGLRenderer | null = null
 let timerInterval: number | null = null
+let animationId: number | null = null
+let handleResize: (() => void) | null = null
 
 const velocity = { x: 0, y: 0, z: 0 }
 const angularVelocity = { x: 0, y: 0, z: 0 }
 const DICE_SIZE = 0.8
 const BOUNDARY = 3.5
+const ROLL_TIMEOUT_MS = 6000
+let rollStartTime = 0
+
+// Short click when the dice is thrown — auditory feedback for the roll
+const playThrowSound = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    if (ctx.state === 'suspended') ctx.resume()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(600, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.12)
+    gain.gain.setValueAtTime(0.2, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.12)
+    osc.onended = () => ctx.close()
+  } catch { /* audio unavailable — silent */ }
+}
 
 const createDiceTexture = (number: number): THREE.CanvasTexture => {
   const canvas = document.createElement('canvas')
@@ -177,7 +201,7 @@ onMounted(() => {
   scene.add(dice)
 
   // Handle window resize
-  const handleResize = () => {
+  handleResize = () => {
     const width = window.innerWidth
     const height = window.innerHeight
     camera.aspect = width / height
@@ -189,7 +213,7 @@ onMounted(() => {
 
   // Animation loop
   const animate = () => {
-    requestAnimationFrame(animate)
+    animationId = requestAnimationFrame(animate)
 
     if (dice) {
       if (state.isRolling) {
@@ -232,11 +256,12 @@ onMounted(() => {
           velocity.y *= -0.8
         }
 
-        // Check if dice has stopped
+        // Check if dice has stopped (velocity threshold with a timeout fallback
+        // so a low-energy rattle can never roll forever)
         const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2 + velocity.z ** 2)
         const angularSpeed = Math.sqrt(angularVelocity.x ** 2 + angularVelocity.y ** 2 + angularVelocity.z ** 2)
 
-        if (speed < 0.01 && angularSpeed < 0.01) {
+        if ((speed < 0.01 && angularSpeed < 0.01) || performance.now() - rollStartTime > ROLL_TIMEOUT_MS) {
           state.isRolling = false
           snapDiceToFace(dice)
           state.result = getDiceResult(dice)
@@ -378,7 +403,9 @@ const handleMouseDown = (e: MouseEvent) => {
   const handleMouseUp = () => {
     document.removeEventListener('mousemove', handleMouseMove)
     document.removeEventListener('mouseup', handleMouseUp)
+    rollStartTime = performance.now()
     state.isRolling = true
+    playThrowSound()
   }
 
   document.addEventListener('mousemove', handleMouseMove)
@@ -407,7 +434,9 @@ const handleTouchStart = (e: TouchEvent) => {
   const handleTouchEnd = () => {
     document.removeEventListener('touchmove', handleTouchMove)
     document.removeEventListener('touchend', handleTouchEnd)
+    rollStartTime = performance.now()
     state.isRolling = true
+    playThrowSound()
   }
 
   document.addEventListener('touchmove', handleTouchMove)
@@ -435,6 +464,13 @@ const resetGame = () => {
 
   if (timerInterval) clearInterval(timerInterval)
 }
+
+onUnmounted(() => {
+  if (animationId) cancelAnimationFrame(animationId)
+  if (timerInterval) clearInterval(timerInterval)
+  if (handleResize) window.removeEventListener('resize', handleResize)
+  if (renderer) { renderer.dispose(); renderer.domElement.remove() }
+})
 </script>
 
 <style scoped>

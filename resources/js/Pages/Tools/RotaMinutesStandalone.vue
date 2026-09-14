@@ -6,7 +6,7 @@ import { prepareFormData, printHtml } from '../../Utils/rotaMinutesPrint.js'
 import { downloadJson } from '../../Utils/rotaFormIO.js'
 import PreviewModal from '../../Components/PreviewModal.vue'
 
-const SAVE_KEY = 'rota-minutes-standalone-form'
+const SAVE_KEY = 'site_rota-minutes-standalone-form'
 
 const props = defineProps({
   config: { type: Object, default: () => ({}) },

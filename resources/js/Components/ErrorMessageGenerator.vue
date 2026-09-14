@@ -102,6 +102,7 @@ const maxConfirmations = ref(3)
 const shuffledConfirmations = ref([])
 const shuffledTechMessages = ref([])
 const shuffledErrors = ref([])
+const isTransitioning = ref(false)
 
 let progressInterval = null
 let techMessageInterval = null
@@ -193,6 +194,8 @@ const getCurrentPrompt = () => {
 }
 
 const startCLI = () => {
+  if (isTransitioning.value) return
+  isTransitioning.value = true
   currentState.value = 'confirming'
   confirmationCount.value = 0
   maxConfirmations.value = Math.floor(Math.random() * 3) + 3 
@@ -272,12 +275,14 @@ const startProgress = () => {
     const randomError = shuffledErrors.value[0] 
     currentError.value = randomError
     currentState.value = 'error'
+    isTransitioning.value = false
     techMessage.value = ''
   }, 8000)
 }
 
 const reset = () => {
   currentState.value = 'idle'
+  isTransitioning.value = false
   confirmationCount.value = 0
   userInput.value = ''
   progress.value = 0

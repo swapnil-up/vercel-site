@@ -95,6 +95,9 @@
 
         <div class="text-center mt-8">
           <div class="text-[#d4a04a]/20 text-[10px] font-mono tracking-[0.2em]">{{ discoveredCount }}/{{ totalRooms }} catalogued</div>
+          <button @click="copyLayoutLink" class="mt-2 text-[#d4a04a]/30 text-[10px] font-mono tracking-[0.2em] hover:text-[#d4a04a]/70 transition-colors" title="Copy a link that replays this exact layout">
+            LAYOUT #{{ seed }} — COPY LINK
+          </button>
         </div>
 
         <div class="text-center mt-4">
@@ -131,6 +134,16 @@
         <button @click="startExperience" class="corridor-btn group">
           <span class="relative z-10 font-display text-sm tracking-[0.25em] group-hover:text-[#0d0a06] transition-colors duration-300">Begin</span>
         </button>
+
+        <div class="mt-8 flex items-center justify-center gap-2">
+          <span class="text-[#d4a04a]/30 text-[10px] font-mono tracking-[0.2em]">LAYOUT</span>
+          <input
+            v-model="seedInput"
+            inputmode="numeric"
+            class="w-24 bg-transparent border border-[#b8860b]/20 px-2 py-1 text-center text-[#d4a04a]/70 text-[11px] font-mono tracking-[0.15em] focus:outline-none focus:border-[#b8860b]/50"
+            title="Enter a layout seed to replay a specific corridor"
+          />
+        </div>
 
         <div class="flex items-center justify-center gap-3 mt-12">
           <div class="h-px w-8 bg-[#b8860b]/15"></div>
@@ -204,6 +217,35 @@ const discovered = ref({})
 const showDiscoveryToast = ref(false)
 const discoveryToastName = ref('')
 const showCompletion = ref(false)
+const seed = ref(1)
+const seedInput = ref('')
+
+// Seeded RNG (mulberry32) — room layout is deterministic per seed so layouts can be replayed/shared
+function hashSeed(str) {
+  let h = 2166136261
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+let rng = mulberry32(1)
+function reseed(s) {
+  seed.value = s >>> 0
+  seedInput.value = String(seed.value)
+  rng = mulberry32(seed.value)
+}
+function randomSeed() {
+  return (Math.floor(Math.random() * 90000) + 10000) >>> 0
+}
 
 const allRooms = [
   { id: 'study', name: 'The Study', rarity: 'common', description: 'Floating books drift through warm lamplight. A magnifying glass turns slowly in the air.', type: 'study', bg: 0x1a150d, accent: 0xd4a04a },
@@ -222,6 +264,7 @@ const discoveredCount = computed(() => Object.keys(discovered.value).length)
 let scene, camera, renderer, clock
 let animationId
 let corridorSegments = []
+let spawnQueue = []
 let doors = []
 let currentDoorRoom = null
 let dustParticles
@@ -251,9 +294,111 @@ function roomDotClass(rarity) {
   return 'bg-[#b8860b]'
 }
 
+// ─── Shared assets ──────────────────────────────────────────────────────────
+// Everything a corridor segment needs is built ONCE here and reused.
+// Previously each spawned segment generated ~6500 canvas ops, 3 GPU texture
+// uploads, ~25 geometries and 7 lights synchronously mid-frame — the visible
+// hitch when walking into a new section. Caching also bounds the wall colour
+// drift (raw index used to push rgb() out of range far from spawn).
+let SHARED = null
+
+function initSharedAssets() {
+  if (SHARED) return SHARED
+  const wallTexes = []
+  const wallMats = []
+  for (let v = 0; v < 4; v++) {
+    const tex = generateWallTexture(v)
+    tex.repeat.set(2, 1)
+    wallTexes.push(tex)
+    wallMats.push(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.92, metalness: 0.02 }))
+  }
+  const floorTex = generateFloorTexture()
+  floorTex.repeat.set(4, 6)
+  const ceilTex = generateFloorTexture()
+  ceilTex.repeat.set(3, 6)
+  SHARED = {
+    wallTexes,
+    wallMats,
+    floorMat: new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.88, metalness: 0.02 }),
+    ceilMat: new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.95, metalness: 0 }),
+    beamMat: new THREE.MeshStandardMaterial({ color: 0x2a2015, roughness: 0.85, metalness: 0.05 }),
+    sconceMat: new THREE.MeshStandardMaterial({ color: BRASS, metalness: 0.85, roughness: 0.25 }),
+    shadeMat: new THREE.MeshStandardMaterial({
+      color: AMBER, emissive: AMBER, emissiveIntensity: 0.5,
+      transparent: true, opacity: 0.65, roughness: 0.3, metalness: 0.1,
+    }),
+    woodMat: new THREE.MeshStandardMaterial({ color: 0x1a120a, metalness: 0.1, roughness: 0.8 }),
+    wallGeo: new THREE.PlaneGeometry(SEGMENT_LENGTH, CORRIDOR_HEIGHT),
+    floorGeo: new THREE.PlaneGeometry(CORRIDOR_WIDTH, SEGMENT_LENGTH),
+    beamGeo: new THREE.BoxGeometry(CORRIDOR_WIDTH + 0.2, 0.2, 0.3),
+    bracketGeo: new THREE.BoxGeometry(0.3, 0.08, 0.15),
+    shadeGeo: new THREE.SphereGeometry(0.12, 8, 8),
+    frameSideGeo: new THREE.BoxGeometry(0.18, 3.2, 0.25),
+    frameTopGeo: new THREE.BoxGeometry(1.98, 0.18, 0.25),
+    trimGeo: new THREE.BoxGeometry(2.1, 0.04, 0.04),
+    panelGeo: new THREE.PlaneGeometry(1.7, 3.1),
+    borderGeo: new THREE.BoxGeometry(1.7, 0.03, 0.03),
+    handleGeo: new THREE.CylinderGeometry(0.025, 0.025, 0.2, 8),
+    // Door materials vary by room — cached per room id (8 max, shared across doors)
+    doorMats: {},
+  }
+  SHARED.sharedGeos = new Set(
+    Object.values(SHARED).filter(v => v && v.isBufferGeometry)
+  )
+  SHARED.sharedMats = new Set(
+    Object.values(SHARED).filter(v => v && v.isMaterial)
+  )
+  SHARED.sharedTexes = new Set(
+    [...SHARED.wallTexes, SHARED.floorMat.map, SHARED.ceilMat.map]
+  )
+  return SHARED
+}
+
+function wallVariant(index) {
+  return ((index % 4) + 4) % 4
+}
+
+// Per-room door materials (rarity colour + room accent), cached and shared
+function getDoorMats(roomDef) {
+  const cached = SHARED.doorMats[roomDef.id]
+  if (cached) return cached
+  const rarityColor = roomDef.rarity === 'rare' ? 0xd4a04a : roomDef.rarity === 'uncommon' ? 0xaab0bb : BRASS
+  const mats = {
+    brass: new THREE.MeshStandardMaterial({ color: rarityColor, metalness: 0.85, roughness: 0.2 }),
+    door: new THREE.MeshBasicMaterial({ color: roomDef.accent, transparent: true, opacity: 0.18 }),
+    border: new THREE.MeshStandardMaterial({ color: rarityColor, metalness: 0.85, roughness: 0.25, transparent: true, opacity: 0.5 }),
+    handle: new THREE.MeshStandardMaterial({ color: rarityColor, metalness: 0.9, roughness: 0.15 }),
+  }
+  SHARED.doorMats[roomDef.id] = mats
+  return mats
+}
+
+// Dispose a removed segment — skipping shared assets (geometries, materials,
+// textures flagged via the SHARED sets below; per-room door mats included)
+function isSharedAsset(obj) {
+  if (!SHARED || !obj) return false
+  if (SHARED.sharedGeos.has(obj) || SHARED.sharedMats.has(obj) || SHARED.sharedTexes.has(obj)) return true
+  return Object.values(SHARED.doorMats).some(mats => Object.values(mats).includes(obj))
+}
+
+function disposeSegment(seg) {
+  seg.group.traverse((obj) => {
+    if (obj.geometry && !isSharedAsset(obj.geometry)) obj.geometry.dispose()
+    if (obj.material) {
+      const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
+      mats.forEach((m) => {
+        if (isSharedAsset(m)) return
+        if (m.map && !isSharedAsset(m.map)) m.map.dispose()
+        m.dispose()
+      })
+    }
+  })
+  scene.remove(seg.group)
+}
+
 function pickRoomForSegment(index) {
-  // Weighted rarity: common 60%, uncommon 30%, rare 10%
-  const roll = Math.random()
+  // Weighted rarity: common 60%, uncommon 30%, rare 10% (seeded — same seed, same layout)
+  const roll = rng()
   let pool
   if (roll < 0.10) pool = allRooms.filter(r => r.rarity === 'rare')
   else if (roll < 0.40) pool = allRooms.filter(r => r.rarity === 'uncommon')
@@ -261,10 +406,10 @@ function pickRoomForSegment(index) {
 
   // Prefer undiscovered rooms
   const undiscovered = pool.filter(r => !discovered.value[r.id])
-  if (undiscovered.length > 0 && Math.random() < 0.7) {
-    return undiscovered[Math.floor(Math.random() * undiscovered.length)]
+  if (undiscovered.length > 0 && rng() < 0.7) {
+    return undiscovered[Math.floor(rng() * undiscovered.length)]
   }
-  return pool[Math.floor(Math.random() * pool.length)]
+  return pool[Math.floor(rng() * pool.length)]
 }
 
 function generateWallTexture(variant) {
@@ -370,54 +515,36 @@ function generateFloorTexture() {
 function createCorridorSegment(zPosition, index) {
   const group = new THREE.Group()
   group.position.z = zPosition
+  const S = SHARED
+  const v = wallVariant(index)
 
-  const wallTex = generateWallTexture(index)
-  wallTex.repeat.set(2, 1)
-  const floorTex = generateFloorTexture()
-  floorTex.repeat.set(4, 6)
-  const ceilingTex = generateFloorTexture()
-  ceilingTex.repeat.set(3, 6)
-
-  const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.92, metalness: 0.02 })
-
-  const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(SEGMENT_LENGTH, CORRIDOR_HEIGHT), wallMat)
+  const leftWall = new THREE.Mesh(S.wallGeo, S.wallMats[v])
   leftWall.rotation.y = Math.PI / 2
   leftWall.position.set(-CORRIDOR_WIDTH / 2, CORRIDOR_HEIGHT / 2, 0)
   group.add(leftWall)
 
-  const rightWallTex = wallTex.clone()
-  rightWallTex.wrapS = THREE.RepeatWrapping
-  const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(SEGMENT_LENGTH, CORRIDOR_HEIGHT), wallMat.clone())
-  rightWall.material.map = rightWallTex
+  const rightWall = new THREE.Mesh(S.wallGeo, S.wallMats[v])
   rightWall.rotation.y = -Math.PI / 2
   rightWall.position.set(CORRIDOR_WIDTH / 2, CORRIDOR_HEIGHT / 2, 0)
   group.add(rightWall)
 
-  const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.88, metalness: 0.02 })
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(CORRIDOR_WIDTH, SEGMENT_LENGTH), floorMat)
+  const floor = new THREE.Mesh(S.floorGeo, S.floorMat)
   floor.rotation.x = -Math.PI / 2
   group.add(floor)
 
-  const ceilMat = new THREE.MeshStandardMaterial({ map: ceilingTex, roughness: 0.95, metalness: 0 })
-  const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(CORRIDOR_WIDTH, SEGMENT_LENGTH), ceilMat)
+  const ceiling = new THREE.Mesh(S.floorGeo, S.ceilMat)
   ceiling.rotation.x = Math.PI / 2
   ceiling.position.y = CORRIDOR_HEIGHT
   group.add(ceiling)
 
   // Ceiling beams
-  const beamMat = new THREE.MeshStandardMaterial({ color: 0x2a2015, roughness: 0.85, metalness: 0.05 })
   for (const bz of [-SEGMENT_LENGTH / 3, 0, SEGMENT_LENGTH / 3]) {
-    const beam = new THREE.Mesh(new THREE.BoxGeometry(CORRIDOR_WIDTH + 0.2, 0.2, 0.3), beamMat)
+    const beam = new THREE.Mesh(S.beamGeo, S.beamMat)
     beam.position.set(0, CORRIDOR_HEIGHT - 0.1, bz)
     group.add(beam)
   }
 
   // Sconces — both sides
-  const sconceMat = new THREE.MeshStandardMaterial({ color: BRASS, metalness: 0.85, roughness: 0.25 })
-  const shadeMat = new THREE.MeshStandardMaterial({
-    color: AMBER, emissive: AMBER, emissiveIntensity: 0.5,
-    transparent: true, opacity: 0.65, roughness: 0.3, metalness: 0.1,
-  })
   const lightPositions = [-SEGMENT_LENGTH / 3, 0, SEGMENT_LENGTH / 3]
   const sconceLights = []
 
@@ -428,20 +555,22 @@ function createCorridorSegment(zPosition, index) {
       group.add(sconceLight)
       sconceLights.push(sconceLight)
 
-      const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.15), sconceMat)
+      const bracket = new THREE.Mesh(S.bracketGeo, S.sconceMat)
       bracket.position.set(side * (CORRIDOR_WIDTH / 2 - 0.15), CORRIDOR_HEIGHT * 0.7, lz)
       group.add(bracket)
 
-      const shade = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), shadeMat.clone())
+      const shade = new THREE.Mesh(S.shadeGeo, S.shadeMat)
       shade.position.set(side * (CORRIDOR_WIDTH / 2 - 0.25), CORRIDOR_HEIGHT * 0.72, lz)
       group.add(shade)
     }
   }
 
-  // Door placement — every segment gets one, weighted by rarity
-  if (index > 0) {
-    const side = Math.random() > 0.5 ? -1 : 1
-    const doorZ = (Math.random() - 0.5) * SEGMENT_LENGTH * 0.5
+  // Door placement — every segment gets one, weighted by rarity (seeded).
+  // Note: index 0 is the spawn segment (kept clear); both walking
+  // directions (positive AND negative indices) get doors.
+  if (index !== 0) {
+    const side = rng() > 0.5 ? -1 : 1
+    const doorZ = (rng() - 0.5) * SEGMENT_LENGTH * 0.5
     const roomDef = pickRoomForSegment(index)
     const door = createDoor(side, doorZ, roomDef)
     group.add(door.group)
@@ -454,56 +583,46 @@ function createCorridorSegment(zPosition, index) {
 
 function createDoor(side, z, roomDef) {
   const doorGroup = new THREE.Group()
-  const frameWidth = 1.8, frameHeight = 3.2
+  const frameHeight = 3.2
+  const S = SHARED
+  const mats = getDoorMats(roomDef)
 
-  const woodMat = new THREE.MeshStandardMaterial({ color: 0x1a120a, metalness: 0.1, roughness: 0.8 })
-
-  const lFrame = new THREE.Mesh(new THREE.BoxGeometry(0.18, frameHeight, 0.25), woodMat)
-  lFrame.position.set(-frameWidth / 2, frameHeight / 2, 0)
+  const lFrame = new THREE.Mesh(S.frameSideGeo, S.woodMat)
+  lFrame.position.set(-0.9, frameHeight / 2, 0)
   doorGroup.add(lFrame)
 
-  const rFrame = new THREE.Mesh(new THREE.BoxGeometry(0.18, frameHeight, 0.25), woodMat)
-  rFrame.position.set(frameWidth / 2, frameHeight / 2, 0)
+  const rFrame = new THREE.Mesh(S.frameSideGeo, S.woodMat)
+  rFrame.position.set(0.9, frameHeight / 2, 0)
   doorGroup.add(rFrame)
 
-  const tFrame = new THREE.Mesh(new THREE.BoxGeometry(frameWidth + 0.18, 0.18, 0.25), woodMat)
+  const tFrame = new THREE.Mesh(S.frameTopGeo, S.woodMat)
   tFrame.position.set(0, frameHeight, 0)
   doorGroup.add(tFrame)
 
-  // Rarity affects door colour
-  const rarityColor = roomDef.rarity === 'rare' ? 0xd4a04a : roomDef.rarity === 'uncommon' ? 0xaab0bb : BRASS
-  const brassMat = new THREE.MeshStandardMaterial({ color: rarityColor, metalness: 0.85, roughness: 0.2 })
-
-  const brassTrim = new THREE.Mesh(new THREE.BoxGeometry(frameWidth + 0.3, 0.04, 0.04), brassMat)
+  const brassTrim = new THREE.Mesh(S.trimGeo, mats.brass)
   brassTrim.position.set(0, frameHeight + 0.02, 0.14)
   doorGroup.add(brassTrim)
 
   // Door panel
-  const doorMat = new THREE.MeshBasicMaterial({
-    color: roomDef.accent, transparent: true, opacity: 0.18,
-  })
-  const doorPanel = new THREE.Mesh(new THREE.PlaneGeometry(frameWidth - 0.1, frameHeight - 0.1), doorMat)
+  const doorPanel = new THREE.Mesh(S.panelGeo, mats.door)
   doorPanel.position.set(0, frameHeight / 2, 0.06)
   doorGroup.add(doorPanel)
 
   // Panel border
-  const borderMat = new THREE.MeshStandardMaterial({ color: rarityColor, metalness: 0.85, roughness: 0.25, transparent: true, opacity: 0.5 })
-  const topBorder = new THREE.Mesh(new THREE.BoxGeometry(frameWidth - 0.1, 0.03, 0.03), borderMat)
+  const topBorder = new THREE.Mesh(S.borderGeo, mats.border)
   topBorder.position.set(0, frameHeight - 0.05, 0.12)
   doorGroup.add(topBorder)
-  const botBorder = new THREE.Mesh(new THREE.BoxGeometry(frameWidth - 0.1, 0.03, 0.03), borderMat)
+  const botBorder = new THREE.Mesh(S.borderGeo, mats.border)
   botBorder.position.set(0, 0.05, 0.12)
   doorGroup.add(botBorder)
 
   // Door light — rare doors glow brighter
-  const lightIntensity = roomDef.rarity === 'rare' ? 3.0 : roomDef.rarity === 'uncommon' ? 2.2 : 1.5
-  const doorLight = new THREE.PointLight(roomDef.accent, lightIntensity, roomDef.rarity === 'rare' ? 14 : 10)
+  const doorLight = new THREE.PointLight(roomDef.accent, roomDef.rarity === 'rare' ? 3.0 : roomDef.rarity === 'uncommon' ? 2.2 : 1.5, roomDef.rarity === 'rare' ? 14 : 10)
   doorLight.position.set(0, frameHeight / 2, 0.6)
   doorGroup.add(doorLight)
 
   // Handle
-  const handleMat = new THREE.MeshStandardMaterial({ color: rarityColor, metalness: 0.9, roughness: 0.15 })
-  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.2, 8), handleMat)
+  const handle = new THREE.Mesh(S.handleGeo, mats.handle)
   handle.position.set(side * 0.5, frameHeight * 0.45, 0.15)
   handle.rotation.x = Math.PI / 2
   doorGroup.add(handle)
@@ -805,13 +924,13 @@ function exitRoom() {
 
 function saveProgress() {
   try {
-    localStorage.setItem('corridor-journal', JSON.stringify(discovered.value))
+    localStorage.setItem('site_corridor-journal', JSON.stringify(discovered.value))
   } catch (e) { /* ignore */ }
 }
 
 function loadProgress() {
   try {
-    const saved = localStorage.getItem('corridor-journal')
+    const saved = localStorage.getItem('site_corridor-journal')
     if (saved) discovered.value = JSON.parse(saved)
   } catch (e) { /* ignore */ }
 }
@@ -820,6 +939,13 @@ function init() {
   const container = containerRef.value
   const w = container.clientWidth
   const h = container.clientHeight
+
+  // Seed from URL hash (#seed=12345) so layouts can be replayed/shared
+  const m = window.location.hash.match(/seed=(\d+)/)
+  reseed(m ? parseInt(m[1], 10) >>> 0 : randomSeed())
+
+  // Build the shared asset cache once — segment spawns during play reuse it
+  initSharedAssets()
 
   scene = new THREE.Scene()
   scene.background = new THREE.Color(0x0d0a06)
@@ -858,15 +984,26 @@ function init() {
 function spawnSegmentIfNeeded() {
   const currentSegIndex = Math.floor(cameraZ / SEGMENT_LENGTH)
   const existingIndices = new Set(corridorSegments.map(s => s.index))
+  const queuedIndices = new Set(spawnQueue.map(s => s.index))
 
   for (let i = currentSegIndex - 1; i <= currentSegIndex + VIEW_DISTANCE + 1; i++) {
-    if (!existingIndices.has(i)) createCorridorSegment(i * SEGMENT_LENGTH, i)
+    if (!existingIndices.has(i) && !queuedIndices.has(i)) {
+      spawnQueue.push({ zPosition: i * SEGMENT_LENGTH, index: i })
+      queuedIndices.add(i)
+    }
+  }
+
+  // Build at most one segment per frame — segment construction used to happen
+  // all at once on boundary cross, freezing the frame (the "glitch").
+  if (spawnQueue.length > 0) {
+    const next = spawnQueue.shift()
+    createCorridorSegment(next.zPosition, next.index)
   }
 
   for (let i = corridorSegments.length - 1; i >= 0; i--) {
     const seg = corridorSegments[i]
     if (seg.index < currentSegIndex - 2) {
-      scene.remove(seg.group)
+      disposeSegment(seg)
       corridorSegments.splice(i, 1)
       for (let j = doors.length - 1; j >= 0; j--) {
         if (Math.abs(doors[j].worldZ - seg.zPosition) < SEGMENT_LENGTH) doors.splice(j, 1)
@@ -1039,9 +1176,31 @@ function onPointerLockChange() {
 }
 
 function startExperience() {
+  // Allow replaying a typed-in seed: reseed + rebuild segments before starting
+  const typed = parseInt(seedInput.value, 10)
+  if (!isNaN(typed) && (typed >>> 0) !== seed.value) {
+    reseed(typed >>> 0)
+    for (const seg of corridorSegments) disposeSegment(seg)
+    corridorSegments = []
+    spawnQueue = []
+    doors = []
+    for (let i = -1; i <= VIEW_DISTANCE; i++) {
+      createCorridorSegment(i * SEGMENT_LENGTH, i)
+    }
+  }
+  window.location.hash = `seed=${seed.value}`
   started.value = true
   showHUD.value = true
   nextTick(() => { renderer.domElement.requestPointerLock() })
+}
+
+function copyLayoutLink() {
+  const url = window.location.origin + window.location.pathname + `#seed=${seed.value}`
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).catch(() => { prompt('Copy this layout link:', url) })
+  } else {
+    prompt('Copy this layout link:', url)
+  }
 }
 
 onMounted(() => { nextTick(() => init()) })
@@ -1053,6 +1212,18 @@ onUnmounted(() => {
   window.removeEventListener('keyup', onKeyUp)
   window.removeEventListener('mousemove', onMouseMove)
   document.removeEventListener('pointerlockchange', onPointerLockChange)
+  if (scene) {
+    scene.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose()
+      if (obj.material) {
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
+        mats.forEach((m) => {
+          Object.values(m).forEach((v) => { if (v && v.isTexture) v.dispose() })
+          m.dispose()
+        })
+      }
+    })
+  }
   if (renderer) { renderer.dispose(); renderer.domElement.remove() }
 })
 </script>

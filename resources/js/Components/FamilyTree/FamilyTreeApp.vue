@@ -73,6 +73,14 @@ onUnmounted(() => {
       </div>
       <div class="flex gap-2">
         <button
+          @click="store.undo()"
+          :disabled="!store.canUndo"
+          class="px-3 py-1.5 text-xs bg-warm-surface border border-warm-border text-warm-muted rounded-sm hover:bg-cream transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          title="Undo (Ctrl+Z)"
+        >
+          Undo
+        </button>
+        <button
           @click="store.resetLayout()"
           class="px-3 py-1.5 text-xs bg-warm-surface border border-warm-border text-warm-muted rounded-sm hover:bg-cream transition-colors"
           title="Clear manually dragged positions"

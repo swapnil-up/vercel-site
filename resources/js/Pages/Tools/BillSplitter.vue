@@ -1,11 +1,14 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 
-const STORAGE_KEY = 'bill-splitter-data'
+const STORAGE_KEY = 'site_bill-splitter-data'
 
 const people = ref([''])
 const items = ref([])
 const importExportMode = ref(null)
+const currency = ref('Rs.')
+
+const fmt = (amount) => `${currency.value} ${Number(amount).toFixed(2)}`
 
 let itemIdCounter = 0
 
@@ -85,6 +88,7 @@ const saveToStorage = () => {
  const data = {
  people: people.value,
  items: items.value,
+ currency: currency.value,
  savedAt: Date.now()
  }
  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
@@ -97,6 +101,7 @@ const loadFromStorage = () => {
  const data = JSON.parse(saved)
  people.value = data.people || ['']
  items.value = data.items || []
+ currency.value = data.currency || 'Rs.'
  if (items.value.length > 0) {
  itemIdCounter = Math.max(...items.value.map(i => i.id)) || 0
  }
@@ -110,7 +115,7 @@ const clearStorage = () => {
  localStorage.removeItem(STORAGE_KEY)
 }
 
-watch([people, items], () => {
+watch([people, items, currency], () => {
  saveToStorage()
 }, { deep: true })
 
@@ -135,7 +140,7 @@ const removePerson = (index) => {
  if (item.paidBy > index) {
  item.paidBy--
  } else if (item.paidBy === index) {
- item.paidBy = 0
+ item.paidBy = Math.min(item.paidBy, validPeople.value.length - 1)
  }
  })
  }
@@ -276,9 +281,9 @@ const copyShareLink = () => {
  }))
  }
 
- const text = `Bill Split\nTotal: Rs. ${totalAmount.value.toFixed(2)}\n\n` +
+ const text = `Bill Split\nTotal: ${fmt(totalAmount.value)}\n\n` +
  data.items.map(item =>
- `${item.description}: Rs. ${item.cost}\n Paid by: ${item.paidBy}\n Split: ${item.sharedBy.join(', ')}`
+ `${item.description}: ${currency.value} ${item.cost}\n Paid by: ${item.paidBy}\n Split: ${item.sharedBy.join(', ')}`
  ).join('\n\n')
 
  navigator.clipboard.writeText(text).then(() => {
@@ -427,8 +432,18 @@ onUnmounted(() => {
  <span><kbd class="px-1.5 py-0.5 bg-cream border border-warm-border rounded text-xs font-mono">Space</kbd> Toggle share</span>
  </div>
  </div>
- <div class="flex gap-2">
- <button @click="exportData" class="px-4 py-2 bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
+  <div class="flex gap-2 items-center">
+  <label class="flex items-center gap-2 text-sm text-warm-muted">
+  Currency
+  <input
+  v-model="currency"
+  type="text"
+  maxlength="4"
+  class="w-16 px-2 py-2 border border-warm-border rounded-sm bg-warm-surface text-ink text-center focus:ring-2 focus:ring-coral focus:border-coral"
+  title="Currency symbol shown on all amounts"
+  />
+  </label>
+  <button @click="exportData" class="px-4 py-2 bg-mint text-ink rounded-sm hover:bg-mint/80 transition-colors text-sm flex items-center gap-2">
  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
  Export
  </button>
@@ -525,9 +540,9 @@ onUnmounted(() => {
 
  <div class="grid grid-cols-2 gap-4 mb-3">
  <div>
- <label class="block text-sm font-medium text-warm-muted mb-1">
- Cost (Rs.)
- </label>
+  <label class="block text-sm font-medium text-warm-muted mb-1">
+  Cost ({{ currency }})
+  </label>
  <input
  v-model="item.cost"
  @keydown="handleItemKeydown($event, index, 'cost')"
@@ -634,10 +649,10 @@ onUnmounted(() => {
 
  <div class="space-y-3">
  <div class="flex justify-between items-center">
- <span class="text-warm-muted">Total Amount:</span>
- <span class="text-2xl font-bold text-ink">
- Rs. {{ totalAmount.toFixed(2) }}
- </span>
+  <span class="text-warm-muted">Total Amount:</span>
+  <span class="text-2xl font-bold text-ink">
+  {{ fmt(totalAmount) }}
+  </span>
  </div>
  <div class="flex justify-between items-center">
  <span class="text-warm-muted">Items:</span>
@@ -648,10 +663,10 @@ onUnmounted(() => {
  <span class="text-ink">{{ validPeople.length }}</span>
  </div>
  <div class="flex justify-between items-center">
- <span class="text-warm-muted">Per person (avg):</span>
- <span class="text-ink">
- {{ validPeople.length > 0 ? 'Rs. ' + (totalAmount / validPeople.length).toFixed(2) : 'Rs. 0.00' }}
- </span>
+  <span class="text-warm-muted">Per person (avg):</span>
+  <span class="text-ink">
+  {{ validPeople.length > 0 ? fmt(totalAmount / validPeople.length) : fmt(0) }}
+  </span>
  </div>
  </div>
  </div>
@@ -679,7 +694,7 @@ onUnmounted(() => {
  'text-warm-muted'
  ]"
  >
- {{ balances[index] > 0.01 ? '+' : '' }}Rs. {{ balances[index].toFixed(2) }}
+  {{ balances[index] > 0.01 ? '+' : '' }}{{ fmt(balances[index]) }}
  </span>
  </div>
  </div>
@@ -715,9 +730,9 @@ onUnmounted(() => {
  {{ validPeople[settlement.to] }}
  </span>
  </div>
- <span class="font-bold text-lg text-mint">
- Rs. {{ settlement.amount.toFixed(2) }}
- </span>
+  <span class="font-bold text-lg text-mint">
+  {{ fmt(settlement.amount) }}
+  </span>
  </div>
  </div>
  </div>

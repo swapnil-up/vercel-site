@@ -1,6 +1,6 @@
 import { reactive, computed, watch } from 'vue'
 
-const STORAGE_KEY = 'family-tree'
+const STORAGE_KEY = 'site_family-tree'
 
 function generateId() {
   return crypto.randomUUID()
@@ -193,5 +193,6 @@ export function useFamilyTreeStore() {
     generateId,
     undo,
     resetLayout,
+    get canUndo() { return undoStack.length > 0 },
   }
 }

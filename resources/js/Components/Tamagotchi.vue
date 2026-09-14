@@ -19,6 +19,7 @@ const isHoveringPet = ref(false)
 const clickEffects = ref([])
 const isSleeping = ref(false)
 const expression = ref('😊')
+const lastClickTime = ref(0)
 const decayInterval = ref(null)
 let clickEffectId = 0
 
@@ -413,6 +414,10 @@ const spawnBurstParticles = (color, count = 20) => {
 }
 
 const handlePetClick = (event) => {
+  const now = Date.now()
+  if (now - lastClickTime.value < 300) return
+  lastClickTime.value = now
+
   const rect = event.currentTarget.getBoundingClientRect()
   const x = event.clientX - rect.left
   const y = event.clientY - rect.top
@@ -717,11 +722,11 @@ const handleKeyUp = (e) => {
 
 // ─── Persistence ─────────────────────────────────────────────
 const saveProgress = () => {
-  localStorage.setItem('blobbyPet', JSON.stringify({ ...pet.value, lastSeen: Date.now() }))
+  localStorage.setItem('site_blobbyPet', JSON.stringify({ ...pet.value, lastSeen: Date.now() }))
 }
 
 const loadProgress = () => {
-  const saved = localStorage.getItem('blobbyPet')
+  const saved = localStorage.getItem('site_blobbyPet')
   if (saved) {
     const data = JSON.parse(saved)
     pet.value = { ...pet.value, ...data }
@@ -730,9 +735,9 @@ const loadProgress = () => {
     pet.value.boredom = Math.min(100, pet.value.boredom + timePassed)
     pet.value.love = Math.max(0, pet.value.love - timePassed)
   }
-  const bestMemory = localStorage.getItem('blobbyMemoryBest')
+  const bestMemory = localStorage.getItem('site_blobbyMemoryBest')
   if (bestMemory) memoryBestScore.value = parseInt(bestMemory)
-  const bestReaction = localStorage.getItem('blobbyReactionBest')
+  const bestReaction = localStorage.getItem('site_blobbyReactionBest')
   if (bestReaction) reactionBest.value = parseInt(bestReaction)
 }
 
@@ -768,8 +773,8 @@ watch(petMood, (newMood) => {
   expression.value = map[newMood] || '😊'
 })
 
-watch(memoryBestScore, (v) => { if (v) localStorage.setItem('blobbyMemoryBest', v) })
-watch(reactionBest, (v) => { if (v) localStorage.setItem('blobbyReactionBest', v) })
+watch(memoryBestScore, (v) => { if (v) localStorage.setItem('site_blobbyMemoryBest', v) })
+watch(reactionBest, (v) => { if (v) localStorage.setItem('site_blobbyReactionBest', v) })
 
 onMounted(async () => {
   loadProgress(); startDecay()
@@ -789,6 +794,18 @@ onUnmounted(() => {
   clearTimeout(reactionTimeout.value)
   window.removeEventListener('keyup', handleKeyUp)
   window.removeEventListener('resize', handleResize)
+  if (scene) {
+    scene.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose()
+      if (obj.material) {
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
+        mats.forEach((m) => {
+          Object.values(m).forEach((v) => { if (v && v.isTexture) v.dispose() })
+          m.dispose()
+        })
+      }
+    })
+  }
   if (renderer) {
     renderer.dispose()
     if (canvasContainer.value && renderer.domElement.parentNode === canvasContainer.value) {

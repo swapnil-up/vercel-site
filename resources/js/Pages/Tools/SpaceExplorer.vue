@@ -1008,7 +1008,7 @@ function gameOver() {
   highScores.value.push(entry)
   highScores.value.sort((a, b) => b.score - a.score)
   highScores.value = highScores.value.slice(0, 10)
-  localStorage.setItem('spaceExplorer_highScores', JSON.stringify(highScores.value))
+  localStorage.setItem('site_spaceExplorer_highScores', JSON.stringify(highScores.value))
   isNewHighScore.value = highScores.value[0]?.date === entry.date && highScores.value[0]?.score === entry.score
 }
 
@@ -1045,7 +1045,7 @@ function quitToMenu() {
 
 function loadHighScores() {
   try {
-    const data = localStorage.getItem('spaceExplorer_highScores')
+    const data = localStorage.getItem('site_spaceExplorer_highScores')
     if (data) highScores.value = JSON.parse(data)
   } catch (e) { /* ignore */ }
 }
@@ -1097,8 +1097,10 @@ function updateExplosions(dt) {
   }
 }
 
+const MAX_ASTEROIDS = 60
+
 function getDifficultyAsteroidCount() {
-  return 15 + difficultyLevel * 4
+  return Math.min(MAX_ASTEROIDS, 15 + difficultyLevel * 4)
 }
 
 function animate() {
@@ -1264,6 +1266,18 @@ onUnmounted(() => {
   window.removeEventListener('resize', onResize)
   window.removeEventListener('keydown', onKeyDown)
   window.removeEventListener('keyup', onKeyUp)
+  if (scene) {
+    scene.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose()
+      if (obj.material) {
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
+        mats.forEach((m) => {
+          Object.values(m).forEach((v) => { if (v && v.isTexture) v.dispose() })
+          m.dispose()
+        })
+      }
+    })
+  }
   if (renderer) {
     renderer.dispose()
     renderer.domElement.remove()

@@ -131,7 +131,9 @@ async function initEngine() {
   // Fallback to Three.js
   try {
     const { ParticleLifeFallback } = await import('./ParticleLife/fallback.js')
-    engine = new ParticleLifeFallback(canvas, { ...opts, particleCount: Math.min(opts.particleCount, 15000) })
+    const capped = Math.min(opts.particleCount, 15000)
+    if (capped < opts.particleCount) particleCount.value = capped
+    engine = new ParticleLifeFallback(canvas, { ...opts, particleCount: capped })
     await engine.init()
     engine.setForces(opts.forces)
     engineType.value = 'fallback'
@@ -406,6 +408,9 @@ onUnmounted(() => {
       <span class="text-xs font-mono px-2 py-0.5 rounded"
         :class="engineType === 'webgpu' ? 'text-emerald-400 bg-emerald-400/10' : engineType === 'fallback' ? 'text-amber-400 bg-amber-400/10' : 'text-red-400 bg-red-400/10'">
         {{ engineType === 'webgpu' ? 'WebGPU' : engineType === 'fallback' ? 'Three.js' : 'Error' }}
+      </span>
+      <span v-if="engineType === 'fallback'" class="text-xs font-mono text-amber-300/80 bg-black/40 px-2 py-0.5 rounded" title="WebGPU unavailable — compatibility mode caps particles at 15,000">
+        compatibility mode · capped at 15k
       </span>
     </div>
 

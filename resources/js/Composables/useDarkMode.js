@@ -10,13 +10,13 @@ export function useDarkMode() {
     } else {
       document.documentElement.classList.remove('dark')
     }
-    localStorage.setItem('theme', dark ? 'dark' : 'light')
+    localStorage.setItem('site_theme', dark ? 'dark' : 'light')
   }
 
   const toggle = () => apply(!isDark.value)
 
   onMounted(() => {
-    const stored = localStorage.getItem('theme')
+    const stored = localStorage.getItem('site_theme')
     if (stored === 'dark') {
       apply(true)
     } else if (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches) {

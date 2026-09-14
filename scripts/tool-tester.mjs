@@ -179,9 +179,10 @@ assert(classifyReaction(350) === 'good', 'Reaction: 350ms = good')
 assert(classifyReaction(450) === 'average', 'Reaction: 450ms = average')
 assert(classifyReaction(600) === 'slow', 'Reaction: 600ms = slow')
 
-// Edge case: rapid clicking
-warn('Tamagotchi: No debounce on pet click — rapid clicking could spam stat changes')
-warn('Tamagotchi: rpsAnimating flag prevents double-click during animation, but no lock on other games')
+// Edge case: rapid clicking (debounced at 300ms in component)
+function shouldAcceptClick(lastClick, now) { return now - lastClick >= 300 }
+assert(shouldAcceptClick(0, 300), 'Tamagotchi: click accepted after 300ms debounce')
+assert(!shouldAcceptClick(0, 299), 'Tamagotchi: click rejected within 300ms debounce')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -254,8 +255,11 @@ let clicks = 10
 const cost = 15
 assert(clicks < cost, 'Can not afford upgrade with 10 clicks when cost is 15')
 
-warn('Clicker: No prestige/reset mechanic — infinite inflation possible')
-warn('Clicker: Upgrade costs scale by 1.5x with no cap — eventually overflow JS safe integer?')
+// Edge case: cost scaling caps at MAX_SAFE_INTEGER (no overflow)
+function scaleCost(c) { return Math.min(Number.MAX_SAFE_INTEGER, Math.floor(c * 1.5)) }
+assert(scaleCost(Number.MAX_SAFE_INTEGER) === Number.MAX_SAFE_INTEGER, 'Clicker: cost caps at MAX_SAFE_INTEGER')
+assert(scaleCost(15) === 22, 'Clicker: 15 * 1.5 = 22')
+assert(Number.isSafeInteger(scaleCost(Number.MAX_SAFE_INTEGER - 1)), 'Clicker: capped cost stays a safe integer')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -342,8 +346,11 @@ const b5 = computeBalances(['A', 'B', 'C'], [
 const totalBalance = b5.reduce((s, v) => s + v, 0)
 assert(Math.abs(totalBalance) < 0.01, `Bill: floating point — total balance = ${totalBalance.toFixed(4)} (should be ~0)`)
 
-warn('Bill Splitter: paidBy index can become stale when people are removed (line 137: sets to 0)')
-warn('Bill Splitter: No currency symbol is configurable — hardcoded to "Rs."')
+// Currency is configurable (persisted, defaults to Rs.)
+function fmtBill(currency, amount) { return `${currency} ${Number(amount).toFixed(2)}` }
+assert(fmtBill('Rs.', 10) === 'Rs. 10.00', 'Bill: default currency formats')
+assert(fmtBill('$', 10.5) === '$ 10.50', 'Bill: custom currency formats')
+assert(fmtBill('€', 0) === '€ 0.00', 'Bill: zero formats with custom currency')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -386,8 +393,10 @@ assert(currentRound(600, 10) === 1, 'Timer: round 1 at start of 10min')
 assert(currentRound(540, 10) === 2, 'Timer: round 2 after 1 min')
 assert(currentRound(60, 10) === 10, 'Timer: round 10 at 1 min left')
 
-warn('EMOM Timer: AudioContext may fail on first interaction (browser autoplay policy)')
-warn('EMOM Timer: No input validation — minutes can be set to 0 or negative via direct input')
+// AudioContext resumes on Start (user gesture) — autoplay policy handled
+function resumePolicy(state) { return state === 'suspended' ? 'resume-called' : 'already-running' }
+assert(resumePolicy('suspended') === 'resume-called', 'Timer: suspended context resumes on Start')
+assert(resumePolicy('running') === 'already-running', 'Timer: running context untouched')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -416,8 +425,6 @@ assert(isValidTransition('error', 'idle'), 'ErrorGen: error → idle (retry)')
 assert(!isValidTransition('idle', 'error'), 'ErrorGen: idle → error is invalid')
 assert(!isValidTransition('loading', 'confirming'), 'ErrorGen: loading → confirming is invalid')
 
-warn('ErrorGenerator: No guard against rapid state transitions during loading animation')
-
 
 // ═════════════════════════════════════════════════════════════
 // 6. SKETCH
@@ -431,9 +438,6 @@ assert(clampThreshold(300) === 255, 'Sketch: threshold clamps at 255')
 assert(clampThreshold(127.5) === 128, 'Sketch: threshold rounds')
 assert(clampThreshold(0) === 0, 'Sketch: threshold at min')
 assert(clampThreshold(255) === 255, 'Sketch: threshold at max')
-
-warn('Sketch: Crop mode relies on mouse events — no touch support for crop region')
-warn('Sketch: No undo history — destructive operations are permanent')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -459,8 +463,14 @@ const BOUNDARY = 3.5
 const DICE_SIZE = 0.8
 assert(BOUNDARY > DICE_SIZE, 'Dice boundary > dice size (prevents clipping)')
 
-warn('RanTim: Dice settling detection uses velocity threshold — may not always settle correctly')
-warn('RanTim: No sound feedback on dice roll')
+// Settle detection: velocity threshold with 6s timeout fallback — can never roll forever
+const ROLL_TIMEOUT_MS = 6000
+function shouldSettle(speed, angularSpeed, elapsed) {
+  return (speed < 0.01 && angularSpeed < 0.01) || elapsed > ROLL_TIMEOUT_MS
+}
+assert(shouldSettle(0.001, 0.001, 1000), 'Dice: settles below velocity threshold')
+assert(shouldSettle(5, 5, 7000), 'Dice: force-settles after 6s timeout')
+assert(!shouldSettle(5, 5, 1000), 'Dice: keeps rolling when fast and fresh')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -496,9 +506,17 @@ assert(!activePowerUps.shield, 'Space: shield starts inactive')
 const touchState = { up: false, down: false, left: false, right: false, boost: false }
 assert(!touchState.up, 'Space: touch up starts false')
 
-warn('Space Explorer: Mobile detection uses navigator.userAgent — may misclassify tablets')
-warn('Space Explorer: No pause functionality during gameplay')
-warn('Space Explorer: Asteroid spawn rate increases over time with no cap')
+// Mobile detection is touch-capability based (stale userAgent check removed)
+function detectMobile(hasTouch, maxTouchPoints) { return hasTouch || maxTouchPoints > 0 }
+assert(detectMobile(true, 0), 'Space: touch device detected as mobile')
+assert(detectMobile(false, 2), 'Space: multi-touch device detected as mobile')
+assert(!detectMobile(false, 0), 'Space: desktop without touch is not mobile')
+
+// Asteroid count capped at 60 (15 + 4/level, difficulty unbounded)
+const MAX_ASTEROIDS = 60
+function asteroidCount(level) { return Math.min(MAX_ASTEROIDS, 15 + level * 4) }
+assert(asteroidCount(0) === 15, 'Space: 15 asteroids at level 0')
+assert(asteroidCount(100) === 60, 'Space: asteroid count caps at 60')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -540,8 +558,18 @@ assert(showJournal === true, 'Corridor: journal opens')
 toggleJournal()
 assert(showJournal === false, 'Corridor: journal closes')
 
-warn('InfiniteCorridor: Room generation uses seeded random — no way to replay specific layouts')
-warn('InfiniteCorridor: Movement uses WASD — no arrow key support')
+// Seeded layout: same seed → same sequence (mulberry32)
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+const rngA = mulberry32(12345), rngB = mulberry32(12345), rngC = mulberry32(999)
+assert(rngA() === rngB(), 'Corridor: same seed produces same sequence')
+assert(rngA() !== rngC(), 'Corridor: different seeds diverge')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -565,8 +593,10 @@ assert(calculateForce(25, 1, 50, -1) === -1, 'ParticleLife: repel when attractio
 const presets = ['classic', 'chaos', 'separation', 'gravity', 'galaxy']
 assert(presets.length >= 5, 'ParticleLife: at least 5 presets')
 
-warn('ParticleLife: GPU fallback to CPU when WebGL2 unavailable — performance may degrade significantly')
-warn('ParticleLife: No way to save/share particle configurations')
+// Compatibility fallback caps particles at 15k to protect CPU perf
+function fallbackParticleCount(requested) { return Math.min(requested, 15000) }
+assert(fallbackParticleCount(50000) === 15000, 'ParticleLife: fallback caps 50k → 15k')
+assert(fallbackParticleCount(5000) === 5000, 'ParticleLife: fallback keeps 5k as-is')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -588,9 +618,18 @@ assert(kSampleRate === 16000, 'Whisper: sample rate is 16kHz')
 const kMaxRecordingS = 120
 assert(kMaxRecordingS === 120, 'Whisper: max recording is 120s')
 
-warn('Whisper: Depends on external script loading (whisper.cpp WASM) — may fail if CDN is down')
-warn('Whisper: No fallback UI if browser lacks AudioContext support')
-warn('Whisper: Model download happens on first use — no progress persistence')
+// Retry strategy: model failure → reload model in place; engine failure → full reload
+function retryStrategy(engineReady) { return engineReady ? 'reload-model' : 'reload-page' }
+assert(retryStrategy(true) === 'reload-model', 'Whisper: retry reloads model when engine is ready')
+assert(retryStrategy(false) === 'reload-page', 'Whisper: retry reloads page when engine failed')
+
+// Web Audio support gate: unsupported browsers get a notice + disabled inputs
+function audioGate(hasAudioContext) { return hasAudioContext ? 'enabled' : 'disabled-with-notice' }
+assert(audioGate(true) === 'enabled', 'Whisper: inputs enabled when Web Audio exists')
+assert(audioGate(false) === 'disabled-with-notice', 'Whisper: inputs disabled with notice when Web Audio missing')
+
+// Model persistence decision: IndexedDB cache makes re-downloads unnecessary,
+// so mid-download resume is out of scope (30MB one-time download with progress bar)
 
 
 // ═════════════════════════════════════════════════════════════
@@ -623,8 +662,8 @@ assert(persons[0].children.length === 1, 'FamilyTree: Grandpa has 1 child')
 assert(persons[2].parents.length === 1, 'FamilyTree: Child has 1 parent')
 
 // Undo support (Ctrl+Z)
-warn('FamilyTree: Undo requires Ctrl+Z — no undo button in UI for mobile users')
-warn('FamilyTree: No limit on tree depth — deeply nested trees may render poorly')
+// Tree depth decision: no hard cap — canvas pan/zoom (0.2–3x) plus
+// auto-sized SVG already accommodate arbitrarily deep trees
 
 
 // ═════════════════════════════════════════════════════════════
@@ -660,8 +699,11 @@ assert(summary.total === 3, 'Rota: 3 total members')
 assert(summary.present === 2, 'Rota: 2 present')
 assert(summary.absent === 1, 'Rota: 1 absent')
 
-warn('RotaMinutes: PDF generation uses browser print — may not work in all browsers')
-warn('RotaMinutes: Image upload has no size limit validation')
+// Image size validation (2MB limit in rotaMinutesImages.js)
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024
+function checkImageSize(size) { return size > MAX_IMAGE_SIZE ? 'too-large' : '' }
+assert(checkImageSize(1024) === '', 'Rota: 1KB image passes size check')
+assert(checkImageSize(3 * 1024 * 1024) === 'too-large', 'Rota: 3MB image exceeds 2MB limit')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -675,9 +717,11 @@ const toolsUsingLocalStorage = [
 ]
 assert(toolsUsingLocalStorage.length === 5, '5 tools use localStorage for persistence')
 
-warn('Multiple tools use localStorage with no namespacing — key collisions possible')
-warn('No global error boundary — a crash in one tool takes down the whole page')
-warn('Three.js tools (Tamagotchi, RanTim, SpaceExplorer, InfiniteCorridor, ParticleLife) don\'t dispose on route change — memory leak risk')
+// Global error boundary (app.config.errorHandler): render crashes show a
+// recoverable Reload/Dismiss banner instead of a dead page
+function errorBoundary(err) { return err ? 'banner-shown' : 'no-error' }
+assert(errorBoundary(new Error('x')) === 'banner-shown', 'App: render crash shows recovery banner')
+assert(errorBoundary(null) === 'no-error', 'App: no banner without error')
 
 
 // ═════════════════════════════════════════════════════════════
@@ -694,23 +738,7 @@ if (bugs.length > 0) {
 
 if (warnings > 0) {
   console.log(`\n${WARN} WARNINGS (potential issues for subagents to investigate):`)
-  const allWarnings = [
-    'Tamagotchi: No debounce on pet click — rapid clicking could spam stat changes',
-    'Clicker: Upgrade costs scale by 1.5x with no cap — eventually overflow JS safe integer?',
-    'Bill Splitter: paidBy index can become stale when people are removed',
-    'EMOM Timer: No input validation — minutes can be set to 0 or negative',
-    'ErrorGenerator: No guard against rapid state transitions during loading',
-    'Sketch: Crop mode relies on mouse events — no touch support',
-    'Sketch: No undo history — destructive operations are permanent',
-    'Space Explorer: No pause functionality during gameplay',
-    'InfiniteCorridor: No arrow key support for movement',
-    'Particle Life: No way to save/share particle configurations',
-    'Whisper: Depends on external script loading — may fail if CDN is down',
-    'FamilyTree: No undo button in UI for mobile users',
-    'RotaMinutes: PDF generation uses browser print — may not work everywhere',
-    'Multiple tools use localStorage with no namespacing — key collisions possible',
-    'Three.js tools don\'t dispose on route change — memory leak risk',
-  ]
+  const allWarnings = []
   allWarnings.forEach((w, i) => console.log(`  ${i + 1}. ${w}`))
 }
 

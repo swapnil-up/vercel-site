@@ -7,6 +7,8 @@ const timeLeft = ref(0);
 const currentRound = ref(0);
 const totalRounds = ref(0);
 
+const clampMinutes = () => { minutes.value = Math.max(1, Math.min(60, Math.round(minutes.value) || 1)) }
+
 let audioContext = null;
 let intervalId = null;
 
@@ -144,10 +146,12 @@ const progress = computed(() =>
  v-model.number="minutes"
  type="number"
  min="1"
+ max="60"
+ @blur="clampMinutes"
  class="flex-1 bg-warm-surface border border-warm-border text-ink text-4xl font-bold text-center py-4 rounded-sm focus:outline-none focus:ring-2 focus:ring-coral"
  />
  <button
- @click="minutes++"
+ @click="minutes = Math.min(60, minutes + 1)"
  class="w-12 h-12 bg-ink dark:bg-[#1C1C1E] hover:bg-coral text-white rounded-sm text-xl font-bold transition-colors"
  >
  +

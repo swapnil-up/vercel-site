@@ -38,15 +38,29 @@ const buyUpgrade = (upgrade) => {
   if (clicks.value >= upgrade.cost) {
     clicks.value -= upgrade.cost
     upgrade.count++
-    upgrade.cost = Math.floor(upgrade.cost * 1.5)
+    upgrade.cost = Math.min(Number.MAX_SAFE_INTEGER, Math.floor(upgrade.cost * 1.5))
     saveProgress()
   }
 }
 
 const canAfford = (cost) => clicks.value >= cost
 
+const BASE_COSTS = {
+  coffee: 15, planner: 100, hacks: 500, coach: 2000,
+  saas: 5000, course: 15000, crypto: 50000, manifest: 150000,
+}
+
+const resetProgress = () => {
+  if (!confirm('Reset all progress? This cannot be undone.')) return
+  clicks.value = 0
+  lifetimeClicks.value = 0
+  unlockedAchievements.value = []
+  upgrades.value.forEach(u => { u.count = 0; u.cost = BASE_COSTS[u.id] ?? u.cost })
+  saveProgress()
+}
+
 const saveProgress = () => {
-  localStorage.setItem('optimizerClicker', JSON.stringify({
+  localStorage.setItem('site_optimizerClicker', JSON.stringify({
     clicks: clicks.value,
     lifetimeClicks: lifetimeClicks.value,
     upgrades: upgrades.value.map(u => ({ id: u.id, count: u.count, cost: u.cost })),
@@ -55,7 +69,7 @@ const saveProgress = () => {
 }
 
 const loadProgress = () => {
-  const saved = localStorage.getItem('optimizerClicker')
+  const saved = localStorage.getItem('site_optimizerClicker')
   if (saved) {
     const data = JSON.parse(saved)
     clicks.value = data.clicks || 0
@@ -66,7 +80,7 @@ const loadProgress = () => {
         const upgrade = upgrades.value.find(u => u.id === savedU.id)
         if (upgrade) {
           upgrade.count = savedU.count
-          upgrade.cost = savedU.cost
+          upgrade.cost = Math.min(Number.MAX_SAFE_INTEGER, savedU.cost || BASE_COSTS[upgrade.id] || 0)
         }
       })
     }
@@ -117,6 +131,14 @@ onMounted(loadProgress)
 
         <div class="text-center text-xs text-gray-400">
           Lifetime: {{ formatNumber(lifetimeClicks) }}
+        </div>
+        <div class="text-center mt-2">
+          <button
+            @click="resetProgress"
+            class="text-xs text-gray-400 hover:text-red-500 underline transition-colors"
+          >
+            reset progress
+          </button>
         </div>
       </div>
 
