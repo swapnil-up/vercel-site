@@ -102,6 +102,12 @@ Route::get('/tools/space-explorer', fn() => inertia('Tools/SpaceExplorer', [
     ],
 ]));
 
+Route::get('/tools/infinite-corridor', fn() => inertia('Tools/InfiniteCorridor', [
+    'meta' => [
+        'title' => 'The Infinite Corridor — Tools — Swapnil Upadhyay',
+    ],
+]));
+
 Route::get('/tracker', fn() => inertia('Tracker', [
     'meta' => [
         'title' => 'Tracker — Swapnil Upadhyay',
