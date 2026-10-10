@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as THREE from 'three'
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 
 // ─── Pet State ───────────────────────────────────────────────
 const pet = ref({
@@ -98,16 +99,16 @@ const petMessage = computed(() => {
 })
 
 const moodColors = {
-  excited: { body: 0xffd93d, emissive: 0xffa500, intensity: 0.4 },
-  happy: { body: 0xb8a9c9, emissive: 0xff6b9d, intensity: 0.2 },
-  content: { body: 0xb8a9c9, emissive: 0x7480fc, intensity: 0.15 },
-  sick: { body: 0x7cb342, emissive: 0x33691e, intensity: 0.3 },
-  hungry: { body: 0xffb74d, emissive: 0xe65100, intensity: 0.2 },
-  angry: { body: 0xff6b6b, emissive: 0xd32f2f, intensity: 0.5 },
-  bored: { body: 0x90a4ae, emissive: 0x455a64, intensity: 0.1 },
-  crying: { body: 0x90caf9, emissive: 0x1565c0, intensity: 0.3 },
-  lonely: { body: 0xce93d8, emissive: 0x7b1fa2, intensity: 0.2 },
-  sleepy: { body: 0xb39ddb, emissive: 0x4527a0, intensity: 0.15 }
+  excited: { body: 0xffe082, emissive: 0xffb300, intensity: 0.3 },
+  happy: { body: 0xf8bbd0, emissive: 0xff6b9d, intensity: 0.2 },
+  content: { body: 0xc5b3e6, emissive: 0x7480fc, intensity: 0.15 },
+  sick: { body: 0xaed581, emissive: 0x558b2f, intensity: 0.22 },
+  hungry: { body: 0xffcc80, emissive: 0xef6c00, intensity: 0.2 },
+  angry: { body: 0xef9a9a, emissive: 0xd32f2f, intensity: 0.4 },
+  bored: { body: 0xb0bec5, emissive: 0x546e7a, intensity: 0.1 },
+  crying: { body: 0x90caf9, emissive: 0x1e88e5, intensity: 0.28 },
+  lonely: { body: 0xce93d8, emissive: 0x8e24aa, intensity: 0.2 },
+  sleepy: { body: 0xb39ddb, emissive: 0x5e35b1, intensity: 0.15 }
 }
 
 // ─── Three.js ────────────────────────────────────────────────
@@ -116,7 +117,96 @@ let scene, camera, renderer, petMesh, petMaterial, clock
 let ambientLight, pointLight, rimLight
 let animationFrameId
 let time = 0
+let lastFrameTime = 0
 const basePositions = ref(null)
+
+// Face
+let leftEye, rightEye, mouthMesh = null, mouthType = null, mouthMaterial
+const eyeBase = { lx: -0.34, rx: 0.34, y: 0.1, z: 0.88 }
+const eyeOffset = { x: 0, y: 0 }
+let blinkT = 0
+let nextBlink = 1.5 + Math.random() * 3
+const BLINK_DUR = 0.13
+
+// Tech tuft
+let antennaGroup, antennaTip
+
+// Cursor tracking (eye contact)
+const pointerNDC = { x: 0, y: 0 }
+let pointerActive = false
+let onCanvasPointerMove, onCanvasPointerLeave
+
+const moodFace = () => {
+  if (isSleeping.value) return 'flat'
+  if (animation.value === 'eating') return 'o'
+  if (animation.value === 'confused') return 'flat'
+  switch (petMood.value) {
+    case 'excited': case 'happy': return 'cat'
+    case 'angry': return 'frown'
+    case 'crying': case 'sick': return 'wavy'
+    case 'bored': case 'lonely': case 'sleepy': return 'flat'
+    case 'hungry': return 'o'
+    default: return 'smile'
+  }
+}
+
+const buildMouthGeometry = (type) => {
+  const y = -0.13, z = 1.015
+  const v = (x, yy) => new THREE.Vector3(x, yy, z)
+  const chain = (pts) => new THREE.CatmullRomCurve3(pts.map(([x, yy]) => v(x, yy)))
+  switch (type) {
+    case 'cat':
+      return new THREE.TubeGeometry(chain([
+        [-0.17, y + 0.03], [-0.085, y - 0.05], [0, y + 0.015], [0.085, y - 0.05], [0.17, y + 0.03]
+      ]), 36, 0.022, 8, false)
+    case 'flat':
+      return new THREE.TubeGeometry(chain([
+        [-0.13, y], [0, y - 0.005], [0.13, y]
+      ]), 16, 0.022, 8, false)
+    case 'frown':
+      return new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(
+        v(-0.16, y - 0.05), v(0, y + 0.07), v(0.16, y - 0.05)
+      ), 24, 0.022, 8, false)
+    case 'wavy':
+      return new THREE.TubeGeometry(chain([
+        [-0.16, y - 0.02], [-0.08, y + 0.05], [0, y - 0.02], [0.08, y + 0.05], [0.16, y - 0.02]
+      ]), 36, 0.02, 8, false)
+    case 'o':
+      return new THREE.TorusGeometry(0.05, 0.018, 8, 20)
+    default:
+      return new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(
+        v(-0.16, y + 0.03), v(0, y - 0.1), v(0.16, y + 0.03)
+      ), 24, 0.022, 8, false)
+  }
+}
+
+const setMouth = (type) => {
+  if (!petMesh || type === mouthType) return
+  mouthType = type
+  if (mouthMesh) {
+    petMesh.remove(mouthMesh)
+    mouthMesh.geometry.dispose()
+  }
+  mouthMesh = new THREE.Mesh(buildMouthGeometry(type), mouthMaterial)
+  if (type === 'o') mouthMesh.position.set(0, -0.15, 1.02)
+  petMesh.add(mouthMesh)
+}
+
+const bakeGumdrop = (geometry) => {
+  const welded = mergeVertices(geometry)
+  const pos = welded.attributes.position
+  for (let i = 0; i < pos.count; i++) {
+    let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i)
+    const t = Math.min(1, Math.max(0, (y + 1) / 2))
+    const width = 1.12 - 0.42 * t * t
+    x *= width
+    z *= width
+    if (y < -0.65) y = -0.65 + (y + 0.65) * 0.35
+    pos.setXYZ(i, x, y, z)
+  }
+  welded.computeVertexNormals()
+  return welded
+}
 
 const initThree = () => {
   if (!canvasContainer.value) return
@@ -141,65 +231,56 @@ const initThree = () => {
   renderer.setSize(size, size)
   container.appendChild(renderer.domElement)
 
-  ambientLight = new THREE.AmbientLight(0x404060, 0.6)
+  ambientLight = new THREE.AmbientLight(0x606090, 1.4)
   scene.add(ambientLight)
 
-  pointLight = new THREE.PointLight(0xffd93d, 1.5, 10)
+  pointLight = new THREE.PointLight(0xffd93d, 45, 10)
   pointLight.position.set(2, 3, 3)
   pointLight.castShadow = true
+  pointLight.shadow.normalBias = 0.04
   scene.add(pointLight)
 
-  rimLight = new THREE.PointLight(0xff6b9d, 0.8, 8)
+  rimLight = new THREE.PointLight(0xff6b9d, 18, 8)
   rimLight.position.set(-2, 1, -2)
   scene.add(rimLight)
 
-  const fillLight = new THREE.PointLight(0x74c0fc, 0.4, 8)
+  const fillLight = new THREE.PointLight(0x74c0fc, 10, 8)
   fillLight.position.set(-1, -2, 2)
   scene.add(fillLight)
 
-  // Pet body
-  const bodyGeometry = new THREE.IcosahedronGeometry(1, 4)
-  petMaterial = new THREE.MeshStandardMaterial({
-    color: 0xb8a9c9, emissive: 0x7480fc, emissiveIntensity: 0.15,
-    roughness: 0.4, metalness: 0.1, flatShading: false
+  // Pet body — gumdrop silhouette, candy-gloss jelly
+  petMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0xc5b3e6, emissive: 0x7480fc, emissiveIntensity: 0.15,
+    roughness: 0.32, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.18
   })
-  petMesh = new THREE.Mesh(bodyGeometry, petMaterial)
+  petMesh = new THREE.Mesh(bakeGumdrop(new THREE.IcosahedronGeometry(1, 4)), petMaterial)
   petMesh.castShadow = true
   petMesh.receiveShadow = true
   scene.add(petMesh)
 
-  // Eyes
-  const eyeGeometry = new THREE.SphereGeometry(0.12, 16, 16)
-  const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.2 })
-  const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial)
-  leftEye.position.set(-0.3, 0.15, 0.85)
-  petMesh.add(leftEye)
+  // Eyes — big glossy bulbs, low and wide, two sparkles each
+  const bulbMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x241f2b, roughness: 0.08, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05
+  })
+  const sparkleMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff })
+  const makeEye = (x) => {
+    const eye = new THREE.Group()
+    eye.add(new THREE.Mesh(new THREE.SphereGeometry(0.185, 24, 24), bulbMaterial))
+    const big = new THREE.Mesh(new THREE.SphereGeometry(0.068, 12, 12), sparkleMaterial)
+    big.position.set(0.055, 0.06, 0.15)
+    eye.add(big)
+    const small = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), sparkleMaterial)
+    small.position.set(-0.05, -0.055, 0.16)
+    eye.add(small)
+    eye.position.set(x, eyeBase.y, eyeBase.z)
+    petMesh.add(eye)
+    return eye
+  }
+  leftEye = makeEye(eyeBase.lx)
+  rightEye = makeEye(eyeBase.rx)
 
-  const eyeWhiteGeometry = new THREE.SphereGeometry(0.06, 12, 12)
-  const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.3 })
-  const leftEyeWhite = new THREE.Mesh(eyeWhiteGeometry, eyeWhiteMaterial)
-  leftEyeWhite.position.set(0.04, 0.04, 0.08)
-  leftEye.add(leftEyeWhite)
-
-  const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial)
-  rightEye.position.set(0.3, 0.15, 0.85)
-  petMesh.add(rightEye)
-
-  const rightEyeWhite = new THREE.Mesh(eyeWhiteGeometry, eyeWhiteMaterial)
-  rightEyeWhite.position.set(0.04, 0.04, 0.08)
-  rightEye.add(rightEyeWhite)
-
-  // Mouth
-  const mouthCurve = new THREE.QuadraticBezierCurve3(
-    new THREE.Vector3(-0.2, -0.15, 0.9),
-    new THREE.Vector3(0, -0.25, 0.95),
-    new THREE.Vector3(0.2, -0.15, 0.9)
-  )
-  const mouthGeometry = new THREE.TubeGeometry(mouthCurve, 20, 0.025, 8, false)
-  const mouthMaterial = new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.3 })
-  const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial)
-  mouth.name = 'mouth'
-  petMesh.add(mouth)
+  // Mouth (shape swaps with mood via setMouth)
+  mouthMaterial = new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.3 })
 
   // Cheeks
   const cheekGeometry = new THREE.SphereGeometry(0.1, 12, 12)
@@ -208,31 +289,62 @@ const initThree = () => {
     transparent: true, opacity: 0.6
   })
   const leftCheek = new THREE.Mesh(cheekGeometry, cheekMaterial)
-  leftCheek.position.set(-0.55, -0.05, 0.7)
-  leftCheek.scale.set(1, 0.6, 0.5)
+  leftCheek.position.set(-0.48, -0.14, 0.88)
+  leftCheek.scale.set(1, 0.6, 0.4)
   leftCheek.name = 'leftCheek'
   petMesh.add(leftCheek)
 
   const rightCheek = new THREE.Mesh(cheekGeometry, cheekMaterial)
-  rightCheek.position.set(0.55, -0.05, 0.7)
-  rightCheek.scale.set(1, 0.6, 0.5)
+  rightCheek.position.set(0.48, -0.14, 0.88)
+  rightCheek.scale.set(1, 0.6, 0.4)
   rightCheek.name = 'rightCheek'
   petMesh.add(rightCheek)
+
+  // Tech tuft — little antenna with a mood-colored LED tip
+  antennaGroup = new THREE.Group()
+  const antennaCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 0.88, 0.05),
+    new THREE.Vector3(0.05, 1.1, 0.02),
+    new THREE.Vector3(0.14, 1.28, -0.05)
+  ])
+  antennaGroup.add(new THREE.Mesh(
+    new THREE.TubeGeometry(antennaCurve, 20, 0.028, 8, false),
+    new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.4 })
+  ))
+  antennaTip = new THREE.Mesh(
+    new THREE.SphereGeometry(0.075, 16, 16),
+    new THREE.MeshStandardMaterial({ color: 0xffd93d, emissive: 0xffd93d, emissiveIntensity: 1.4, roughness: 0.3 })
+  )
+  antennaTip.position.set(0.15, 1.33, -0.06)
+  antennaGroup.add(antennaTip)
+  petMesh.add(antennaGroup)
 
   // Ground + grid
   const groundGeometry = new THREE.PlaneGeometry(12, 12, 24, 24)
   const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.9, metalness: 0.1 })
   const ground = new THREE.Mesh(groundGeometry, groundMaterial)
   ground.rotation.x = -Math.PI / 2
-  ground.position.y = -1.3
+  ground.position.y = -1.02
   ground.receiveShadow = true
   scene.add(ground)
 
   const gridHelper = new THREE.GridHelper(12, 24, 0x333355, 0x222244)
-  gridHelper.position.y = -1.29
+  gridHelper.position.y = -1.01
   scene.add(gridHelper)
 
+  // Eye contact — glance toward the cursor
+  onCanvasPointerMove = (e) => {
+    const rect = renderer.domElement.getBoundingClientRect()
+    pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+    pointerNDC.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1)
+    pointerActive = true
+  }
+  onCanvasPointerLeave = () => { pointerActive = false }
+  renderer.domElement.addEventListener('pointermove', onCanvasPointerMove)
+  renderer.domElement.addEventListener('pointerleave', onCanvasPointerLeave)
+
   createAmbientParticles()
+  setMouth(moodFace())
   animate()
 }
 
@@ -279,7 +391,10 @@ const deformPet = () => {
     const breathe = Math.sin(tv * 2) * 0.02
     const len = Math.sqrt(bx * bx + by * by + bz * bz)
     if (len > 0) {
-      const scale = 1 + noise + breathe
+      // dampen wobble on the front so the face stays readable
+      const front = Math.max(0, bz)
+      const atten = 1 - 0.7 * front * front
+      const scale = 1 + (noise + breathe) * atten
       positions.array[i * 3] = bx * scale
       positions.array[i * 3 + 1] = by * scale
       positions.array[i * 3 + 2] = bz * scale
@@ -292,33 +407,47 @@ const deformPet = () => {
 const animate = () => {
   animationFrameId = requestAnimationFrame(animate)
   time = clock.getElapsedTime()
+  const dt = Math.min(0.05, time - lastFrameTime)
+  lastFrameTime = time
 
   if (petMesh) {
-    petMesh.position.y = Math.sin(time * 1.2) * 0.08
+    const mood = petMood.value
+    const BASE_Y = -0.18
+    petMesh.position.y = BASE_Y + Math.sin(time * 1.2) * 0.06
 
     if (animation.value === 'idle') {
       petMesh.rotation.y = Math.sin(time * 0.5) * 0.1
       petMesh.rotation.z = Math.sin(time * 0.8) * 0.02
     }
 
-    const mood = petMood.value
+    let scaleDriven = false
     if (mood === 'excited' || animation.value === 'excited') {
-      petMesh.position.y = Math.abs(Math.sin(time * 4)) * 0.3
+      // squash-and-stretch hop: squashed on landing, stretched mid-air
+      const hop = Math.abs(Math.sin(time * 4))
+      petMesh.position.y = BASE_Y + hop * 0.3
       petMesh.rotation.y = Math.sin(time * 3) * 0.3
+      petMesh.rotation.z = 0
+      const stretch = 1 + (hop - 0.45) * 0.24
+      petMesh.scale.set(1 / Math.sqrt(stretch), stretch, 1 / Math.sqrt(stretch))
+      scaleDriven = true
     } else if (mood === 'happy' || animation.value === 'love') {
       petMesh.rotation.z = Math.sin(time * 2) * 0.08
     } else if (mood === 'angry') {
       petMesh.rotation.z = Math.sin(time * 8) * 0.05
       petMesh.position.x = Math.sin(time * 12) * 0.02
+      const puff = 1.05 + Math.sin(time * 10) * 0.02
+      petMesh.scale.set(puff, 1 / puff, puff)
+      scaleDriven = true
     } else if (mood === 'sleepy' || isSleeping.value) {
-      petMesh.position.y = Math.sin(time * 0.6) * 0.04
+      petMesh.position.y = BASE_Y + Math.sin(time * 0.6) * 0.03
       petMesh.rotation.z = 0.15
     } else if (animation.value === 'eating') {
-      petMesh.scale.y = 1 + Math.sin(time * 8) * 0.08
-      petMesh.scale.x = 1 - Math.sin(time * 8) * 0.04
+      const s = Math.abs(Math.sin(time * 9))
+      petMesh.scale.set(1 + s * 0.07, 1 - s * 0.13, 1 + s * 0.07)
+      scaleDriven = true
     }
 
-    if (animation.value === 'idle') {
+    if (animation.value === 'idle' && !scaleDriven) {
       petMesh.scale.x += (1 - petMesh.scale.x) * 0.1
       petMesh.scale.y += (1 - petMesh.scale.y) * 0.1
       petMesh.scale.z += (1 - petMesh.scale.z) * 0.1
@@ -326,6 +455,51 @@ const animate = () => {
     }
 
     deformPet()
+
+    // Blink — random timer, or eyes shut tight while sleeping
+    blinkT += dt
+    let closed = 0
+    if (isSleeping.value) {
+      closed = 1
+    } else if (blinkT >= nextBlink) {
+      const phase = (blinkT - nextBlink) / BLINK_DUR
+      if (phase >= 1) {
+        blinkT = 0
+        nextBlink = 1.8 + Math.random() * 3.5
+      } else {
+        closed = Math.sin(phase * Math.PI)
+      }
+    }
+
+    // Eye contact — glance toward the cursor
+    const lookX = pointerActive && !isSleeping.value ? pointerNDC.x : 0
+    const lookY = pointerActive && !isSleeping.value ? pointerNDC.y : 0
+    eyeOffset.x += (lookX * 0.045 - eyeOffset.x) * 0.06
+    eyeOffset.y += (lookY * 0.03 - eyeOffset.y) * 0.06
+
+    if (leftEye && rightEye) {
+      const applyEye = (eye, bx) => {
+        eye.scale.set(1 - closed * 0.08, 1 - closed * 0.9, 1)
+        eye.position.set(
+          bx + eyeOffset.x,
+          eyeBase.y + eyeOffset.y - closed * 0.03,
+          eyeBase.z
+        )
+      }
+      applyEye(leftEye, eyeBase.lx)
+      applyEye(rightEye, eyeBase.rx)
+    }
+
+    // Tech tuft — lazy sway + mood-colored LED pulse
+    if (antennaGroup) {
+      antennaGroup.rotation.z = Math.sin(time * 1.2) * 0.1
+      antennaGroup.rotation.x = Math.sin(time * 1.6 + 1) * 0.06
+    }
+    if (antennaTip) {
+      const colors = moodColors[mood] || moodColors.content
+      antennaTip.material.emissive.lerp(new THREE.Color(colors.emissive), 0.05)
+      antennaTip.material.emissiveIntensity = 0.7 + Math.sin(time * 2.4) * 0.35
+    }
 
     const colors = moodColors[mood] || moodColors.content
     petMaterial.color.lerp(new THREE.Color(colors.body), 0.05)
@@ -346,9 +520,10 @@ const animate = () => {
     const leftCheek = petMesh.getObjectByName('leftCheek')
     const rightCheek = petMesh.getObjectByName('rightCheek')
     if (leftCheek && rightCheek) {
-      const show = ['happy', 'excited', 'content'].includes(mood) && !isSleeping.value
-      leftCheek.material.opacity = show ? 0.6 + Math.sin(time * 2) * 0.2 : 0
-      rightCheek.material.opacity = show ? 0.6 + Math.sin(time * 2) * 0.2 : 0
+      const glowing = ['happy', 'excited', 'content'].includes(mood) && !isSleeping.value
+      const opacity = isSleeping.value ? 0 : glowing ? 0.65 + Math.sin(time * 2) * 0.2 : 0.35
+      leftCheek.material.opacity = opacity
+      rightCheek.material.opacity = opacity
     }
 
     pointLight.color.lerp(new THREE.Color(
@@ -435,7 +610,10 @@ const handlePetClick = (event) => {
   saveProgress()
 }
 
-const handlePetHover = () => { isHoveringPet.value = true }
+const handlePetHover = () => {
+  isHoveringPet.value = true
+  blinkT = nextBlink // little acknowledging blink
+}
 const handlePetLeave = () => { isHoveringPet.value = false }
 
 const feed = () => {
@@ -773,6 +951,8 @@ watch(petMood, (newMood) => {
   expression.value = map[newMood] || '😊'
 })
 
+watch([petMood, animation, isSleeping], () => setMouth(moodFace()))
+
 watch(memoryBestScore, (v) => { if (v) localStorage.setItem('site_blobbyMemoryBest', v) })
 watch(reactionBest, (v) => { if (v) localStorage.setItem('site_blobbyReactionBest', v) })
 
@@ -794,6 +974,10 @@ onUnmounted(() => {
   clearTimeout(reactionTimeout.value)
   window.removeEventListener('keyup', handleKeyUp)
   window.removeEventListener('resize', handleResize)
+  if (renderer) {
+    if (onCanvasPointerMove) renderer.domElement.removeEventListener('pointermove', onCanvasPointerMove)
+    if (onCanvasPointerLeave) renderer.domElement.removeEventListener('pointerleave', onCanvasPointerLeave)
+  }
   if (scene) {
     scene.traverse((obj) => {
       if (obj.geometry) obj.geometry.dispose()
@@ -843,7 +1027,7 @@ onUnmounted(() => {
         <!-- Pet viewport -->
         <div class="lg:col-span-2">
           <div class="pet-viewport relative rounded-lg overflow-hidden border border-[#222] bg-[#0d0d22]" style="aspect-ratio:4/3;">
-            <div ref="canvasContainer" class="absolute inset-0 cursor-pointer"
+            <div ref="canvasContainer" class="absolute inset-0 cursor-pointer flex items-center justify-center"
                  @click="handlePetClick" @mouseenter="handlePetHover" @mouseleave="handlePetLeave"></div>
 
             <div v-for="effect in clickEffects" :key="effect.id"
