@@ -78,6 +78,13 @@ Route::get('/tools/bill-splitter', fn() => inertia('Tools/BillSplitter', [
 
 Route::get('/tools/rota-minutes', RotaMinutesController::class)->name('rota-minutes');
 
+Route::get('/tools/water-schedule', fn() => inertia('Tools/WaterSchedule', [
+    'meta' => [
+        'title' => 'Water Schedule — Tools — Swapnil Upadhyay',
+        'description' => 'Look up when and where KUKL delivers water across Kathmandu branches.',
+    ],
+]));
+
 Route::get('/tools/family-tree', fn() => inertia('Tools/FamilyTree', [
     'meta' => [
         'title' => 'Family Tree — Tools — Swapnil Upadhyay',
@@ -105,6 +112,13 @@ Route::get('/tools/space-explorer', fn() => inertia('Tools/SpaceExplorer', [
 Route::get('/tools/infinite-corridor', fn() => inertia('Tools/InfiniteCorridor', [
     'meta' => [
         'title' => 'The Infinite Corridor — Tools — Swapnil Upadhyay',
+    ],
+]));
+
+Route::get('/tools/anchor', fn() => inertia('Tools/Anchor', [
+    'meta' => [
+        'title' => 'Anchor — a calm minute for rough moments — Tools — Swapnil Upadhyay',
+        'description' => 'SOS breathing + 5-4-3-2-1 grounding + rhythm garden. A supportive, research-informed calm tool.',
     ],
 ]));
 

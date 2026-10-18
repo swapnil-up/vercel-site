@@ -15,6 +15,8 @@ const tools = [
   { name: 'Particle Life', path: '/tools/particle-life', description: 'Emergent life from simple rules — 3D GPU simulation' },
   { name: 'Space Explorer', path: '/tools/space-explorer', description: 'Fly through the asteroid field — collect stars, dodge rocks' },
   { name: 'The Infinite Corridor', path: '/tools/infinite-corridor', description: 'Walk through an endless corridor — find mysterious doors' },
+  { name: 'Anchor', path: '/tools/anchor', description: 'A calm minute for rough moments — breathing + grounding + garden' },
+  { name: 'Water Schedule', path: '/tools/water-schedule', description: 'Where and when KUKL delivers water in Kathmandu' },
 ]
 </script>
 
