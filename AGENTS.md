@@ -20,14 +20,14 @@ Then use `php artisan serve` or your preferred Laravel local server.
 
 ```
 vercel-site/
-├── articles/           # Only now.md (manually kept)
 ├── app/
 │   ├── Console/Commands/ImportPosts.php  # Import command: posts:import
 │   ├── Console/Commands/ExportPosts.php  # Export command: posts:export
 │   └── Models/Post.php                  # Post model
+├── config/content.php   # Article source manifest (paths, prefixes, tags, filters)
 ├── database/database.sqlite             # SQLite database
 ├── graph/              # Graph data (JSON files for connections/thoughts)
-├── posts/              # Exported markdown files (gitignored)
+├── posts/              # Backup-only markdown exports (gitignored, never imported)
 ├── public/achievements.txt  # Tracker data source
 ├── resources/js/
 │   ├── Pages/         # Vue pages (Components, Tools, Posts subdirs)
@@ -38,38 +38,76 @@ vercel-site/
 └── tech/            # Test articles folder
 ```
 
+## Content Flow (read this first)
+
+The blog "articles" on the site are rows in the `posts` table. They are **not** the `articles` table (that table belongs to the separate Nepal News pipeline and is unused by the main site).
+
+- **Source of truth**: markdown in the source folders. `config/content.php` lists every source, its portable prefix, tag, and filters. The SQLite DB is a derived artifact that is committed and bundled into the Vercel deploy.
+- **Sources (Oct 2026)**:
+  - `til` → `/home/swap/github/coding-problems/learning-notes/TIL` (116 posts, whole folder published)
+  - `published` → `/home/swap/github/obsidian-vault/published` (32 posts, whole folder published)
+  - `notes` → `/home/swap/github/obsidian-vault/coding notes` (future notes; only `publish: true` files import)
+- **Portable source paths**: `posts.source_path` stores `til/...`, `published/...`, or `notes/...`, never absolute paths. The DB is valid on any device with the same sibling-repo layout.
+- **Single import command**: `php artisan posts:import` imports every configured source. `--source=notes` targets one. Explicit paths still work for ad-hoc imports.
+- **Flow**: edit markdown in a source folder → `php artisan posts:import` → verify → commit `database/database.sqlite` → deploy. Commit the source markdown in its own repo separately.
+- **DB-only posts**: `php artisan posts:export --db-only --dir=../obsidian-vault/published --only-missing` adds posts that have no canonical source to the Obsidian `published/` folder without overwriting existing files. `posts/` is backup-only.
+- **Don't lose posts**: `--prune` only considers posts whose portable source prefix matches the imported source(s), so importing one source cannot delete another source's posts.
+- **Missing directory**: if a source folder is gone, `posts:import` warns and skips it; the other sources still import.
+- **Re-importing a source refreshes existing rows**: slug is the identity, so title/content/date/tags are overwritten from the file. Tags include the configured source tag, frontmatter tags, and subfolder names. Dates fall back to a body `Date: YYYY-MM-DD` line when frontmatter has no `date`.
+- **Slug collisions abort**: the same slug coming from two sources (or hijacking another source's post) stops the import before any writes.
+- **Import also rebuilds derived data**: it re-processes wikilinks for all posts and syncs `thoughts`/`connections`.
+- **Tests**: `php artisan test --filter='ImportPostsTest|ExportPostsTest'` covers manifest imports, publish filtering, portable keys, collisions, scoped pruning, and additive exports.
+
+## Multi-device workflow
+```bash
+git pull
+php artisan posts:import
+php artisan test --filter='ImportPostsTest|ExportPostsTest'
+git add database/database.sqlite
+git commit -m "content: import"
+git push
+```
+If two devices both import, the SQLite binaries cannot merge. Recovery: pull, discard the local DB change, re-run `posts:import`, and commit once. Never resolve a DB conflict by hand.
+
 ## Key Commands
 
 All commands should be run from project root.
 
 ### Posts Import (Primary)
 ```bash
-php artisan posts:import <path> [--prune]
+php artisan posts:import [paths...] [--source=<name>] [--prune] [--dry-run]
 ```
 - **Idempotent**: Safe to run multiple times - uses slug for deduplication
-- **Symlink Support**: Follows symlinked directories (e.g., TIL folder symlinked from another repo)
+- **Configured sources**: No arguments imports every source in `config/content.php`
+- **Source filter**: `--source=til` (repeatable) imports only the named source(s)
+- **Symlink Support**: Follows symlinked directories; `.git`, `.obsidian`, `.trash`, `.stversions` are ignored
+- **Publish filter**: sources with `require_publish` skip files lacking `publish: true`
 - **Automatic Graph Integration**: Creates graph nodes and connections automatically
 - **Wikilink Processing**: Converts `[[slug]]` to internal links and creates graph edges
 - **Smart Link Resolution**: Handles title-based matching and partial slug matching
-- **Multi-source Support**: Import from multiple directories at once
 - **Data Updates**: Updates existing posts, nodes, and connections when files change
-- **Prune Option**: `--prune` removes posts whose source files no longer exist
+- **Prune Option**: `--prune` removes orphaned posts only within the imported source prefix(es)
+- **Dry run**: `--dry-run` reports what would be imported without writing
+- **Dates & Tags**: Falls back to a body `Date: YYYY-MM-DD` line; adds the configured source tag (e.g. `TIL`) and subfolder names
 - **Cleanup**: Removes orphaned connections automatically
 - Arguments:
-  - `<path>` - Directory to scan for .md files (recursive)
-  - Supports multiple import sources
+  - `[paths...]` - Optional directories for ad-hoc imports (bypasses the manifest)
+  - `--source` - A configured source name from `config/content.php`
+
 
 ### Posts Export
 ```bash
-php artisan posts:export [--dir=<path>] [--dry-run]
+php artisan posts:export [--dir=<path>] [--source=<prefix>] [--db-only] [--only-missing] [--dry-run]
 ```
-- **Reverse of import**: Writes all DB posts back to markdown files with YAML frontmatter
+- **Reverse of import**: Writes DB posts back to markdown files with YAML frontmatter
 - **Content preserved**: Exports raw wikilink content (not HTML), preserving `[[slug]]` syntax
 - **Idempotent**: Skips files that haven't changed (compares against existing content)
-- **Default directory**: `posts/` (project root)
-- **--dir**: Specify a custom output directory
+- **Default directory**: `posts/` (backup-only, gitignored)
+- **--source**: Only export posts under a portable prefix (e.g. `published`); preserves subfolders
+- **--db-only**: Only export posts with no canonical source (`source_path` null or `posts/...`)
+- **--only-missing**: Additive sync — never overwrites files already in the target folder
 - **--dry-run**: Preview which files would be written
-- **Cross-device workflow**: Run after import to materialize files, then import on another machine (gitignored, use for backup/snapshot purposes)
+- **Push DB-only posts to Obsidian**: `php artisan posts:export --db-only --dir=../obsidian-vault/published --only-missing`
 
 ### Database Seeding
 ```bash
@@ -139,12 +177,10 @@ The tracker at `/tracker` reads from `public/achievements.txt` - a plain text fi
 
 ### Cross-device sync workflow
 ```bash
-# On device A: write/edit markdown files in articles/
-php artisan posts:import articles/  # Load into local DB
-# Then commit and push articles/ to git
-
-# On device B: pull git, then
-php artisan posts:import articles/  # Load into local DB
+# On device A: write/edit markdown, then load it into the local DB
+php artisan posts:import
+# Commit the source markdown in its own repo, then commit database/database.sqlite here
+# On device B: pull this repo — the DB already contains the content
 ```
 
 ### Export DB back to files (e.g., after manual DB edits)
@@ -152,18 +188,10 @@ php artisan posts:import articles/  # Load into local DB
 php artisan posts:export --dir=./posts
 ```
 
-### Import articles from a new source
-```bash
-php artisan posts:import ./path/to/articles
-```
-
-This will:
-1. Import markdown files with frontmatter
-2. Create/update posts in the database
-3. Process wikilinks and create internal links
-4. Create graph nodes for each post
-5. Create graph connections based on wikilinks
-6. Update the graph visualization automatically
+### Add an article source
+1. Add an entry to `config/content.php` with `path`, `prefix`, `tag`, and optional `require_publish`/`exclude`.
+2. Run `php artisan posts:import --source=<name>` (or just `posts:import` for everything).
+3. Commit `database/database.sqlite`.
 
 ### Check existing posts
 ```bash

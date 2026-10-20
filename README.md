@@ -13,10 +13,10 @@ A personal blog and digital garden built with VILT stack (Vue 3 + Laravel + Iner
 
 ```
 vercel-site/
-├── articles/              # Original article markdown files
 ├── app/                   # Laravel app
 │   ├── Console/Commands/ # Artisan commands
 │   └── Models/           # Eloquent models
+├── config/content.php     # Article source manifest
 ├── database/
 │   └── database.sqlite   # SQLite database
 ├── graph/                 # Graph data (thoughts, connections)
@@ -61,15 +61,19 @@ npm run dev
 Import markdown articles with YAML frontmatter:
 
 ```bash
-php artisan posts:import <path>
+php artisan posts:import [paths...] [--source=<name>] [--prune] [--dry-run]
 ```
+
+Run with no arguments to import every source listed in `config/content.php`.
 
 **Features:**
 - **Idempotent**: Safe to run multiple times - uses slug for deduplication
+- **Configured sources**: TIL, Obsidian `published`, and Obsidian `coding notes` (publish-only)
 - **Automatic Graph Integration**: Creates graph nodes and connections automatically
 - **Wikilink Processing**: Converts `[[slug]]` to internal links and creates graph edges
 - **Smart Link Resolution**: Handles title-based matching and partial slug matching
-- **Multi-source Support**: Import from multiple directories at once
+- **Portable source keys**: `source_path` stores `til/...` / `published/...`, never absolute paths
+- **Duplicate-slug protection**: Aborts before writing if two sources claim the same slug
 
 **Graph Integration:**
 - Creates nodes in the `thoughts` table for each imported post
@@ -80,14 +84,20 @@ php artisan posts:import <path>
 
 **Example:**
 ```bash
-# Import from articles folder
-php artisan posts:import ./articles
+# Import every configured source
+php artisan posts:import
 
-# Import from tech folder
+# Import one source
+php artisan posts:import --source=til
+
+# Ad-hoc import
 php artisan posts:import ./tech
 
-# Import from multiple sources
-php artisan posts:import ./articles ./tech ./other-source
+# Preview without writing
+php artisan posts:import --dry-run
+
+# Push DB-only posts into the Obsidian published folder
+php artisan posts:export --db-only --dir=../obsidian-vault/published --only-missing
 ```
 
 ### Database Seeding

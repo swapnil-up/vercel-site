@@ -9,9 +9,14 @@ use Symfony\Component\Yaml\Yaml;
 
 class ExportPosts extends Command
 {
-    protected $signature = 'posts:export {--dir= : Output directory for exported markdown files (default: posts/)} {--dry-run : Preview what would be exported without writing}';
+    protected $signature = 'posts:export
+        {--dir= : Output directory for exported markdown files (default: posts/)}
+        {--source=* : Only export posts whose source_path starts with this prefix}
+        {--db-only : Only export posts with no canonical source (source_path is null or under posts/)}
+        {--only-missing : Skip files that already exist instead of overwriting}
+        {--dry-run : Preview what would be exported without writing}';
 
-    protected $description = 'Export all posts from the database back to markdown files';
+    protected $description = 'Export database posts back to markdown files';
 
     public function handle()
     {
@@ -22,6 +27,38 @@ class ExportPosts extends Command
 
         if ($posts->isEmpty()) {
             $this->error('No posts found in the database.');
+            return 1;
+        }
+
+        $prefixes = array_values(array_filter(array_map(
+            fn (string $prefix) => trim(str_replace('\\', '/', $prefix), '/'),
+            (array) $this->option('source')
+        )));
+
+        if (! empty($prefixes)) {
+            $posts = $posts->filter(function (Post $post) use ($prefixes) {
+                $source = str_replace('\\', '/', $post->source_path ?? '');
+
+                foreach ($prefixes as $prefix) {
+                    if (str_starts_with($source, $prefix.'/')) {
+                        return true;
+                    }
+                }
+
+                return false;
+            });
+        }
+
+        if ($this->option('db-only')) {
+            $posts = $posts->filter(function (Post $post) {
+                $source = str_replace('\\', '/', $post->source_path ?? '');
+
+                return $source === '' || str_starts_with($source, 'posts/');
+            });
+        }
+
+        if ($posts->isEmpty()) {
+            $this->error('No posts matched the selected filters.');
             return 1;
         }
 
@@ -38,8 +75,8 @@ class ExportPosts extends Command
         $exported = 0;
 
         foreach ($posts as $post) {
-            $filename = $post->slug.'.md';
-            $filePath = $outputDir.'/'.$filename;
+            $relativePath = $this->relativePath($post, $prefixes);
+            $filePath = $outputDir.'/'.$relativePath;
 
             $frontmatter = [];
 
@@ -79,18 +116,27 @@ class ExportPosts extends Command
                 continue;
             }
 
+            if ($this->option('only-missing') && File::exists($filePath)) {
+                $this->line("  Skipped (exists): {$relativePath}");
+                $exported++;
+                continue;
+            }
+
             if (File::exists($filePath)) {
                 $existing = File::get($filePath);
+
                 if ($existing === $content) {
-                    $this->line("  Skipped (unchanged): {$filename}");
+                    $this->line("  Skipped (unchanged): {$relativePath}");
                     $exported++;
                     continue;
                 }
-                $this->warn("  Overwriting: {$filename}");
+
+                $this->warn("  Overwriting: {$relativePath}");
             } else {
-                $this->info("  Exported: {$filename}");
+                $this->info("  Exported: {$relativePath}");
             }
 
+            File::ensureDirectoryExists(dirname($filePath));
             File::put($filePath, $content);
             $exported++;
         }
@@ -99,5 +145,23 @@ class ExportPosts extends Command
         $this->info("Done. {$exported} post(s) {$verb} {$outputDir}");
 
         return 0;
+    }
+
+    /**
+     * Preserve subfolders when exporting a specific source, otherwise flatten to <slug>.md.
+     */
+    private function relativePath(Post $post, array $prefixes): string
+    {
+        if (! empty($prefixes) && $post->source_path) {
+            $source = str_replace('\\', '/', $post->source_path);
+
+            foreach ($prefixes as $prefix) {
+                if (str_starts_with($source, $prefix.'/')) {
+                    return substr($source, strlen($prefix) + 1);
+                }
+            }
+        }
+
+        return $post->slug.'.md';
     }
 }
