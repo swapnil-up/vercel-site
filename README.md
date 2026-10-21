@@ -115,7 +115,7 @@ php artisan db:seed --class=QuotesSeeder
 | `/posts` | List all blog posts |
 | `/posts/{slug}` | Single post view |
 | `/posts/tag/{tag}` | Posts filtered by tag |
-| `/graph` | Interactive knowledge graph |
+| `/graph` | Interactive digital-garden map with local backlinks |
 | `/tracker` | Achievement tracker |
 | `/about` | About page |
 | `/now` | Now page (current focus) |
@@ -134,25 +134,16 @@ php artisan db:seed --class=QuotesSeeder
 - Tags and series support
 - Draft support
 
-### Knowledge Graph
+### Knowledge Graph / Garden Map
 
-- **Automatic Integration**: Graph nodes and edges created automatically during import
-- **Rich Post Viewing**: Click any article node to view full post with tags, series navigation, and related posts
-- **Interactive Features**: 
-  - Hover to highlight connected nodes and links
-  - Click node titles to focus while keeping connected nodes visible
-  - Click tags to highlight all posts with that tag
-  - Dynamic node sizing based on connection count
-- **Enhanced Controls**: 
-  - Adaptive zoom range (0.05x to 10x)
-  - "Fit All" button restarts simulation and fits content
-  - Smooth transitions and animations
-- **Smart Link Handling**: 
-  - Internal post links open in graph sidebar (add to stack)
-  - Tag clicks highlight related nodes in the graph
-  - Series navigation opens posts in sidebar
-- **Data Storage**: Nodes in `thoughts` table, connections in `connections` table
-- **Link Types**: Supports mentions, references, and custom connection types
+- **Maps of content**: `published/maps/*.md` (tagged `moc`) are graph hubs. Notes link to them with `[[Title|slug]]`.
+- **Two views**: Garden (all notes, default) and Local (one node plus 1–2 hops).
+- **Search and filters**: Search by title, description, or tag; filter by Maps, TIL, Articles, or Courses.
+- **Backlinks**: Post pages show **Appears in** maps and **Linked from** notes, plus an **Open in graph** link.
+- **Interactive features**: Hover to highlight neighbors, drag to pan, scroll to zoom, click for the reading sidebar, double-click to focus.
+- **Readable defaults**: Map labels stay visible; note titles appear in ink on hover or selection. Map hubs are laid out on a stable ring in Garden view.
+- **Data storage**: Nodes come from `posts` (plus `thoughts`), edges from `connections`.
+- **Feed and index**: MOCs are excluded from `/feed` and shown in a separate section on `/posts`.
 
 ### Tools
 

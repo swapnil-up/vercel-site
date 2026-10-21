@@ -6,6 +6,8 @@ defineProps({
   post: Object,
   linkedPosts: Array,
   seriesPosts: Array,
+  maps: { type: Array, default: () => [] },
+  backlinks: { type: Array, default: () => [] },
 })
 
 const progress = ref(0)
@@ -30,10 +32,24 @@ onUnmounted(() => {
     <div class="progress-bar" :style="{ width: progress + '%' }" />
 
     <article class="max-w-4xl mx-auto px-6 py-12">
-      <Link href="/posts" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral transition-colors mb-4 group">
-        <span class="group-hover:-translate-x-1 transition-transform">←</span>
-        Back to posts
-      </Link>
+      <div class="flex items-center justify-between gap-4 mb-4">
+        <Link href="/posts" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral transition-colors group">
+          <span class="group-hover:-translate-x-1 transition-transform">←</span>
+          Back to posts
+        </Link>
+        <Link
+          :href="`/graph?node=${post.slug}`"
+          class="inline-flex items-center gap-2 text-sm font-medium text-coral hover:text-ink transition-colors"
+        >
+          Open in graph
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="6" cy="6" r="2.5" />
+            <circle cx="18" cy="18" r="2.5" />
+            <circle cx="18" cy="6" r="2.5" />
+            <path d="M8.5 6H15M6 8.5V15a3 3 0 0 0 3 3h6.5M8.4 7.6l7.2 8.8" />
+          </svg>
+        </Link>
+      </div>
 
       <header class="mb-12">
         <div class="flex items-center gap-3 text-sm text-warm-muted mb-4">
@@ -84,6 +100,42 @@ onUnmounted(() => {
       </div>
 
       <div class="article-content max-w-none" v-html="post.content_html" />
+
+      <div v-if="maps.length" class="mt-12 pt-8 border-t border-warm-border">
+        <h3 class="font-display text-sm font-bold uppercase tracking-wider text-warm-muted mb-3">Appears in</h3>
+        <div class="flex flex-wrap gap-2">
+          <Link
+            v-for="map in maps"
+            :key="map.slug"
+            :href="`/posts/${map.slug}`"
+            class="px-3 py-1.5 text-sm font-medium bg-coral/10 border border-coral/30 text-ink rounded-full hover:border-coral transition-colors"
+          >
+            {{ map.title }}
+          </Link>
+        </div>
+      </div>
+
+      <div v-if="backlinks.length" class="mt-12 pt-8 border-t border-warm-border">
+        <h3 class="font-display text-lg font-bold text-ink mb-4 flex items-center gap-2">
+          <span class="w-1.5 h-6 bg-sky rounded-sm inline-block"></span>
+          Linked from
+        </h3>
+        <div class="space-y-4">
+          <Link
+            v-for="backlink in backlinks"
+            :key="backlink.slug"
+            :href="`/posts/${backlink.slug}`"
+            class="block p-5 bg-warm-surface border border-warm-border rounded-sm hover:bg-coral/5 hover:border-coral transition-all"
+          >
+            <h4 class="font-display font-semibold text-ink mb-1">
+              {{ backlink.title }}
+            </h4>
+            <p v-if="backlink.description" class="text-sm text-ink/70">
+              {{ backlink.description }}
+            </p>
+          </Link>
+        </div>
+      </div>
 
       <div v-if="linkedPosts && linkedPosts.length > 0" class="mt-16 pt-8 border-t border-warm-border">
         <h3 class="font-display text-lg font-bold text-ink mb-4 flex items-center gap-2">

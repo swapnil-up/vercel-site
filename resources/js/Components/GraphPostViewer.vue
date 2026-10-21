@@ -5,6 +5,9 @@ defineProps({
   post: Object,
   linkedPosts: Array,
   seriesPosts: Array,
+  maps: Array,
+  backlinks: Array,
+  inlineNavigation: Boolean,
 })
 
 const emit = defineEmits(['open-post', 'highlight-tag'])
@@ -16,6 +19,9 @@ const emit = defineEmits(['open-post', 'highlight-tag'])
       :post="post"
       :linkedPosts="linkedPosts"
       :seriesPosts="seriesPosts"
+      :maps="maps"
+      :backlinks="backlinks"
+      :inlineNavigation="inlineNavigation"
       @open-post="emit('open-post', $event)"
       @highlight-tag="emit('highlight-tag', $event)"
     />
@@ -30,4 +36,3 @@ const emit = defineEmits(['open-post', 'highlight-tag'])
   padding: 1rem;
 }
 </style>
-

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\Thought;
+use App\Services\PostRelations;
 use League\CommonMark\CommonMarkConverter;
 
 class NodeDataController extends Controller
@@ -46,6 +47,8 @@ class NodeDataController extends Controller
                 ->toArray();
         }
 
+        [$maps, $backlinks] = app(PostRelations::class)->incoming($post->slug);
+
         $contentHtml = $post->content_html;
         if (empty($contentHtml)) {
             $contentHtml = (new CommonMarkConverter)->convert($post->content)->getContent();
@@ -62,8 +65,11 @@ class NodeDataController extends Controller
             'tags' => $post->tags,
             'series' => $post->series,
             'series_order' => $post->series_order,
+            'is_map' => in_array('moc', $post->tags ?? [], true),
             'linkedPosts' => $linkedPosts,
             'seriesPosts' => $seriesPosts,
+            'maps' => $maps,
+            'backlinks' => $backlinks,
         ]);
     }
 
@@ -80,6 +86,8 @@ class NodeDataController extends Controller
             'type' => 'thought',
             'title' => $thought->title,
             'content' => $thought->content,
+            'maps' => [],
+            'backlinks' => [],
         ]);
     }
 }

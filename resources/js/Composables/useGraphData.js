@@ -1,123 +1,94 @@
 export function useGraphData() {
-  function computeFolderNodes(nodes) {
-    const folderMap = new Map()
-    const folderLinks = []
-
-    nodes.forEach(node => {
-      if (!node.folders || node.folders.length < 2) return
-      const topFolder = node.folders[node.folders.length - 1]
-      if (!folderMap.has(topFolder)) {
-        folderMap.set(topFolder, [])
-      }
-      folderMap.get(topFolder).push(node.id)
-    })
-
-    const folderNodes = []
-    folderMap.forEach((nodeIds, folder) => {
-      const folderNodeId = `folder:${folder}`
-      folderNodes.push({
-        id: folderNodeId,
-        title: folder,
-        type: 'folder',
-        size: 14,
-        tags: [folder],
-      })
-      nodeIds.forEach(nodeId => {
-        folderLinks.push({
-          source: folderNodeId,
-          target: nodeId,
-          type: 'folder',
-          weight: 1,
-        })
-      })
-    })
-
-    return { folderNodes, folderLinks }
+  const sectionColors = {
+    til: 'var(--color-sky)',
+    published: 'var(--color-mint)',
+    thought: 'var(--color-mustard)',
+    other: 'var(--color-warm-muted)',
   }
 
-  function computeTagNodes(nodes) {
-    const tagMap = new Map()
-    const tagLinks = []
-
-    nodes.forEach(node => {
-      if (!node.tags || node.tags.length === 0) return
-      node.tags.forEach(tag => {
-        if (!tagMap.has(tag)) {
-          tagMap.set(tag, [])
-        }
-        tagMap.get(tag).push(node)
-      })
-    })
-
-    const tagNodes = []
-    tagMap.forEach((connectedNodes, tag) => {
-      const tagNodeId = `tag:${tag}`
-      let sumX = 0, sumY = 0, count = 0
-      connectedNodes.forEach(node => {
-        if (node.x !== undefined && node.y !== undefined) {
-          sumX += node.x
-          sumY += node.y
-          count++
-        }
-      })
-      const cx = count > 0 ? sumX / count : 500
-      const cy = count > 0 ? sumY / count : 500
-
-      tagNodes.push({
-        id: tagNodeId,
-        title: tag,
-        type: 'tag',
-        size: 6,
-        tags: [tag],
-        x: cx, y: cy,
-        fx: cx, fy: cy,
-      })
-
-      connectedNodes.forEach(node => {
-        tagLinks.push({
-          source: tagNodeId,
-          target: node.id,
-          type: 'tag',
-          weight: 1,
-        })
-      })
-    })
-
-    return { tagNodes, tagLinks }
+  function nodeColor(node) {
+    if (node.is_map) return 'var(--color-coral)'
+    if (node.folder === 'courses') return 'var(--color-mustard)'
+    return sectionColors[node.section] || sectionColors.other
   }
 
-  function getNodeColor(type) {
-    const colors = {
-      article: 'var(--color-sky)',
-      thought: 'var(--color-mint)',
-      prediction: 'var(--color-mustard)',
-      reflection: 'var(--color-sky)',
-      tag: 'var(--color-mint)',
-      folder: 'var(--color-coral)',
+  function nodeRadius(node) {
+    if (node.is_map) {
+      return Math.min(20, 8.5 + Math.sqrt(node.degree || 0) * 1.6)
     }
-    return colors[type] || 'var(--color-warm-muted)'
+
+    if (!node.degree) return 3.4
+
+    return Math.min(10.5, 3.6 + Math.sqrt(node.degree) * 1.15)
   }
 
-  function calculateNodeSize(node, links) {
-    const connectionCount = links.filter(
-      link => link.source.id === node.id || link.target.id === node.id
-    ).length
-    const baseSize = node.type === 'article' ? 8 : 5
-    const sizeMultiplier = Math.min(2, 1 + connectionCount * 0.1)
-    return baseSize * sizeMultiplier
+  function nodeLabel(node) {
+    if (node.is_map) return node.title
+    return node.title
   }
 
-  function getNodeFillColor(node) {
-    if (node.type === 'tag') return 'var(--color-mint)'
-    if (node.type === 'folder') return 'var(--color-coral)'
-    return getNodeColor(node.type)
+  function sectionLabel(node) {
+    if (node.is_map) return 'Map'
+    if (node.folder === 'courses') return 'Course'
+    if (node.section === 'til') return 'TIL'
+    if (node.section === 'published') return 'Article'
+    if (node.section === 'thought') return 'Thought'
+    return 'Note'
+  }
+
+  function truncate(text, length = 32) {
+    if (!text) return ''
+    return text.length > length ? `${text.slice(0, length - 1)}…` : text
+  }
+
+  function neighborsOf(id, links) {
+    const ids = new Set([id])
+
+    links.forEach((link) => {
+      const source = link.source?.id || link.source
+      const target = link.target?.id || link.target
+
+      if (source === id) ids.add(target)
+      if (target === id) ids.add(source)
+    })
+
+    return ids
+  }
+
+  function neighborhood(id, depth, links) {
+    const visited = new Set([id])
+    let frontier = new Set([id])
+
+    for (let step = 0; step < depth; step += 1) {
+      const next = new Set()
+
+      links.forEach((link) => {
+        const source = link.source?.id || link.source
+        const target = link.target?.id || link.target
+
+        if (frontier.has(source) && !visited.has(target)) next.add(target)
+        if (frontier.has(target) && !visited.has(source)) next.add(source)
+      })
+
+      next.forEach((nodeId) => visited.add(nodeId))
+      frontier = next
+    }
+
+    return visited
+  }
+
+  function isMapNode(node) {
+    return Boolean(node?.is_map)
   }
 
   return {
-    computeFolderNodes,
-    computeTagNodes,
-    getNodeColor,
-    calculateNodeSize,
-    getNodeFillColor,
+    nodeColor,
+    nodeRadius,
+    nodeLabel,
+    sectionLabel,
+    truncate,
+    neighborsOf,
+    neighborhood,
+    isMapNode,
   }
 }

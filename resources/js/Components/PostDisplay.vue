@@ -1,10 +1,13 @@
 <script setup>
 import { router } from '@inertiajs/vue3'
 
-defineProps({
+const props = defineProps({
   post: Object,
   linkedPosts: Array,
   seriesPosts: Array,
+  maps: Array,
+  backlinks: Array,
+  inlineNavigation: Boolean,
 })
 
 const emit = defineEmits(['open-post', 'highlight-tag'])
@@ -27,6 +30,13 @@ const handleProseClick = (event) => {
   const href = link.getAttribute('href')
   if (!href || href.startsWith('http') || href.startsWith('//') || href.startsWith('#')) return
   event.preventDefault()
+
+  if (props.inlineNavigation) {
+    const slug = href.split('/').filter(Boolean).pop()
+    if (slug) emit('open-post', slug)
+    return
+  }
+
   router.visit(href)
 }
 </script>
@@ -76,6 +86,36 @@ const handleProseClick = (event) => {
     </div>
 
     <div class="prose-content" v-html="post.content_html" @click="handleProseClick" />
+
+    <div v-if="maps && maps.length > 0" class="post-maps">
+      <h3 class="post-relations-title">Appears in</h3>
+      <div class="post-relation-links">
+        <button
+          v-for="map in maps"
+          :key="map.slug"
+          type="button"
+          class="map-pill"
+          @click="handlePostClick(map.slug)"
+        >
+          {{ map.title }}
+        </button>
+      </div>
+    </div>
+
+    <div v-if="backlinks && backlinks.length > 0" class="linked-posts">
+      <h3 class="linked-posts-title">Linked from</h3>
+      <div class="linked-posts-list">
+        <button
+          v-for="backlink in backlinks"
+          :key="backlink.slug"
+          @click="handlePostClick(backlink.slug)"
+          class="linked-post-card"
+        >
+          <h4 class="linked-post-title">{{ backlink.title }}</h4>
+          <p v-if="backlink.description" class="linked-post-description">{{ backlink.description }}</p>
+        </button>
+      </div>
+    </div>
 
     <div v-if="linkedPosts && linkedPosts.length > 0" class="linked-posts">
       <h3 class="linked-posts-title">Related Posts</h3>
@@ -263,6 +303,41 @@ const handleProseClick = (event) => {
   border-left: 4px solid var(--color-warm-border);
   padding-left: 1rem;
   color: var(--color-warm-muted);
+}
+
+.post-maps {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-warm-border);
+}
+
+.post-relations-title {
+  margin-bottom: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.post-relation-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.map-pill {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-coral) 35%, var(--color-warm-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-coral) 8%, transparent);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.map-pill:hover {
+  border-color: var(--color-coral);
 }
 
 .linked-posts {

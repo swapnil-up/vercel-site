@@ -5,6 +5,7 @@ import Fuse from 'fuse.js'
 
 const props = defineProps({
   posts: Array,
+  maps: { type: Array, default: () => [] },
   selectedTag: String,
 })
 
@@ -43,6 +44,28 @@ function clear() {
         Tagged: {{ selectedTag }}
       </p>
     </header>
+
+    <section v-if="maps.length && !query" class="mb-10">
+      <div class="flex items-baseline justify-between gap-4 mb-4">
+        <h2 class="font-display text-xl font-bold text-ink">Maps of content</h2>
+        <span class="text-xs uppercase tracking-wider text-warm-muted">{{ maps.length }} maps</span>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Link
+          v-for="map in maps"
+          :key="map.id"
+          :href="`/posts/${map.slug}`"
+          class="group border border-warm-border bg-warm-surface p-4 rounded-sm hover:border-coral transition-colors"
+        >
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-2 h-2 rounded-full bg-coral" aria-hidden="true"></span>
+            <span class="text-[0.65rem] font-bold uppercase tracking-wider text-warm-muted">Map</span>
+          </div>
+          <h3 class="font-display text-lg font-bold text-ink group-hover:text-coral transition-colors">{{ map.title }}</h3>
+          <p v-if="map.description" class="mt-1 text-sm text-warm-muted leading-relaxed">{{ map.description }}</p>
+        </Link>
+      </div>
+    </section>
 
     <div class="relative mb-10">
       <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">

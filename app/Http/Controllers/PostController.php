@@ -3,31 +3,33 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Services\PostRelations;
 use Inertia\Inertia;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 
 class PostController extends Controller
 {
     public function index()
     {
-        $posts = Post::where('is_draft', false)
+        $all = Post::where('is_draft', false)
             ->orderBy('published_date', 'desc')
-            ->get()
-            ->map(fn($post) => [
-                'id' => $post->id,
-                'title' => $post->title,
-                'slug' => $post->slug,
-                'description' => $post->description,
-                'published_date' => $post->published_date->format('M d, Y'),
-                'tags' => $post->tags,
-            ]);
-        
+            ->get();
+
+        $maps = $all
+            ->filter(fn (Post $post) => $this->isMap($post))
+            ->map(fn (Post $post) => $this->card($post))
+            ->values();
+
+        $posts = $all
+            ->reject(fn (Post $post) => $this->isMap($post))
+            ->map(fn (Post $post) => $this->card($post))
+            ->values();
+
         return Inertia::render('Posts/Index', [
             'posts' => $posts,
+            'maps' => $maps,
             'meta' => [
-                'title' => 'Articles — Swapnil Upadhyay',
-                'description' => 'Technical articles and essays by Swapnil Upadhyay about development, career, and productivity.',
+                'title' => 'Writing — Swapnil Upadhyay',
+                'description' => 'Technical articles, essays, and maps of content by Swapnil Upadhyay.',
             ],
         ]);
     }
@@ -41,7 +43,7 @@ class PostController extends Controller
         // Get linked posts
         $linkedPosts = [];
         if ($post->internal_links) {
-            $linkedPosts = Post::whereIn('slug', array_map(fn($title) => Str::slug($title), $post->internal_links))
+            $linkedPosts = Post::whereIn('slug', $post->internal_links)
                 ->where('is_draft', false)
                 ->get(['title', 'slug', 'description'])
                 ->toArray();
@@ -57,11 +59,14 @@ class PostController extends Controller
                 ->toArray();
         }
         
+        [$maps, $backlinks] = app(PostRelations::class)->incoming($post->slug);
+
         $postUrl = route('posts.show', $post->slug);
 
         return Inertia::render('Posts/Show', [
             'post' => [
                 'title' => $post->title,
+                'slug' => $post->slug,
                 'content_html' => $post->content_html,
                 'description' => $post->description,
                 'published_date' => $post->published_date->format('M d, Y'),
@@ -72,6 +77,8 @@ class PostController extends Controller
             ],
             'linkedPosts' => $linkedPosts,
             'seriesPosts' => $seriesPosts,
+            'maps' => $maps,
+            'backlinks' => $backlinks,
             'meta' => [
                 'title' => $post->title . ' — Swapnil Upadhyay',
                 'description' => $post->description ?? 'Article by Swapnil Upadhyay',
@@ -127,26 +134,49 @@ class PostController extends Controller
     public function byTag($tag)
     {
         $tag = (string) $tag; // sqlite gotcha?
-        $posts = Post::where('is_draft', false)
+        $all = Post::where('is_draft', false)
             ->where('tags', 'LIKE', '%"' . $tag . '"%')
             ->orderBy('published_date', 'desc')
-            ->get()
-            ->map(fn ($post) => [
-                'id' => $post->id,
-                'title' => $post->title,
-                'slug' => $post->slug,
-                'description' => $post->description,
-                'published_date' => $post->published_date->format('M d, Y'),
-                'tags' => $post->tags,
-            ]);
-        
+            ->get();
+
+        $maps = $all
+            ->filter(fn (Post $post) => $this->isMap($post))
+            ->map(fn (Post $post) => $this->card($post))
+            ->values();
+
+        $posts = $all
+            ->reject(fn (Post $post) => $this->isMap($post))
+            ->map(fn (Post $post) => $this->card($post))
+            ->values();
+
         return Inertia::render('Posts/Index', [
             'posts' => $posts,
+            'maps' => $maps,
             'selectedTag' => $tag,
             'meta' => [
                 'title' => ucfirst($tag) . ' articles — Swapnil Upadhyay',
                 'description' => 'Articles tagged with "' . $tag . '" by Swapnil Upadhyay.',
             ],
         ]);
+    }
+
+    private function isMap(Post $post): bool
+    {
+        return in_array('moc', $post->tags ?? [], true);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function card(Post $post): array
+    {
+        return [
+            'id' => $post->id,
+            'title' => $post->title,
+            'slug' => $post->slug,
+            'description' => $post->description,
+            'published_date' => $post->published_date->format('M d, Y'),
+            'tags' => $post->tags,
+        ];
     }
 }

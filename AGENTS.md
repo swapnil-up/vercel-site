@@ -45,8 +45,9 @@ The blog "articles" on the site are rows in the `posts` table. They are **not** 
 - **Source of truth**: markdown in the source folders. `config/content.php` lists every source, its portable prefix, tag, and filters. The SQLite DB is a derived artifact that is committed and bundled into the Vercel deploy.
 - **Sources (Oct 2026)**:
   - `til` → `/home/swap/github/coding-problems/learning-notes/TIL` (116 posts, whole folder published)
-  - `published` → `/home/swap/github/obsidian-vault/published` (32 posts, whole folder published)
+  - `published` → `/home/swap/github/obsidian-vault/published` (whole folder published, including `maps/`)
   - `notes` → `/home/swap/github/obsidian-vault/coding notes` (future notes; only `publish: true` files import)
+- **Maps of content (MOCs)**: `published/maps/*.md` are published posts tagged `moc`. They link to notes with `[[Title|slug]]` and act as graph hubs. The graph, post pages, and Writing index treat them separately; `/feed` omits them.
 - **Portable source paths**: `posts.source_path` stores `til/...`, `published/...`, or `notes/...`, never absolute paths. The DB is valid on any device with the same sibling-repo layout.
 - **Single import command**: `php artisan posts:import` imports every configured source. `--source=notes` targets one. Explicit paths still work for ad-hoc imports.
 - **Flow**: edit markdown in a source folder → `php artisan posts:import` → verify → commit `database/database.sqlite` → deploy. Commit the source markdown in its own repo separately.
@@ -151,6 +152,14 @@ Key routes in `routes/web.php`:
 ## Wikilink Syntax
 
 In markdown, use `[[slug]]` or `[[display text|slug]]` to link between posts. The import command processes these into proper links.
+
+## Maps of Content (MOCs)
+
+- A MOC is a normal post in `published/maps/` with `tags: [moc, ...]`.
+- Link to notes with `[[Title|slug]]`; the importer resolves the slug after the pipe.
+- The graph uses MOC posts as coral hubs. A note's maps come from incoming links, so adding a MOC is enough to make a note discoverable; do not edit TIL source files.
+- Post pages show **Appears in** (maps) and **Linked from** (ordinary backlinks). `/graph?node=<slug>` opens a note in the local graph.
+- The Writing index shows maps in a separate section, and `/feed` excludes them.
 
 ## Tracker
 
