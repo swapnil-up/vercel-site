@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\GraphDataController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NepalNewsController;
 use App\Http\Controllers\NepalNewsSetupController;
 use App\Http\Controllers\RotaMinutesController;
@@ -12,12 +13,7 @@ use App\Http\Controllers\FeedController;
 use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn() => inertia('Index', [
-    'meta' => [
-        'title' => 'Swapnil Upadhyay — Full-Stack Developer',
-        'description' => 'Personal website and blog of Swapnil Upadhyay. Code, career, and curiosity — written in public.',
-    ],
-]));
+Route::get('/', HomeController::class);
 
 Route::get('/about', fn() => inertia('About', [
     'meta' => [

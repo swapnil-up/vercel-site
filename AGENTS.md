@@ -26,11 +26,13 @@ vercel-site/
 │   └── Models/Post.php                  # Post model
 ├── config/content.php   # Article source manifest (paths, prefixes, tags, filters)
 ├── database/database.sqlite             # SQLite database
+├── docs/dulna-jaam.md   # Immersive homepage plan + progress log (keep updated)
 ├── graph/              # Graph data (JSON files for connections/thoughts)
 ├── posts/              # Backup-only markdown exports (gitignored, never imported)
 ├── public/achievements.txt  # Tracker data source
 ├── resources/js/
 │   ├── Pages/         # Vue pages (Components, Tools, Posts subdirs)
+│   ├── Components/Journey/  # Scroll-scene homepage, stops, HUD, mascot
 │   └── Composables/  # Vue composables
 ├── routes/web.php     # All routes
 ├── scripts/         # Deprecated scripts (ignore)
@@ -141,6 +143,7 @@ npm run build
 ## Routes
 
 Key routes in `routes/web.php`:
+- `/` - Immersive "Dulna Jaam" homepage (`?static=1` for the flat fallback)
 - `/posts` - List all posts
 - `/posts/{slug}` - Single post
 - `/posts/tag/{tag}` - Posts by tag

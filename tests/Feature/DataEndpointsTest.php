@@ -21,6 +21,17 @@ class DataEndpointsTest extends TestCase
         $response->assertJson(['quote' => 'Test quote']);
     }
 
+    public function test_quote_random_can_exclude_the_current_quote(): void
+    {
+        $first = Quote::create(['quote' => 'First quote', 'author' => 'Test']);
+        $second = Quote::create(['quote' => 'Second quote', 'author' => 'Test']);
+
+        $response = $this->get('/data/quote/random?exclude='.$first->id);
+
+        $response->assertStatus(200);
+        $response->assertJson(['id' => $second->id, 'quote' => 'Second quote']);
+    }
+
     public function test_now_returns_content(): void
     {
         Post::factory()->create([
