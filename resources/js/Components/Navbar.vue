@@ -9,6 +9,7 @@ const { isDark, toggle } = useDarkMode();
 const links = [
   { href: '/', label: 'Home' },
   { href: '/posts', label: 'Writing' },
+  { href: '/books', label: 'Books' },
   { href: '/graph', label: 'Graph' },
   { href: '/tools', label: 'Tools' },
   { href: '/now', label: 'Now' },

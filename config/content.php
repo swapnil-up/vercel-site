@@ -47,6 +47,14 @@ return [
             ],
         ],
 
+        'books' => [
+            'type' => 'books',
+            'path' => base_path('../obsidian-vault/books'),
+            'prefix' => 'books',
+            'tag' => 'books',
+            'exclude' => [],
+        ],
+
     ],
 
 ];

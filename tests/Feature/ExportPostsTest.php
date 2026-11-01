@@ -33,7 +33,8 @@ class ExportPostsTest extends TestCase
         Post::factory()->create(['slug' => 'course-post', 'source_path' => 'published/courses/course-post.md']);
         Post::factory()->create(['slug' => 'til-post', 'source_path' => 'til/til-post.md']);
 
-        $this->artisan('posts:export', [
+        $this->artisan('content:export', [
+            '--type' => 'posts',
             '--source' => ['published'],
             '--dir' => $this->outputDir,
         ])->assertSuccessful();
@@ -47,7 +48,8 @@ class ExportPostsTest extends TestCase
     {
         Post::factory()->create(['slug' => 'published-post', 'source_path' => 'published/published-post.md']);
 
-        $this->artisan('posts:export', [
+        $this->artisan('content:export', [
+            '--type' => 'posts',
             '--source' => ['published'],
             '--dir' => $this->outputDir,
         ])->assertSuccessful();
@@ -56,7 +58,8 @@ class ExportPostsTest extends TestCase
         $original = File::get($path);
         File::put($path, "hand edited\n");
 
-        $this->artisan('posts:export', [
+        $this->artisan('content:export', [
+            '--type' => 'posts',
             '--source' => ['published'],
             '--dir' => $this->outputDir,
             '--only-missing' => true,
@@ -72,7 +75,8 @@ class ExportPostsTest extends TestCase
         Post::factory()->create(['slug' => 'legacy-post', 'source_path' => 'posts/legacy-post.md']);
         Post::factory()->create(['slug' => 'til-post', 'source_path' => 'til/til-post.md']);
 
-        $this->artisan('posts:export', [
+        $this->artisan('content:export', [
+            '--type' => 'posts',
             '--db-only' => true,
             '--dir' => $this->outputDir,
         ])->assertSuccessful();

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookController;
 use App\Http\Controllers\GraphDataController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NepalNewsController;
@@ -141,6 +142,9 @@ Route::get('/graph', fn() => inertia('Graph', [
 Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
 Route::get('/posts/tag/{tag}', [PostController::class, 'byTag'])->name('posts.by-tag');
 Route::get('/posts/{slug}', [PostController::class, 'show'])->name('posts.show');
+
+Route::get('/books', [BookController::class, 'index'])->name('books.index');
+Route::get('/books/{slug}', [BookController::class, 'show'])->name('books.show');
 
 Route::get('/data/quote/random', [QuoteController::class, 'random']);
 Route::get('/data/now', [NowController::class, 'show']);

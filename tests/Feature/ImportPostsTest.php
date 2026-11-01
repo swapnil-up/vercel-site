@@ -35,7 +35,7 @@ class ImportPostsTest extends TestCase
             'published' => ['path' => $published, 'prefix' => 'published', 'tag' => 'articles'],
         ]]);
 
-        $this->artisan('posts:import')->assertSuccessful();
+        $this->artisan('content:import')->assertSuccessful();
 
         $this->assertDatabaseHas('posts', [
             'slug' => 'some-note',
@@ -57,7 +57,7 @@ class ImportPostsTest extends TestCase
             'missing' => ['path' => '/definitely/not/a/real/directory', 'prefix' => 'missing', 'tag' => 'missing'],
         ]]);
 
-        $this->artisan('posts:import')->assertSuccessful();
+        $this->artisan('content:import')->assertSuccessful();
 
         $this->assertDatabaseHas('posts', ['slug' => 'now']);
     }
@@ -77,7 +77,7 @@ class ImportPostsTest extends TestCase
             ],
         ]]);
 
-        $this->artisan('posts:import')->assertSuccessful();
+        $this->artisan('content:import')->assertSuccessful();
 
         $this->assertDatabaseHas('posts', ['slug' => 'public-note']);
         $this->assertDatabaseMissing('posts', ['slug' => 'private-note']);
@@ -96,7 +96,7 @@ class ImportPostsTest extends TestCase
             'second' => ['path' => $second, 'prefix' => 'second', 'tag' => 'second'],
         ]]);
 
-        $this->artisan('posts:import')->assertExitCode(1);
+        $this->artisan('content:import')->assertExitCode(1);
 
         $this->assertDatabaseCount('posts', 0);
     }
@@ -120,7 +120,7 @@ class ImportPostsTest extends TestCase
             'articles' => ['path' => $articles, 'prefix' => 'articles', 'tag' => 'articles'],
         ]]);
 
-        $this->artisan('posts:import', ['--prune' => true])->assertSuccessful();
+        $this->artisan('content:import', ['--prune' => true])->assertSuccessful();
 
         $this->assertDatabaseHas('posts', ['slug' => 'existing-post']);
         $this->assertDatabaseHas('posts', ['slug' => 'now']);
@@ -142,7 +142,7 @@ class ImportPostsTest extends TestCase
             'published' => ['path' => '/definitely/not/a/real/published', 'prefix' => 'published', 'tag' => 'articles'],
         ]]);
 
-        $this->artisan('posts:import', ['--prune' => true])->assertSuccessful();
+        $this->artisan('content:import', ['--prune' => true])->assertSuccessful();
 
         $this->assertDatabaseHas('posts', ['slug' => 'published-post']);
     }
@@ -156,7 +156,7 @@ class ImportPostsTest extends TestCase
             'til' => ['path' => $til, 'prefix' => 'til', 'tag' => 'TIL'],
         ]]);
 
-        $this->artisan('posts:import')->assertSuccessful();
+        $this->artisan('content:import')->assertSuccessful();
 
         $post = Post::where('slug', 'some-useful-note')->firstOrFail();
 
@@ -174,7 +174,7 @@ class ImportPostsTest extends TestCase
             'til' => ['path' => $til, 'prefix' => 'til', 'tag' => 'TIL'],
         ]]);
 
-        $this->artisan('posts:import', ['--dry-run' => true])->assertSuccessful();
+        $this->artisan('content:import', ['--dry-run' => true])->assertSuccessful();
 
         $this->assertDatabaseCount('posts', 0);
     }

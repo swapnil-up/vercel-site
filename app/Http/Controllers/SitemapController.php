@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Book;
 use App\Models\Post;
 use App\Models\Thought;
 use Illuminate\Http\Response;
@@ -15,6 +16,10 @@ class SitemapController extends Controller
             ->get();
 
         $thoughts = Thought::orderBy('updated_at', 'desc')
+            ->get();
+
+        $books = Book::where('is_draft', false)
+            ->orderBy('updated_at', 'desc')
             ->get();
 
         $sitemap = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -43,6 +48,23 @@ class SitemapController extends Controller
                 $post->updated_at,
                 'monthly',
                 '0.8'
+            );
+        }
+
+        // Books
+        $sitemap .= $this->buildUrlEntry(
+            route('books.index'),
+            $books->first()?->updated_at ?? now(),
+            'monthly',
+            '0.7'
+        );
+
+        foreach ($books as $book) {
+            $sitemap .= $this->buildUrlEntry(
+                route('books.show', $book->slug),
+                $book->updated_at,
+                'yearly',
+                '0.6'
             );
         }
 
@@ -92,18 +114,18 @@ class SitemapController extends Controller
     }
 
     private function buildUrlEntry(
-        string $url, 
-        $lastmod, 
-        string $changefreq, 
+        string $url,
+        $lastmod,
+        string $changefreq,
         string $priority
     ): string {
         $entry = '<url>';
-        $entry .= '<loc>' . htmlspecialchars($url) . '</loc>';
-        $entry .= '<lastmod>' . $lastmod->format('Y-m-d') . '</lastmod>';
-        $entry .= '<changefreq>' . $changefreq . '</changefreq>';
-        $entry .= '<priority>' . $priority . '</priority>';
+        $entry .= '<loc>'.htmlspecialchars($url).'</loc>';
+        $entry .= '<lastmod>'.$lastmod->format('Y-m-d').'</lastmod>';
+        $entry .= '<changefreq>'.$changefreq.'</changefreq>';
+        $entry .= '<priority>'.$priority.'</priority>';
         $entry .= '</url>';
-        
+
         return $entry;
     }
 }

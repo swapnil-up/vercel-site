@@ -56,19 +56,19 @@ npm run dev
 
 ## Commands
 
-### Import Posts (Primary)
+### Import Content (Primary)
 
-Import markdown articles with YAML frontmatter:
+Import markdown articles and books with YAML frontmatter:
 
 ```bash
-php artisan posts:import [paths...] [--source=<name>] [--prune] [--dry-run]
+php artisan content:import [paths...] [--source=<name>] [--prune] [--dry-run]
 ```
 
-Run with no arguments to import every source listed in `config/content.php`.
+Run with no arguments to import every source listed in `config/content.php` (posts and books).
 
 **Features:**
 - **Idempotent**: Safe to run multiple times - uses slug for deduplication
-- **Configured sources**: TIL, Obsidian `published`, and Obsidian `coding notes` (publish-only)
+- **Configured sources**: TIL, Obsidian `published`, Obsidian `coding notes` (publish-only), and Obsidian `books`
 - **Automatic Graph Integration**: Creates graph nodes and connections automatically
 - **Wikilink Processing**: Converts `[[slug]]` to internal links and creates graph edges
 - **Smart Link Resolution**: Handles title-based matching and partial slug matching
@@ -85,19 +85,25 @@ Run with no arguments to import every source listed in `config/content.php`.
 **Example:**
 ```bash
 # Import every configured source
-php artisan posts:import
+php artisan content:import
 
 # Import one source
-php artisan posts:import --source=til
+php artisan content:import --source=til
+
+# Import books only
+php artisan content:import --source=books
 
 # Ad-hoc import
-php artisan posts:import ./tech
+php artisan content:import ./tech
 
 # Preview without writing
-php artisan posts:import --dry-run
+php artisan content:import --dry-run
 
 # Push DB-only posts into the Obsidian published folder
-php artisan posts:export --db-only --dir=../obsidian-vault/published --only-missing
+php artisan content:export --type=posts --db-only --dir=../obsidian-vault/published --only-missing
+
+# Export books back to markdown
+php artisan content:export --type=books
 ```
 
 ### Database Seeding
@@ -115,6 +121,8 @@ php artisan db:seed --class=QuotesSeeder
 | `/posts` | List all blog posts |
 | `/posts/{slug}` | Single post view |
 | `/posts/tag/{tag}` | Posts filtered by tag |
+| `/books` | List all books |
+| `/books/{slug}` | Single book note |
 | `/graph` | Interactive digital-garden map with local backlinks |
 | `/tracker` | Achievement tracker |
 | `/about` | About page |
@@ -210,7 +218,7 @@ The `/slides` directory contains a separate presentation app. It has its own `pa
 
 ## Scripts (Deprecated)
 
-The `/scripts` directory contains legacy scripts. Use the `posts:import` command instead.
+The `/scripts` directory contains legacy scripts. Use the `content:import` command instead.
 
 ## License
 
