@@ -11,6 +11,7 @@ class BookController extends Controller
     public function index()
     {
         $books = Book::where('is_draft', false)
+            ->where('hidden', false)
             ->orderByDesc('finished_on')
             ->orderByDesc('created_at')
             ->get()
@@ -30,6 +31,7 @@ class BookController extends Controller
     {
         $book = Book::where('slug', $slug)
             ->where('is_draft', false)
+            ->where('hidden', false)
             ->firstOrFail();
 
         $bookUrl = route('books.show', $book->slug);
@@ -129,25 +131,64 @@ class BookController extends Controller
         $raw = $book->stats ?? [];
 
         $time = (int) ($raw['total_read_time'] ?? 0);
+        $estimated = (int) ($raw['estimated_read_time'] ?? 0);
         $pages = (int) ($raw['read_pages'] ?? 0);
         $totalPages = (int) ($raw['total_pages'] ?? 0);
         $days = (int) ($raw['reading_days'] ?? 0);
+        $progress = $raw['progress'] ?? null;
+
+        if ($progress === null && $pages > 0 && $totalPages > 0) {
+            $progress = min(1, $pages / $totalPages);
+        }
 
         return [
             'total_read_time' => $time ?: null,
             'total_read_time_label' => $time > 0 ? $this->duration($time) : null,
-            'read_pages' => $pages ?: null,
-            'total_pages' => $totalPages ?: null,
+            'estimated_read_time' => $estimated ?: null,
+            'estimated_read_time_label' => $estimated > 0 ? $this->duration($estimated) : null,
+            'progress' => $progress !== null ? (int) round((float) $progress * 100) : null,
             'sessions' => isset($raw['sessions']) ? (int) $raw['sessions'] : null,
-            'highlights' => isset($raw['highlights']) ? (int) $raw['highlights'] : null,
-            'notes' => isset($raw['notes']) ? (int) $raw['notes'] : null,
             'reading_days' => $days ?: null,
-            'pages_per_day' => $days > 0 ? round($pages / $days, 1) : null,
-            'minutes_per_page' => $pages > 0 && $time > 0 ? round(($time / 60) / $pages, 1) : null,
-            'pages_per_hour' => $time > 0 && $pages > 0 ? round($pages / ($time / 3600), 1) : null,
+            'daily' => $this->daily($raw['daily'] ?? []),
             'language' => $raw['language'] ?? null,
             'series' => $raw['series'] ?? null,
         ];
+    }
+
+    /**
+     * @return array<int, array{date: string, seconds: int}>
+     */
+    private function daily(mixed $raw): array
+    {
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $items = [];
+
+        if (array_is_list($raw)) {
+            foreach ($raw as $entry) {
+                if (is_array($entry) && isset($entry['date'], $entry['seconds'])) {
+                    $items[(string) $entry['date']] = (int) $entry['seconds'];
+                }
+            }
+        } else {
+            foreach ($raw as $date => $seconds) {
+                $items[(string) $date] = (int) $seconds;
+            }
+        }
+
+        ksort($items);
+
+        $daily = [];
+
+        foreach ($items as $date => $seconds) {
+            if ($seconds > 0) {
+                $daily[] = ['date' => $date, 'seconds' => $seconds];
+            }
+        }
+
+        return $daily;
     }
 
     private function duration(int $seconds): string

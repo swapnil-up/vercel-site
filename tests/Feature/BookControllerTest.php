@@ -30,9 +30,15 @@ class BookControllerTest extends TestCase
             'title' => 'The Phoenix Project',
             'stats' => [
                 'total_read_time' => 36000,
+                'estimated_read_time' => 39600,
+                'progress' => 0.9375,
                 'read_pages' => 300,
                 'total_pages' => 320,
                 'reading_days' => 10,
+                'daily' => [
+                    ['date' => '2026-10-01', 'seconds' => 3600],
+                    ['date' => '2026-10-02', 'seconds' => 1800],
+                ],
             ],
         ]);
 
@@ -43,7 +49,10 @@ class BookControllerTest extends TestCase
             ->component('Books/Show')
             ->where('book.title', 'The Phoenix Project')
             ->where('book.stats.total_read_time_label', '10h')
-            ->where('book.stats.pages_per_hour', 30)
+            ->where('book.stats.estimated_read_time_label', '11h')
+            ->where('book.stats.progress', 94)
+            ->has('book.stats.daily', 2)
+            ->missing('book.stats.pages_per_hour')
             ->has('ldjson.@graph', 2)
         );
     }
@@ -53,5 +62,32 @@ class BookControllerTest extends TestCase
         $book = Book::factory()->draft()->create();
 
         $this->get("/books/{$book->slug}")->assertStatus(404);
+    }
+
+    public function test_hidden_books_are_excluded_from_index_and_show(): void
+    {
+        Book::factory()->create(['title' => 'Visible Book']);
+        $hidden = Book::factory()->hidden()->create(['title' => 'Secret Book']);
+
+        $this->get('/books')
+            ->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->component('Books/Index')
+                ->has('books', 1)
+                ->where('books.0.title', 'Visible Book')
+            );
+
+        $this->get("/books/{$hidden->slug}")->assertStatus(404);
+    }
+
+    public function test_hidden_books_are_excluded_from_sitemap(): void
+    {
+        Book::factory()->create(['slug' => 'visible-book']);
+        Book::factory()->hidden()->create(['slug' => 'secret-book']);
+
+        $this->get('/sitemap.xml')
+            ->assertStatus(200)
+            ->assertSee('/books/visible-book')
+            ->assertDontSee('/books/secret-book');
     }
 }

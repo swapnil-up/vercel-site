@@ -30,3 +30,4 @@ yarn-error.log
 //////////////// FOR SLIDES ////////////////
 /slides/node_modules/
 /slides/dist/
+/storage/koreader/

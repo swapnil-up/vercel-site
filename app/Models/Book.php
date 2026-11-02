@@ -26,6 +26,7 @@ class Book extends Model
         'stats',
         'source_path',
         'is_draft',
+        'hidden',
     ];
 
     protected $casts = [
@@ -34,5 +35,6 @@ class Book extends Model
         'started_on' => 'date',
         'finished_on' => 'date',
         'is_draft' => 'boolean',
+        'hidden' => 'boolean',
     ];
 }

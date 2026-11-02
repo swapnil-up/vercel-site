@@ -23,21 +23,53 @@ const statusStyles = {
 const stats = computed(() => {
   const raw = props.book?.stats || {}
   const items = [
-    { label: 'Reading time', value: raw.total_read_time_label },
-    { label: 'Pages read', value: raw.read_pages && raw.total_pages ? `${raw.read_pages} / ${raw.total_pages}` : raw.read_pages },
+    { label: 'Tracked time', value: raw.total_read_time_label },
+    { label: 'Estimated time', value: raw.estimated_read_time_label },
+    { label: 'Progress', value: raw.progress !== null && raw.progress !== undefined ? `${raw.progress}%` : null },
     { label: 'Reading days', value: raw.reading_days },
     { label: 'Sessions', value: raw.sessions },
-    { label: 'Pages / day', value: raw.pages_per_day },
-    { label: 'Pages / hour', value: raw.pages_per_hour },
-    { label: 'Minutes / page', value: raw.minutes_per_page },
-    { label: 'Highlights', value: raw.highlights },
-    { label: 'Notes', value: raw.notes },
     { label: 'Language', value: raw.language },
     { label: 'Series', value: raw.series },
   ]
 
   return items.filter(item => item.value !== null && item.value !== undefined && item.value !== '')
 })
+
+const timeline = computed(() => {
+  const days = props.book?.stats?.daily || []
+
+  if (!days.length) {
+    return []
+  }
+
+  const max = Math.max(...days.map(day => day.seconds), 1)
+
+  return days.map(day => ({
+    ...day,
+    height: Math.max(8, Math.round((day.seconds / max) * 100)),
+    label: formatDay(day.date),
+    duration: durationLabel(day.seconds),
+  }))
+})
+
+function formatDay(date) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function durationLabel(seconds) {
+  const totalMinutes = Math.round(seconds / 60)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  if (hours > 0) {
+    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`
+  }
+
+  return `${minutes}m`
+}
 
 const coverStyle = computed(() => {
   const source = `${props.book?.title || ''} ${props.book?.author || ''}`
@@ -138,6 +170,55 @@ const initials = computed(() => (props.book?.title || '?')
               </div>
             </dl>
           </div>
+
+          <div v-if="timeline.length" class="mb-10 p-5 bg-warm-surface border border-warm-border rounded-sm">
+            <h2 class="font-display text-sm font-bold uppercase tracking-wider text-warm-muted mb-4">Reading timeline</h2>
+            <div class="flex items-end gap-1.5 sm:gap-3 h-32">
+              <div
+                v-for="day in timeline"
+                :key="day.date"
+                class="flex-1 min-w-0 h-full flex flex-col justify-end gap-2"
+              >
+                <div class="flex-1 flex items-end">
+                  <div
+                    class="w-full rounded-t-sm bg-coral/70 hover:bg-coral transition-colors"
+                    :style="{ height: `${day.height}%` }"
+                    :title="`${day.label}: ${day.duration}`"
+                    :aria-label="`${day.label}: ${day.duration}`"
+                  ></div>
+                </div>
+                <span class="text-[0.6rem] text-center text-warm-muted truncate">{{ day.label }}</span>
+              </div>
+            </div>
+          </div>
+
+          <details class="group mb-10 p-5 bg-warm-surface border border-warm-border rounded-sm">
+            <summary class="cursor-pointer font-display text-sm font-bold uppercase tracking-wider text-warm-muted">
+              What the stats mean
+            </summary>
+            <dl class="grid gap-3 mt-4 text-sm">
+              <div>
+                <dt class="font-bold text-ink">Tracked time</dt>
+                <dd class="text-warm-muted leading-relaxed">Active page time recorded by KOReader. It caps each page at 2 minutes, so long page reads are undercounted.</dd>
+              </div>
+              <div>
+                <dt class="font-bold text-ink">Estimated time</dt>
+                <dd class="text-warm-muted leading-relaxed">Tracked time plus the excess from pages held between 2 and 30 minutes. Gaps over 30 minutes count as breaks, not reading.</dd>
+              </div>
+              <div>
+                <dt class="font-bold text-ink">Sessions</dt>
+                <dd class="text-warm-muted leading-relaxed">Reading stretches separated by 30 or more minutes without a page turn.</dd>
+              </div>
+              <div>
+                <dt class="font-bold text-ink">Reading days</dt>
+                <dd class="text-warm-muted leading-relaxed">Distinct Nepal-time days with reading activity.</dd>
+              </div>
+              <div>
+                <dt class="font-bold text-ink">Progress</dt>
+                <dd class="text-warm-muted leading-relaxed">Furthest page reached divided by the book's total pages.</dd>
+              </div>
+            </dl>
+          </details>
 
           <div v-if="book.thoughts_html" class="article-content max-w-none" v-html="book.thoughts_html" />
           <p v-else class="text-warm-muted italic">No notes on this one yet.</p>

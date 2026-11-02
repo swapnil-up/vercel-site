@@ -19,6 +19,7 @@ class SitemapController extends Controller
             ->get();
 
         $books = Book::where('is_draft', false)
+            ->where('hidden', false)
             ->orderBy('updated_at', 'desc')
             ->get();
 

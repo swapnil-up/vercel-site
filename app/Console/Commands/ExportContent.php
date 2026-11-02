@@ -192,6 +192,10 @@ class ExportContent extends Command
                 $frontmatter['draft'] = true;
             }
 
+            if ($book->hidden) {
+                $frontmatter['hidden'] = true;
+            }
+
             if ($this->writeFile($outputDir, $relativePath, $frontmatter, $book->thoughts ?? '', $dryRun)) {
                 $count++;
             }

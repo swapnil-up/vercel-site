@@ -32,6 +32,7 @@ class ImportContent extends Command
 
     private const BOOK_NUMERIC_STATS = [
         'total_read_time',
+        'estimated_read_time',
         'read_pages',
         'total_pages',
         'sessions',
@@ -173,6 +174,7 @@ class ImportContent extends Command
                         'tags' => $item['tags'],
                         'stats' => $item['stats'],
                         'is_draft' => $item['is_draft'],
+                        'hidden' => $item['hidden'],
                         'source_path' => $item['key'],
                     ]
                 );
@@ -453,6 +455,7 @@ class ImportContent extends Command
             'tags' => $tags,
             'stats' => $this->bookStats($frontmatter),
             'is_draft' => (bool) ($frontmatter['draft'] ?? false),
+            'hidden' => (bool) ($frontmatter['hidden'] ?? false),
         ];
     }
 

@@ -33,6 +33,7 @@ class BookFactory extends Factory
                 'reading_days' => 10,
             ],
             'is_draft' => false,
+            'hidden' => false,
         ];
     }
 
@@ -40,6 +41,13 @@ class BookFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_draft' => true,
+        ]);
+    }
+
+    public function hidden(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'hidden' => true,
         ]);
     }
 }

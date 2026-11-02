@@ -106,6 +106,22 @@ php artisan content:export --type=posts --db-only --dir=../obsidian-vault/publis
 php artisan content:export --type=books
 ```
 
+### KOReader Import
+
+Create book notes from your KOReader reading statistics:
+
+```bash
+# Download the database from the Kindle SFTP server (password is root or unset)
+sftp -P 2222 root@<kindle-ip>
+# get /mnt/us/koreader/settings/statistics.sqlite3 storage/koreader/statistics.sqlite3
+
+php artisan koreader:import --limit=4 --status=finished
+```
+
+This creates markdown files in `../obsidian-vault/books/` with title, author, Nepal-time dates, progress, tracked and estimated reading time, and per-day reading seconds for the timeline. Fill in `recommended_by` and your thoughts, then run `php artisan content:import --source=books`.
+
+Set `hidden: true` in a book's frontmatter to keep it out of `/books`, its detail page, and the sitemap until you remove the flag.
+
 ### Database Seeding
 
 ```bash

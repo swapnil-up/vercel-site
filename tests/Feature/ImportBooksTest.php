@@ -77,6 +77,25 @@ MD);
         $this->assertSame('books/the-phoenix-project.md', $book->source_path);
     }
 
+    public function test_hidden_frontmatter_is_imported(): void
+    {
+        $books = $this->makeDir('books');
+        File::put($books.'/secret-book.md', '---
+title: Secret Book
+hidden: true
+---
+
+Notes.');
+
+        config(['content.sources' => [
+            'books' => ['type' => 'books', 'path' => $books, 'prefix' => 'books', 'tag' => 'books'],
+        ]]);
+
+        $this->artisan('content:import')->assertSuccessful();
+
+        $this->assertDatabaseHas('books', ['slug' => 'secret-book', 'hidden' => true]);
+    }
+
     public function test_invalid_book_status_falls_back_to_finished(): void
     {
         $books = $this->makeDir('books');

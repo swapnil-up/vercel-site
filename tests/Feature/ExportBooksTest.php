@@ -34,6 +34,7 @@ class ExportBooksTest extends TestCase
             'title' => 'A Book',
             'author' => 'An Author',
             'source_path' => 'books/a-book.md',
+            'hidden' => true,
             'stats' => ['total_read_time' => 3600, 'read_pages' => 20],
         ]);
 
@@ -53,6 +54,7 @@ class ExportBooksTest extends TestCase
         $this->assertStringContainsString("author: 'An Author'", $contents);
         $this->assertStringContainsString('status: finished', $contents);
         $this->assertStringContainsString('total_read_time: 3600', $contents);
+        $this->assertStringContainsString('hidden: true', $contents);
     }
 
     public function test_books_source_filter_preserves_subfolders(): void
