@@ -466,6 +466,8 @@ body {
    ───────────────────────────────────────────────────────────── */
 
 :root {
+  /* Height of the sticky navbar (h-16 + border-b-4); the hero tucks under it. */
+  --site-nav-h: 68px;
   --dj-sky-top: #ffd9a2;
   --dj-sky-mid: #ffb877;
   --dj-sky-low: #ef8f74;
@@ -1037,11 +1039,4 @@ body {
   }
 }
 
-/* HUD colours stay light over the scene in both themes */
-:root {
-  --dj-hud-fg: #f8f2e6;
-  --dj-hud-soft: rgba(248, 242, 230, 0.72);
-  --dj-hud-pill-bg: #fcf9f2;
-  --dj-hud-pill-fg: #1c1c1e;
-  --dj-hud-line: rgba(248, 242, 230, 0.22);
-}
+

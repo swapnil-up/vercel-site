@@ -1,6 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { clamp, gaitRate as calculateGaitRate } from '@/Utils/journeyMath'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { mascotQuips } from '@/Data/journey'
 
 const props = defineProps({
@@ -28,9 +27,7 @@ const quipVisible = ref(false)
 const quipIndex = ref(0)
 let hideTimer = null
 
-let gaitAnimations = []
-let gaitPose = ''
-let gaitFrame = 0
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
 
 function sayQuip() {
   quip.value = mascotQuips[quipIndex.value % mascotQuips.length]
@@ -53,67 +50,8 @@ const bubbleAlign = computed(() => {
   return 'center'
 })
 
-function applyGaitRate() {
-  const rate = calculateGaitRate(props.speed)
-
-  for (const animation of gaitAnimations) {
-    animation.playbackRate = rate
-  }
-}
-
-function collectGaitAnimations() {
-  if (!isMoving.value || !mascotEl.value) {
-    gaitAnimations = []
-    gaitPose = ''
-    return
-  }
-
-  gaitPose = props.pose
-  gaitAnimations = mascotEl.value
-    .getAnimations({ subtree: true })
-    .filter((animation) => /^dj-(leg-step|leg-run|body-bob|dust)(-|$)/.test(animation.animationName))
-
-  applyGaitRate()
-}
-
-async function refreshGaitAnimations() {
-  window.cancelAnimationFrame(gaitFrame)
-
-  if (!isMoving.value) {
-    gaitAnimations = []
-    gaitPose = ''
-    return
-  }
-
-  await nextTick()
-
-  if (!isMoving.value) return
-
-  collectGaitAnimations()
-
-  if (!gaitAnimations.length) {
-    gaitFrame = window.requestAnimationFrame(collectGaitAnimations)
-  }
-}
-
-watch(
-  () => props.pose,
-  () => refreshGaitAnimations(),
-)
-
-watch(
-  () => props.speed,
-  () => {
-    if (gaitAnimations.length && gaitPose === props.pose) applyGaitRate()
-  },
-)
-
-onMounted(refreshGaitAnimations)
-
 onBeforeUnmount(() => {
   window.clearTimeout(hideTimer)
-  window.cancelAnimationFrame(gaitFrame)
-  gaitAnimations = []
 })
 </script>
 

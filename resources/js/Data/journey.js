@@ -1,67 +1,54 @@
-export const stops = [
+// Dulna Jaam — homepage walk chapters.
+//
+// The walk is now a short, escapable intro: five chapters, each a real part of
+// the site with a plain-language label and a destination link. `scene` maps to a
+// landmark in StopScene.vue and `id` maps to the stop component rendered inside
+// the chapter paper (see HeroJourney.vue).
+export const chapters = [
   {
     id: 'ghar',
-    span: 1,
-    gap: 0,
+    scene: 'ghar',
     label: 'Ghar',
     sub: 'the courtyard',
-    hint: 'scroll, swipe or press → and Blobby trots off',
-  },
-  {
-    id: 'chiya',
-    span: 1,
-    gap: 0,
-    label: 'Chiya Pasal',
-    sub: 'the tea shop',
-    hint: 'a cup of milk tea, milk no sugar',
+    hint: 'Start here',
+    href: '/about',
+    cta: 'About',
   },
   {
     id: 'writing',
-    span: 1,
-    gap: 0,
+    scene: 'writing',
     label: 'Pustak Pasal',
     sub: 'the bookstall',
-    hint: 'read the latest field notes',
+    hint: 'Writing & books',
+    href: '/posts',
+    cta: 'Writing',
   },
   {
     id: 'graph',
-    span: 1,
-    gap: 0,
+    scene: 'graph',
     label: 'Bari',
     sub: 'the garden of maps',
-    hint: 'every note is planted somewhere',
-  },
-  {
-    id: 'tracker',
-    span: 1,
-    gap: 0,
-    label: 'Gumba',
-    sub: 'the prayer-flag courtyard',
-    hint: 'borrowed words on little flags',
+    hint: 'The knowledge graph',
+    href: '/graph',
+    cta: 'Graph',
   },
   {
     id: 'tools',
-    span: 1,
-    gap: 0,
+    scene: 'tools',
     label: 'Bazaar',
     sub: 'the gadget stalls',
-    hint: 'toys, fiddles and useful little things',
-  },
-  {
-    id: 'rooftop',
-    span: 1,
-    gap: 0,
-    label: 'Thamel',
-    sub: 'the rooftop',
-    hint: 'laundry, radio, the valley',
+    hint: 'Tools & toys',
+    href: '/tools',
+    cta: 'Tools',
   },
   {
     id: 'night',
-    span: 1,
-    gap: 0,
+    scene: 'night',
     label: 'Swayambhu',
     sub: 'the overlook',
-    hint: 'the city lights come on',
+    hint: 'Now & hello',
+    href: '/now',
+    cta: 'Now',
   },
 ]
 
@@ -97,8 +84,6 @@ export const featuredTools = [
     accent: 'coral',
   },
 ]
-
-export const techChips = ['Vue 3', 'Laravel', 'Inertia', 'Tailwind 4']
 
 export const socials = [
   { label: 'GitHub', href: 'https://github.com/swapnil-up' },
