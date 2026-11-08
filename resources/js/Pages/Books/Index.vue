@@ -167,13 +167,22 @@ function initials(book) {
     <div v-else class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       <Link
         v-for="book in filteredBooks"
-        :key="book.slug"
-        :href="`/books/${book.slug}`"
+        :key="book.slug || `hidden-${book.id}`"
+        :href="book.hidden ? `/books/${book.id}` : `/books/${book.slug}`"
         class="group flex gap-4 p-4 bg-warm-surface border border-warm-border rounded-sm hover:border-coral hover:shadow-[4px_4px_0_0_var(--color-coral)] transition-all"
       >
         <div class="w-20 shrink-0">
+          <div
+            v-if="book.hidden"
+            class="w-full aspect-[2/3] rounded-sm border border-dashed border-warm-border bg-warm-surface flex items-center justify-center"
+            aria-label="Cover withheld"
+          >
+            <svg class="w-6 h-6 text-warm-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.774 3.162 10.066 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243" />
+            </svg>
+          </div>
           <img
-            v-if="book.cover_url"
+            v-else-if="book.cover_url"
             :src="book.cover_url"
             :alt="`Cover of ${book.title}`"
             class="w-full aspect-[2/3] object-cover rounded-sm border border-warm-border"
@@ -199,6 +208,7 @@ function initials(book) {
           </div>
 
           <p v-if="book.author" class="text-sm text-warm-muted mb-1">{{ book.author }}</p>
+          <p v-if="book.hidden" class="text-[0.65rem] font-bold uppercase tracking-wider text-warm-muted mb-1">Title, cover and notes withheld</p>
           <p v-if="book.finished_on" class="text-xs text-warm-muted mb-2">Finished {{ book.finished_on }}</p>
 
           <p v-if="book.excerpt" class="text-sm text-ink/75 leading-relaxed line-clamp-3">
@@ -217,7 +227,7 @@ function initials(book) {
 
           <p v-if="book.stats?.total_read_time_label" class="mt-3 text-xs text-warm-muted">
             {{ book.stats.total_read_time_label }} of reading
-            <span v-if="book.stats.pages_per_hour"> · {{ book.stats.pages_per_hour }} pages/hr</span>
+            <span v-if="book.stats.percent_per_hour"> · {{ book.stats.percent_per_hour }}% per hour</span>
           </p>
         </div>
       </Link>

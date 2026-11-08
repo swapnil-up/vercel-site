@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use PDO;
+use Symfony\Component\Yaml\Yaml;
 use Tests\TestCase;
 
 class ImportKoreaderTest extends TestCase
@@ -54,8 +55,144 @@ class ImportKoreaderTest extends TestCase
         $this->assertStringContainsString('reading_days: 2', $contents);
         $this->assertStringContainsString('sessions: 2', $contents);
         $this->assertStringContainsString('highlights: 23', $contents);
-        $this->assertStringContainsString('daily:', $contents);
+        $this->assertStringContainsString('days:', $contents);
+        $this->assertStringContainsString('page_from: 1', $contents);
+        $this->assertStringContainsString('page_to: 400', $contents);
         $this->assertStringContainsString('seconds: 600', $contents);
+        $this->assertStringContainsString('longest_session: 1800', $contents);
+        $this->assertStringNotContainsString('daily:', $contents);
+    }
+
+    public function test_stats_only_refreshes_the_stats_block_and_leaves_the_rest_alone(): void
+    {
+        $db = $this->makeDatabase();
+        $out = $this->makeDir('out');
+
+        $this->insertBook($db, 1, 'A Book', 'An Author', 100, 50, 3600, 0, 0, 'en', '2026-10-01 10:00:00');
+        $this->insertPageStat($db, 1, 10, '2026-10-01 09:00:00', 600);
+
+        $file = $out.'/a-book.md';
+
+        // A hand-written note: cover, tags, thoughts, and stats in the old
+        // daily-only shape.
+        File::put($file, <<<'NOTE'
+---
+title: 'A Book'
+author: 'An Author'
+slug: a-book
+status: finished
+cover: 'https://example.com/cover.jpg'
+tags:
+  - fiction
+  - favourite
+stats:
+  total_read_time: 1000
+  daily:
+    -
+      date: '2026-10-01'
+      seconds: 1000
+---
+
+Loved the middle section.
+
+NOTE);
+
+        $this->artisan('koreader:import', [
+            'path' => $db,
+            '--dir' => $out,
+            '--stats-only' => true,
+        ])->assertSuccessful();
+
+        [$frontmatter, $body] = $this->splitNote(File::get($file));
+
+        $this->assertSame('A Book', $frontmatter['title']);
+        $this->assertSame('https://example.com/cover.jpg', $frontmatter['cover']);
+        $this->assertSame(['fiction', 'favourite'], $frontmatter['tags']);
+        $this->assertSame("\nLoved the middle section.\n", $body);
+
+        $stats = $frontmatter['stats'];
+        $this->assertSame(3600, $stats['total_read_time']);
+        $this->assertArrayNotHasKey('daily', $stats);
+        $this->assertSame(10, $stats['days'][0]['page_from']);
+        $this->assertSame(10, $stats['days'][0]['page_to']);
+        $this->assertSame(600, $stats['days'][0]['seconds']);
+        $this->assertSame(600, $stats['longest_session']);
+    }
+
+    public function test_stats_only_leaves_an_unchanged_note_untouched(): void
+    {
+        $db = $this->makeDatabase();
+        $out = $this->makeDir('out');
+
+        $this->insertBook($db, 1, 'A Book', 'An Author', 100, 50, 3600, 0, 0, 'en', '2026-10-01 10:00:00');
+        $this->insertPageStat($db, 1, 10, '2026-10-01 09:00:00', 600);
+
+        $this->artisan('koreader:import', [
+            'path' => $db,
+            '--dir' => $out,
+        ])->assertSuccessful();
+
+        $file = $out.'/a-book.md';
+        $before = File::get($file);
+
+        $this->artisan('koreader:import', [
+            'path' => $db,
+            '--dir' => $out,
+            '--stats-only' => true,
+        ])->assertSuccessful();
+
+        $this->assertSame($before, File::get($file));
+    }
+
+    public function test_stats_only_finds_a_note_renamed_by_hand(): void
+    {
+        $db = $this->makeDatabase();
+        $out = $this->makeDir('out');
+
+        $this->insertBook($db, 1, 'A Book', 'An Author', 100, 50, 3600, 0, 0, 'en', '2026-10-01 10:00:00');
+        $this->insertPageStat($db, 1, 10, '2026-10-01 09:00:00', 600);
+
+        // The note's filename no longer matches the slug the importer derives
+        // from the KOReader title, but the frontmatter slug still does.
+        File::put($out.'/my-hand-named-note.md', <<<'NOTE'
+---
+title: 'A Book'
+slug: a-book
+status: finished
+stats:
+  total_read_time: 1000
+---
+
+NOTE);
+
+        $this->artisan('koreader:import', [
+            'path' => $db,
+            '--dir' => $out,
+            '--stats-only' => true,
+        ])->expectsOutputToContain('Refreshed stats: my-hand-named-note.md')
+            ->assertSuccessful();
+
+        $refreshed = File::get($out.'/my-hand-named-note.md');
+        $this->assertFileDoesNotExist($out.'/a-book.md');
+        $this->assertStringContainsString('days:', $refreshed);
+        $this->assertStringNotContainsString('daily:', $refreshed);
+    }
+
+    public function test_stats_only_skips_notes_that_do_not_exist(): void
+    {
+        $db = $this->makeDatabase();
+        $out = $this->makeDir('out');
+
+        $this->insertBook($db, 1, 'A Book', 'An Author', 100, 50, 3600, 0, 0, 'en', '2026-10-01 10:00:00');
+        $this->insertPageStat($db, 1, 10, '2026-10-01 09:00:00', 600);
+
+        $this->artisan('koreader:import', [
+            'path' => $db,
+            '--dir' => $out,
+            '--stats-only' => true,
+        ])->assertSuccessful();
+
+        $this->assertFileDoesNotExist($out.'/a-book.md');
     }
 
     public function test_it_groups_duplicate_title_and_author_rows(): void
@@ -134,6 +271,22 @@ class ImportKoreaderTest extends TestCase
         $this->artisan('koreader:import', [
             'path' => '/definitely/not/a/statistics.sqlite3',
         ])->assertExitCode(1);
+    }
+
+    /**
+     * @return array{0: array<string, mixed>, 1: string}
+     */
+    private function splitNote(string $contents): array
+    {
+        $this->assertStringStartsWith("---\n", $contents);
+
+        $end = strpos($contents, "\n---\n", 4);
+        $this->assertNotFalse($end);
+
+        $frontmatter = Yaml::parse(substr($contents, 4, $end - 4));
+        $this->assertIsArray($frontmatter);
+
+        return [$frontmatter, substr($contents, $end + 5)];
     }
 
     private function makeDatabase(): string

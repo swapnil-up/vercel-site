@@ -118,9 +118,11 @@ sftp -P 2222 root@<kindle-ip>
 php artisan koreader:import --limit=4 --status=finished
 ```
 
-This creates markdown files in `../obsidian-vault/books/` with title, author, Nepal-time dates, progress, tracked and estimated reading time, and per-day reading seconds for the timeline. Fill in `recommended_by` and your thoughts, then run `php artisan content:import --source=books`.
+This creates markdown files in `../obsidian-vault/books/` with title, author, Nepal-time dates, progress, tracked and estimated reading time, and per-day rows (seconds, page range, sessions) that drive the reading timeline on each book page. The timeline speaks in percentages — KOReader's page numbers shift with font size and screen, so they never reach the page itself. Fill in `recommended_by` and your thoughts, then run `php artisan content:import --source=books`.
 
-Set `hidden: true` in a book's frontmatter to keep it out of `/books`, its detail page, and the sitemap until you remove the flag.
+After pulling fresh stats from the Kindle, `php artisan koreader:import --stats-only` rewrites only the `stats` block of the notes that already exist — title, cover, tags and thoughts stay byte for byte intact — so the timeline keeps up without touching anything you wrote.
+
+Set `hidden: true` in a book's frontmatter to keep its name, author, cover, tags and notes out of `/books` and the sitemap while its reading stats still show up. The book is then only reachable at `/books/{id}`.
 
 ### Database Seeding
 

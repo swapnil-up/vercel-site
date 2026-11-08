@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\BookController;
 use App\Models\Book;
 use App\Models\Post;
 use Illuminate\Http\Request;
@@ -127,9 +128,16 @@ class HandleInertiaRequests extends Middleware
         if (! $slug) {
             return 'Book - Swapnil Upadhyay';
         }
-        $book = Book::where('slug', $slug)->first();
 
-        return $book ? $book->title.' - Swapnil Upadhyay' : 'Book - Swapnil Upadhyay';
+        $book = $this->resolveBook($slug);
+
+        if (! $book) {
+            return 'Book - Swapnil Upadhyay';
+        }
+
+        $title = $book->hidden ? BookController::REDACTED_TITLE : $book->title;
+
+        return $title.' - Swapnil Upadhyay';
     }
 
     /**
@@ -141,12 +149,38 @@ class HandleInertiaRequests extends Middleware
         if (! $slug) {
             return 'A book note on Swapnil Upadhyay\'s site';
         }
-        $book = Book::where('slug', $slug)->first();
 
-        return $book
-            ? Str::limit(trim(strip_tags($book->thoughts_html ?? $book->thoughts ?? '')), 160)
-                ?: 'A book note on Swapnil Upadhyay\'s site'
-            : 'A book note on Swapnil Upadhyay\'s site';
+        $book = $this->resolveBook($slug);
+
+        if (! $book) {
+            return 'A book note on Swapnil Upadhyay\'s site';
+        }
+
+        if ($book->hidden) {
+            return 'A book note on Swapnil Upadhyay\'s site';
+        }
+
+        return Str::limit(trim(strip_tags($book->thoughts_html ?? $book->thoughts ?? '')), 160)
+            ?: 'A book note on Swapnil Upadhyay\'s site';
+    }
+
+    /**
+     * Mirrors BookController: visible books by slug, hidden ones by id, so a
+     * hidden book's slug never leaks its title through page metadata.
+     */
+    private function resolveBook(string $slug): ?Book
+    {
+        $book = Book::where('slug', $slug)->where('hidden', false)->first();
+
+        if ($book) {
+            return $book;
+        }
+
+        if (ctype_digit($slug)) {
+            return Book::whereKey((int) $slug)->where('hidden', true)->first();
+        }
+
+        return null;
     }
 
     /**
