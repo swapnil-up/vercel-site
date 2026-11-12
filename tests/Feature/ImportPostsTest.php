@@ -165,6 +165,47 @@ class ImportPostsTest extends TestCase
         $this->assertSame('til/some useful note.md', $post->source_path);
     }
 
+    public function test_it_strips_the_document_heading_and_date_stamp_from_the_body(): void
+    {
+        $til = $this->makeDir('TIL');
+        File::put(
+            $til.'/some note.md',
+            "# some note\n\nDate: 2026-02-22 11:35\n\n---\n\nFirst real paragraph.\n\nSecond."
+        );
+
+        config(['content.sources' => [
+            'til' => ['path' => $til, 'prefix' => 'til', 'tag' => 'TIL'],
+        ]]);
+
+        $this->artisan('content:import')->assertSuccessful();
+
+        $post = Post::where('slug', 'some-note')->firstOrFail();
+
+        $this->assertSame("First real paragraph.\n\nSecond.", $post->content);
+        $this->assertStringNotContainsString('<h1>', $post->content_html ?? '');
+        $this->assertStringNotContainsString('Date:', $post->content);
+        $this->assertSame('2026-02-22', $post->published_date->format('Y-m-d'));
+    }
+
+    public function test_it_keeps_a_date_line_that_is_not_part_of_the_document_header(): void
+    {
+        $til = $this->makeDir('TIL');
+        File::put(
+            $til.'/note.md',
+            "# Note\n\nIntro paragraph.\n\nDate: 2026-02-22\n\nMore text."
+        );
+
+        config(['content.sources' => [
+            'til' => ['path' => $til, 'prefix' => $til, 'tag' => 'TIL'],
+        ]]);
+
+        $this->artisan('content:import')->assertSuccessful();
+
+        $post = Post::where('slug', 'note')->firstOrFail();
+
+        $this->assertSame("Intro paragraph.\n\nDate: 2026-02-22\n\nMore text.", $post->content);
+    }
+
     public function test_dry_run_does_not_write_posts(): void
     {
         $til = $this->makeDir('til');

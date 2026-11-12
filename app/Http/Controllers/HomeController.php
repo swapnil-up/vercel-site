@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Connection;
 use App\Models\Post;
 use App\Models\Quote;
+use App\Services\GraphStats;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -27,14 +27,15 @@ class HomeController extends Controller
             ->values();
 
         $nowPost = Post::where('slug', 'now')->first();
+        $graphStats = app(GraphStats::class)->summary();
 
         return Inertia::render('Index', [
             'latestPosts' => $latestPosts,
             'now' => $nowPost ? $this->plain($nowPost->content_html, 320) : null,
             'quote' => Quote::inRandomOrder()->first(['id', 'quote', 'author']),
             'graphStats' => [
-                'notes' => Post::where('is_draft', false)->count(),
-                'connections' => Connection::count(),
+                'notes' => $graphStats['notes'],
+                'connections' => $graphStats['links'],
             ],
             'meta' => [
                 'title' => 'Swapnil Upadhyay — Full-Stack Developer',

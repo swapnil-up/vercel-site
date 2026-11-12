@@ -32,7 +32,7 @@ const links = [
 <template>
   <header class="border-b-4 border-ink bg-cream sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
-      <Link href="/" class="font-display text-2xl font-bold text-ink hover:text-coral transition-colors tracking-tight">
+      <Link href="/" class="font-display text-2xl font-bold text-ink hover:text-coral-ink transition-colors tracking-tight">
         Swap's musings
       </Link>
 
@@ -45,7 +45,7 @@ const links = [
           class="px-3 py-2 text-sm font-medium transition-colors rounded-sm"
           :class="isActive(link.href)
             ? 'bg-ink text-cream'
-            : 'text-ink hover:bg-coral hover:text-white'"
+            : 'text-ink hover:bg-coral hover:text-ink'"
         >
           {{ link.label }}
         </Link>
@@ -55,8 +55,8 @@ const links = [
         <button
           v-if="soundSupported"
           @click="toggleSound"
-          class="p-2 text-ink hover:bg-coral hover:text-white transition-colors rounded-sm"
-          :class="{ 'bg-coral text-white': soundOn }"
+          class="p-2 text-ink hover:bg-coral hover:text-ink transition-colors rounded-sm"
+          :class="{ 'bg-coral text-ink': soundOn }"
           :aria-label="soundOn ? 'Turn off ambience' : 'Turn on ambience'"
           :aria-pressed="soundOn"
           :title="soundOn ? 'Ambience off' : 'Ambience on'"
@@ -74,7 +74,7 @@ const links = [
 
         <button
           @click="toggle"
-          class="p-2 text-ink hover:bg-coral hover:text-white transition-colors rounded-sm"
+          class="p-2 text-ink hover:bg-coral hover:text-ink transition-colors rounded-sm"
           :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
           :title="isDark ? 'Light mode' : 'Dark mode'"
         >
@@ -88,7 +88,7 @@ const links = [
 
         <button
           @click="isOpen = !isOpen"
-          class="md:hidden p-2 text-ink hover:bg-coral hover:text-white transition-colors rounded-sm"
+          class="md:hidden p-2 text-ink hover:bg-coral hover:text-ink transition-colors rounded-sm"
           aria-label="Toggle menu"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,13 +110,13 @@ const links = [
           class="block px-3 py-2 text-sm font-medium transition-colors rounded-sm"
           :class="isActive(link.href)
             ? 'bg-ink text-cream'
-            : 'text-ink hover:bg-coral hover:text-white'"
+            : 'text-ink hover:bg-coral hover:text-ink'"
         >
           {{ link.label }}
         </Link>
         <button
           @click="toggle"
-          class="w-full px-3 py-2 text-sm font-medium text-ink hover:bg-coral hover:text-white transition-colors rounded-sm text-left"
+          class="w-full px-3 py-2 text-sm font-medium text-ink hover:bg-coral hover:text-ink transition-colors rounded-sm text-left"
         >
           {{ isDark ? '☀ Light mode' : '☾ Dark mode' }}
         </button>

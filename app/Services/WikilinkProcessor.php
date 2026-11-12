@@ -81,6 +81,9 @@ class WikilinkProcessor
             return $displayText;
         }, $content);
 
-        return $this->converter->convert($content)->getContent();
+        $html = $this->converter->convert($content)->getContent();
+
+        // Horizontally scrollable code blocks need to be reachable by keyboard.
+        return str_replace('<pre>', '<pre tabindex="0">', $html);
     }
 }

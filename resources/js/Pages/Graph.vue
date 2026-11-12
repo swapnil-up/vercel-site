@@ -885,7 +885,7 @@ export default {
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
 }
 
 .panel-brand h1 {
@@ -1112,7 +1112,7 @@ export default {
 }
 
 .chip.active {
-  border-color: var(--color-coral);
+  border-color: var(--color-coral-ink);
   background: color-mix(in srgb, var(--color-coral) 12%, transparent);
   color: var(--color-ink);
 }
@@ -1128,7 +1128,7 @@ export default {
 }
 
 .check-row input {
-  accent-color: var(--color-coral);
+  accent-color: var(--color-coral-ink);
 }
 
 .map-list {
@@ -1287,7 +1287,7 @@ export default {
 .back-link {
   border: 0;
   background: none;
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
   font: inherit;
   font-size: 0.72rem;
   font-weight: 700;
@@ -1372,7 +1372,7 @@ export default {
 }
 
 .graph-tooltip .tooltip-maps {
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
 }
 
 .map-detail {
@@ -1419,7 +1419,7 @@ export default {
   padding: 0.18rem 0.5rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-coral) 12%, transparent);
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.08em;

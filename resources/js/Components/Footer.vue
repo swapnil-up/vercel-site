@@ -10,12 +10,12 @@ import { Link } from '@inertiajs/vue3';
           <Link href="/" class="font-display text-xl font-bold tracking-tight">
             Swap's musings
           </Link>
-          <p class="text-warm-muted text-sm mt-2">
+          <p class="text-warm-muted-on-dark text-sm mt-2">
             Code, career, and curiosity.
           </p>
         </div>
         <div>
-          <h4 class="font-display text-sm font-bold text-mustard mb-3">Navigate</h4>
+          <h2 class="font-display text-sm font-bold text-mustard mb-3">Navigate</h2>
           <ul class="space-y-2 text-sm text-white/70">
             <li><Link href="/posts" class="hover:text-coral transition-colors">Writing</Link></li>
             <li><Link href="/books" class="hover:text-coral transition-colors">Books</Link></li>
@@ -25,16 +25,17 @@ import { Link } from '@inertiajs/vue3';
           </ul>
         </div>
         <div>
-          <h4 class="font-display text-sm font-bold text-mustard mb-3">Play</h4>
+          <h2 class="font-display text-sm font-bold text-mustard mb-3">Play</h2>
           <ul class="space-y-2 text-sm text-white/70">
             <li><Link href="/tools" class="hover:text-coral transition-colors">Tools</Link></li>
             <li><Link href="/tools/tamagotchi" class="hover:text-coral transition-colors">Tamagotchi</Link></li>
             <li><Link href="/tools/clicker" class="hover:text-coral transition-colors">Clicker</Link></li>
             <li><Link href="/tools/error-generator" class="hover:text-coral transition-colors">SeriousCLI</Link></li>
+            <li><Link href="/tracker" class="hover:text-coral transition-colors">Tracker</Link></li>
           </ul>
         </div>
         <div>
-          <h4 class="font-display text-sm font-bold text-mustard mb-3">Connect</h4>
+          <h2 class="font-display text-sm font-bold text-mustard mb-3">Connect</h2>
           <ul class="space-y-2 text-sm text-white/70">
             <li><a href="https://github.com/swapnil-up" target="_blank" rel="noopener noreferrer" class="hover:text-coral transition-colors">GitHub</a></li>
             <li><a href="https://slides.swapnilupadhyay.com.np" target="_blank" rel="noopener noreferrer" class="hover:text-coral transition-colors">Slides</a></li>
@@ -42,7 +43,7 @@ import { Link } from '@inertiajs/vue3';
           </ul>
         </div>
       </div>
-      <div class="border-t border-cream/10 dark:border-ink/10 mt-8 pt-6 text-center text-sm text-warm-muted">
+      <div class="border-t border-cream/10 dark:border-ink/10 mt-8 pt-6 text-center text-sm text-warm-muted-on-dark">
         <p>Built with VILT. Runs on caffeine & curiosity.</p>
       </div>
     </div>

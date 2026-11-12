@@ -594,7 +594,7 @@ onUnmounted(() => {
           <button
             @click="exportImage"
             :disabled="isExporting"
-            class="min-h-[44px] px-4 py-2 bg-coral text-white rounded-sm hover:bg-coral/80 transition-colors text-sm font-medium flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-60"
+            class="min-h-[44px] px-4 py-2 bg-coral text-ink rounded-sm hover:bg-coral/80 transition-colors text-sm font-medium flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-60"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             {{ isExporting ? 'Rendering…' : 'Export Image' }}
@@ -629,7 +629,7 @@ onUnmounted(() => {
       <div class="bg-warm-surface p-6 rounded-sm max-w-md w-full mx-4 shadow-2xl">
         <h3 id="import-modal-title" class="font-display text-lg font-bold text-ink mb-4">Import Bill Data</h3>
         <p class="text-sm text-warm-muted mb-4">Select a JSON file previously exported from Bill Splitter.</p>
-        <input ref="fileInputEl" type="file" accept=".json,application/json" @change="handleImportFile" class="w-full mb-4 file:mr-4 file:py-2 file:px-4 file:min-h-[44px] file:rounded-sm file:border-0 file:bg-coral file:text-white hover:file:bg-coral/80 file:cursor-pointer" />
+        <input ref="fileInputEl" type="file" accept=".json,application/json" @change="handleImportFile" class="w-full mb-4 file:mr-4 file:py-2 file:px-4 file:min-h-[44px] file:rounded-sm file:border-0 file:bg-coral file:text-ink hover:file:bg-coral/80 file:cursor-pointer" />
         <div class="flex justify-end">
           <button @click="importExportMode = null" class="min-h-[44px] px-4 py-2 bg-warm-surface border border-warm-border rounded-sm hover:bg-cream">Cancel</button>
         </div>
@@ -657,7 +657,7 @@ onUnmounted(() => {
               <button
                 v-if="people.length > 1"
                 @click="removePerson(index)"
-                class="p-2 min-h-[44px] min-w-[44px] text-coral hover:bg-coral/10 rounded-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+                class="p-2 min-h-[44px] min-w-[44px] text-coral-deep hover:bg-coral/10 rounded-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
                 :aria-label="`Remove ${personLabel(person, index)}`"
               >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -691,7 +691,7 @@ onUnmounted(() => {
                 <span class="text-xs text-warm-muted font-mono">#{{ index + 1 }}</span>
                 <button
                   @click="removeItem(index)"
-                  class="p-1 min-h-[44px] min-w-[44px] -my-2 text-coral hover:bg-coral/10 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+                  class="p-1 min-h-[44px] min-w-[44px] -my-2 text-coral-deep hover:bg-coral/10 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
                   :aria-label="`Remove item ${index + 1}`"
                 >
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -753,13 +753,13 @@ onUnmounted(() => {
                   <div class="flex space-x-2">
                     <button
                       @click="selectAllSharedBy(item)"
-                      class="px-2 py-1 min-h-[32px] bg-mint text-white text-xs rounded hover:bg-mint/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+                      class="px-2 py-1 min-h-[32px] bg-mint text-ink text-xs rounded hover:bg-mint/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
                     >
                       All
                     </button>
                     <button
                       @click="clearAllSharedBy(item)"
-                      class="px-2 py-1 min-h-[32px] bg-ink dark:bg-[#1C1C1E] text-white text-xs rounded-sm hover:bg-coral transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+                      class="px-2 py-1 min-h-[32px] bg-ink dark:bg-[#1C1C1E] text-white text-xs rounded-sm hover:bg-coral-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
                     >
                       None
                     </button>
@@ -771,7 +771,7 @@ onUnmounted(() => {
                     :key="person.id"
                     class="flex items-center space-x-2 px-3 py-2 min-h-[44px] rounded-sm cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-coral"
                     :class="item.sharedBy.includes(person.id)
-                      ? 'bg-coral/10 text-coral border border-coral/30'
+                      ? 'bg-coral/10 text-coral-deep border border-coral/30'
                       : 'bg-cream text-warm-muted hover:bg-coral/10'"
                   >
                     <input
@@ -786,7 +786,7 @@ onUnmounted(() => {
                     <span
                       class="w-4 h-4 flex items-center justify-center rounded border transition-colors"
                       :class="item.sharedBy.includes(person.id)
-                        ? 'bg-coral border-coral text-white'
+                        ? 'bg-coral border-coral text-ink'
                         : 'border-warm-border'"
                     >
                       <svg v-if="item.sharedBy.includes(person.id)" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
@@ -823,7 +823,7 @@ onUnmounted(() => {
             </button>
             <button
               @click="copyShareLink"
-              class="px-4 py-2 min-h-[44px] bg-ink dark:bg-[#1C1C1E] text-white rounded-sm hover:bg-coral transition-colors text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-warm-surface"
+              class="px-4 py-2 min-h-[44px] bg-ink dark:bg-[#1C1C1E] text-white rounded-sm hover:bg-coral-ink transition-colors text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-warm-surface"
             >
               Copy Summary
             </button>
@@ -831,8 +831,8 @@ onUnmounted(() => {
               @click="requestClear"
               class="px-4 py-2 min-h-[44px] rounded-sm transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-warm-surface"
               :class="confirmingClear
-                ? 'bg-coral text-white animate-pulse'
-                : 'bg-coral/10 text-coral hover:bg-coral/20'"
+                ? 'bg-coral text-ink animate-pulse'
+                : 'bg-coral/10 text-coral-deep hover:bg-coral/20'"
             >
               {{ confirmingClear ? 'Click again to confirm' : 'Clear All' }}
             </button>
@@ -915,14 +915,14 @@ onUnmounted(() => {
                     <span
                       class="font-medium tabular-nums shrink-0"
                       :class="(balancesCents[person.id] || 0) > 0 ? 'text-mint' :
-                              (balancesCents[person.id] || 0) < 0 ? 'text-coral' : 'text-warm-muted'"
+                              (balancesCents[person.id] || 0) < 0 ? 'text-coral-ink' : 'text-warm-muted'"
                     >
                       {{ (balancesCents[person.id] || 0) > 0 ? '+' : '' }}{{ fmtCents(balancesCents[person.id] || 0) }}
                     </span>
                   </div>
                 </div>
                 <div class="mt-3 text-xs text-warm-muted space-y-0.5">
-                  <p><span class="text-mint font-medium">Green</span> = gets money back · <span class="text-coral font-medium">Red</span> = owes money</p>
+                  <p><span class="text-mint font-medium">Green</span> = gets money back · <span class="text-coral-ink font-medium">Red</span> = owes money</p>
                 </div>
               </div>
 
@@ -1038,7 +1038,7 @@ onUnmounted(() => {
                 <span class="flex-1 border-b border-dotted -translate-y-1" style="border-color: #EAE2D6" aria-hidden="true"></span>
                 <span
                   class="font-medium tabular-nums shrink-0"
-                  :style="{ color: (balancesCents[person.id] || 0) > 0 ? '#06D6A0' : (balancesCents[person.id] || 0) < 0 ? '#FF5A3D' : '#8B8076' }"
+                  :style="{ color: (balancesCents[person.id] || 0) > 0 ? '#06D6A0' : (balancesCents[person.id] || 0) < 0 ? '#C4432B' : '#6F655C' }"
                 >
                   {{ (balancesCents[person.id] || 0) > 0 ? '+' : '' }}{{ fmtCents(balancesCents[person.id] || 0) }}
                 </span>
@@ -1093,7 +1093,7 @@ onUnmounted(() => {
       </div>
       <button
         @click="scrollToReceipt"
-        class="min-h-[44px] px-4 bg-coral text-white text-sm font-medium rounded-sm flex items-center gap-2 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+        class="min-h-[44px] px-4 bg-coral text-ink text-sm font-medium rounded-sm flex items-center gap-2 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
       >
         {{ settlements.length ? `${settlements.length} transfer${settlements.length === 1 ? '' : 's'}` : 'View receipt' }}
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
@@ -1116,7 +1116,7 @@ onUnmounted(() => {
         <button
           v-if="t.action"
           @click="runToastAction(t)"
-          class="ml-1 shrink-0 text-coral font-semibold underline underline-offset-2 hover:text-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral rounded"
+          class="ml-1 shrink-0 text-coral-ink font-semibold underline underline-offset-2 hover:text-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral rounded"
         >
           {{ t.action.label }}
         </button>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Services\PostRelations;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class PostController extends Controller
@@ -81,8 +82,10 @@ class PostController extends Controller
             'backlinks' => $backlinks,
             'meta' => [
                 'title' => $post->title . ' — Swapnil Upadhyay',
-                'description' => $post->description ?? 'Article by Swapnil Upadhyay',
+                'description' => $post->description
+                    ?: Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags($post->content)) ?? ''), 160),
                 'url' => $postUrl,
+                'type' => 'article',
             ],
             'ldjson' => [
                 '@context' => 'https://schema.org',

@@ -138,7 +138,7 @@ const progress = computed(() =>
  <div class="flex items-center gap-4">
  <button
  @click="minutes = Math.max(1, minutes - 1)"
- class="w-12 h-12 bg-ink dark:bg-[#1C1C1E] hover:bg-coral text-white rounded-sm text-xl font-bold transition-colors"
+ class="w-12 h-12 bg-ink dark:bg-[#1C1C1E] hover:bg-coral-ink text-white rounded-sm text-xl font-bold transition-colors"
  >
  -
  </button>
@@ -152,7 +152,7 @@ const progress = computed(() =>
  />
  <button
  @click="minutes = Math.min(60, minutes + 1)"
- class="w-12 h-12 bg-ink dark:bg-[#1C1C1E] hover:bg-coral text-white rounded-sm text-xl font-bold transition-colors"
+ class="w-12 h-12 bg-ink dark:bg-[#1C1C1E] hover:bg-coral-ink text-white rounded-sm text-xl font-bold transition-colors"
  >
  +
  </button>
@@ -167,7 +167,7 @@ const progress = computed(() =>
  :class="[
  'py-3 rounded-sm font-medium transition-colors',
  minutes === min
- ? 'bg-coral text-white'
+ ? 'bg-coral text-ink'
  : 'bg-warm-surface text-warm-muted border border-warm-border hover:bg-ink dark:hover:bg-[#1C1C1E] hover:text-white'
  ]"
  >
@@ -177,7 +177,7 @@ const progress = computed(() =>
 
  <button
  @click="handleStart"
- class="w-full bg-coral hover:bg-coral/80 text-white font-bold py-4 rounded-sm text-xl transition-colors"
+ class="w-full bg-coral hover:bg-coral/80 text-ink font-bold py-4 rounded-sm text-xl transition-colors"
  >
  Start
  </button>
@@ -221,7 +221,7 @@ const progress = computed(() =>
  </button>
  <button
  @click="handleReset"
- class="flex-1 bg-coral hover:bg-coral/80 text-white font-bold py-4 rounded-sm text-xl transition-colors"
+ class="flex-1 bg-coral hover:bg-coral/80 text-ink font-bold py-4 rounded-sm text-xl transition-colors"
  >
  Reset
  </button>

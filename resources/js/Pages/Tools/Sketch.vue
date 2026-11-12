@@ -4,7 +4,7 @@
  <!-- Header -->
  <header class="flex items-baseline gap-6 px-6 py-3 border-b-4 border-ink bg-cream shrink-0">
  <h1 class="font-display text-sm font-bold tracking-tight">
- sketch <span class="text-coral">→</span> digital
+ sketch <span class="text-coral-ink">→</span> digital
  </h1>
  <p class="text-xs text-warm-muted italic hidden sm:block">
  upload · bleach · crop · annotate · export
@@ -20,8 +20,8 @@
  <section>
  <h3 class="sidebar-heading">01 — Image</h3>
  <button
- class="w-full border-2 border-dashed border-warm-border hover:border-coral hover:bg-coral/10 text-warm-muted hover:text-coral text-xs py-4 px-2 text-center leading-relaxed transition-colors cursor-pointer"
- :class="{ 'border-coral bg-coral/10 text-coral': isDragging }"
+ class="w-full border-2 border-dashed border-warm-border hover:border-coral hover:bg-coral/10 text-warm-muted hover:text-coral-deep text-xs py-4 px-2 text-center leading-relaxed transition-colors cursor-pointer"
+ :class="{ 'border-coral bg-coral/10 text-coral-deep': isDragging }"
  @click="fileInputRef?.click()"
  @dragover.prevent="isDragging = true"
  @dragleave="isDragging = false"
@@ -38,7 +38,7 @@
  <h3 class="sidebar-heading">02 — Bleach</h3>
  <div class="flex justify-between items-center text-xs mb-1">
  <span>Threshold</span>
- <span class="font-display text-coral font-bold">{{ threshold }}</span>
+ <span class="font-display text-coral-ink font-bold">{{ threshold }}</span>
  </div>
  <input
  v-model.number="threshold"
@@ -78,7 +78,7 @@
  </button>
 
  <template v-if="cropMode">
- <div class="text-[10px] leading-relaxed p-2 border border-coral text-coral bg-coral/10 italic mb-2">
+ <div class="text-[10px] leading-relaxed p-2 border border-coral text-coral-deep bg-coral/10 italic mb-2">
  Drag on canvas to select crop region.
  </div>
  <div class="flex gap-1">
@@ -96,7 +96,7 @@
  <template v-else-if="cropRect">
  <div class="text-[10px] p-2 border border-warm-border text-warm-muted mb-2 leading-relaxed">
  Crop active:
- <span class="font-display text-coral font-bold">
+ <span class="font-display text-coral-ink font-bold">
  {{ cropRect.w }}×{{ cropRect.h }}
  </span>
  px
@@ -117,7 +117,7 @@
  <h3 class="sidebar-heading">04 — Zoom</h3>
  <div class="flex justify-between items-center text-xs mb-1">
  <span>View zoom</span>
- <span class="font-display text-coral font-bold">{{ Math.round(zoom * 100) }}%</span>
+ <span class="font-display text-coral-ink font-bold">{{ Math.round(zoom * 100) }}%</span>
  </div>
  <input
  v-model.number="zoom"
@@ -145,7 +145,7 @@
  </button>
  <div
  class="text-[10px] leading-relaxed p-2 border italic transition-colors"
- :class="textMode ? 'border-coral text-coral bg-coral/10' : 'border-warm-border text-warm-muted'"
+ :class="textMode ? 'border-coral text-coral-deep bg-coral/10' : 'border-warm-border text-warm-muted'"
  >
  {{ textMode ? 'Click the canvas to place a label.' : 'Click "Add Label" then click the canvas.' }}
  </div>
@@ -154,7 +154,7 @@
  <div>
  <div class="flex justify-between items-center text-xs mb-1">
  <span>Font size</span>
- <span class="font-display text-coral font-bold">{{ labelFontSize }}px</span>
+ <span class="font-display text-coral-ink font-bold">{{ labelFontSize }}px</span>
  </div>
  <input v-model.number="labelFontSize" type="range" min="8" max="48" class="w-full accent-coral cursor-pointer" />
  </div>
@@ -206,7 +206,7 @@
  <h3 class="sidebar-heading">07 — Export</h3>
  <button
  :disabled="!hasImage || cropMode"
- class="font-display w-full text-left px-3 py-2 text-xs font-bold tracking-wide border-2 border-coral bg-coral text-white hover:bg-coral/80 hover:border-coral/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+ class="font-display w-full text-left px-3 py-2 text-xs font-bold tracking-wide border-2 border-coral bg-coral text-ink hover:bg-coral/80 hover:border-coral/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
  @click="exportPNG"
  >
  ↓ Save as PNG
@@ -318,7 +318,7 @@
  >
  <button
  v-if="selectedLabelId === label.id"
- class="absolute -top-2 -right-2 w-4 h-4 bg-coral text-white rounded-full text-[10px] flex items-center justify-center leading-none z-10"
+ class="absolute -top-2 -right-2 w-4 h-4 bg-coral text-ink rounded-full text-[10px] flex items-center justify-center leading-none z-10"
  @click.stop="deleteLabel(label.id)"
  >×</button>
  <input

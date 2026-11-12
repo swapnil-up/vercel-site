@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\NepalNewsFeed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class NepalNewsController extends Controller
 {
-    private string $repoUrl = 'https://raw.githubusercontent.com/swapnil-up/nepal-news-data/main';
-
-    public function index(Request $request): Response
+    public function index(Request $request, NepalNewsFeed $feed): Response
     {
-        $articles = $this->fetchIndex();
+        $articles = $feed->articles();
 
         // Apply filters
         if ($request->filled('category')) {
@@ -32,7 +32,7 @@ class NepalNewsController extends Controller
         if ($request->filled('days')) {
             $since = now()->subDays((int) $request->input('days'));
             $articles = collect($articles)->filter(function ($a) use ($since) {
-                return isset($a['published_at']) && \Carbon\Carbon::parse($a['published_at'])->gte($since);
+                return isset($a['published_at']) && Carbon::parse($a['published_at'])->gte($since);
             })->values()->all();
         }
 
@@ -58,12 +58,17 @@ class NepalNewsController extends Controller
             'categories' => $categories,
             'sources' => $sources,
             'filters' => $request->only(['category', 'source', 'sentiment', 'days']),
+            'meta' => [
+                'title' => 'Nepal News — Swapnil Upadhyay',
+                'description' => 'A weekly, sentiment-tagged reading list of news from Nepal.',
+                'url' => route('nepal-news.index'),
+            ],
         ]);
     }
 
-    public function show(string $slug): Response
+    public function show(string $slug, NepalNewsFeed $feed): Response
     {
-        $article = $this->fetchArticle($slug);
+        $article = $feed->article($slug);
 
         if (! $article) {
             abort(404);
@@ -71,12 +76,20 @@ class NepalNewsController extends Controller
 
         return Inertia::render('NepalNews/Show', [
             'article' => $article,
+            'meta' => [
+                'title' => ($article['title'] ?? 'Nepal News').' — Nepal News — Swapnil Upadhyay',
+                'description' => Str::limit(
+                    trim(preg_replace('/\s+/', ' ', strip_tags($article['summary'] ?? $article['body'] ?? '')) ?? ''),
+                    160
+                ) ?: 'A Nepal News article on Swapnil Upadhyay\'s site.',
+                'url' => route('nepal-news.show', $slug),
+            ],
         ]);
     }
 
-    public function api(Request $request): JsonResponse
+    public function api(Request $request, NepalNewsFeed $feed): JsonResponse
     {
-        $articles = $this->fetchIndex();
+        $articles = $feed->articles();
 
         if ($request->filled('category')) {
             $articles = collect($articles)->where('category', $request->input('category'))->values()->all();
@@ -98,126 +111,5 @@ class NepalNewsController extends Controller
             'count' => count($articles),
             'articles' => $articles,
         ]);
-    }
-
-    private function fetchIndex(): array
-    {
-        $cacheKey = 'nepal_news_index';
-
-        try {
-            $cached = cache()->get($cacheKey);
-            if ($cached) {
-                return $cached;
-            }
-        } catch (\Throwable $e) {
-            // Cache not available, continue without it
-        }
-
-        $response = Http::timeout(10)
-            ->get("{$this->repoUrl}/index.json");
-
-        if (! $response->successful()) {
-            return [];
-        }
-
-        $data = $response->json('articles', []);
-
-        try {
-            cache()->put($cacheKey, $data, 300);
-        } catch (\Throwable $e) {
-            // Cache not available, continue without it
-        }
-
-        return $data;
-    }
-
-    private function fetchArticle(string $slug): ?array
-    {
-        $index = $this->fetchIndex();
-        $meta = collect($index)->firstWhere('slug', $slug);
-
-        if (! $meta) {
-            return null;
-        }
-
-        $response = Http::timeout(10)
-            ->get("{$this->repoUrl}/{$meta['file']}");
-
-        if (! $response->successful()) {
-            return null;
-        }
-
-        $content = $response->body();
-
-        // Parse frontmatter
-        $body = $content;
-        $frontmatter = [];
-
-        if (preg_match('/^---\n(.+?)\n---\n(.+)$/s', $content, $matches)) {
-            $frontmatter = $this->parseFrontmatter($matches[1]);
-            $body = trim($matches[2]);
-        }
-
-        return array_merge($meta, $frontmatter, ['body' => $body]);
-    }
-
-    private function parseFrontmatter(string $yaml): array
-    {
-        // Simple YAML parser for frontmatter
-        $result = [];
-        $lines = explode("\n", $yaml);
-        $currentKey = null;
-        $currentArray = null;
-
-        foreach ($lines as $line) {
-            $line = rtrim($line);
-
-            if ($line === '' || $line[0] === '#') {
-                continue;
-            }
-
-            // Array item
-            if (preg_match('/^  - (.+)$/', $line, $m)) {
-                if ($currentArray !== null) {
-                    $val = trim($m[1]);
-                    // Try JSON decode for objects
-                    $decoded = json_decode($val, true);
-                    $result[$currentArray][] = $decoded ?? $this->yamlUnquote($val);
-                }
-                continue;
-            }
-
-            // Key: value
-            if (preg_match('/^(\w[\w_]*):\s*(.*)$/', $line, $m)) {
-                $currentKey = $m[1];
-                $value = trim($m[2]);
-
-                if ($value === '' || $value === null) {
-                    $result[$currentKey] = [];
-                    $currentArray = $currentKey;
-                } else {
-                    $result[$currentKey] = $this->yamlUnquote($value);
-                    $currentArray = null;
-                }
-            }
-        }
-
-        return $result;
-    }
-
-    private function yamlUnquote(string $value): mixed
-    {
-        if ($value === 'null') return null;
-        if ($value === 'true') return true;
-        if ($value === 'false') return false;
-        if (is_numeric($value)) return $value + 0;
-
-        // Remove surrounding quotes
-        if ((str_starts_with($value, '"') && str_ends_with($value, '"')) ||
-            (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
-            return substr($value, 1, -1);
-        }
-
-        return $value;
     }
 }

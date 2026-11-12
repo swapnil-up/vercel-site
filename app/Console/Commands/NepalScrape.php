@@ -39,20 +39,22 @@ class NepalScrape extends Command
 
     public function handle(): int
     {
-        $totalScraped = 0;
+        $totalNew = 0;
+        $totalSeen = 0;
 
         foreach ($this->sources as $sourceName => $config) {
             $this->info("Scraping {$sourceName}...");
 
             try {
-                $count = match ($config['type']) {
+                $result = match ($config['type']) {
                     'rss' => $this->scrapeRss($sourceName, $config['rss_url']),
                     'html' => $this->scrapeHtml($sourceName, $config['url']),
-                    default => 0,
+                    default => ['new' => 0, 'seen' => 0],
                 };
 
-                $totalScraped += $count;
-                $this->info("  → {$count} articles from {$sourceName}");
+                $totalNew += $result['new'];
+                $totalSeen += $result['seen'];
+                $this->info("  → {$result['new']} new from {$sourceName} ({$result['seen']} in feed)");
             } catch (\Exception $e) {
                 $this->error("  ✗ Failed to scrape {$sourceName}: {$e->getMessage()}");
                 Log::error("Nepal scrape failed for {$sourceName}", [
@@ -61,11 +63,25 @@ class NepalScrape extends Command
             }
         }
 
-        $this->info("Total scraped: {$totalScraped} articles");
+        $this->info("Total scraped: {$totalNew} new articles ({$totalSeen} seen)");
+
+        // Every feed failing or coming back empty is a real failure: without it
+        // the weekly run would import an empty queue and still look green.
+        // Re-running against an existing database is not a failure, hence the
+        // seen check rather than the new-article count.
+        if ($totalSeen === 0) {
+            $this->error('No articles found in any feed.');
+
+            return 1;
+        }
+
         return 0;
     }
 
-    private function scrapeRss(string $sourceName, string $rssUrl): int
+    /**
+     * @return array{new: int, seen: int}
+     */
+    private function scrapeRss(string $sourceName, string $rssUrl): array
     {
         $response = Http::timeout(30)
             ->withHeaders([
@@ -84,7 +100,8 @@ class NepalScrape extends Command
             throw new \RuntimeException("Failed to parse XML from {$rssUrl}");
         }
 
-        $count = 0;
+        $new = 0;
+        $seen = 0;
 
         foreach ($xml->channel->item as $item) {
             $title = trim((string) ($item->title ?? ''));
@@ -94,6 +111,8 @@ class NepalScrape extends Command
             if ($title === '' || $url === '') {
                 continue;
             }
+
+            $seen++;
 
             $article = Article::updateOrCreate(
                 ['source_url' => $url],
@@ -106,18 +125,22 @@ class NepalScrape extends Command
             );
 
             if ($article->wasRecentlyCreated) {
-                $count++;
+                $new++;
             }
         }
 
-        return $count;
+        return ['new' => $new, 'seen' => $seen];
     }
 
-    private function scrapeHtml(string $sourceName, string $url): int
+    /**
+     * @return array{new: int, seen: int}
+     */
+    private function scrapeHtml(string $sourceName, string $url): array
     {
         // Placeholder for HTML scraping — implement when adding THT/myRepublica
         $this->warn("  HTML scraping not yet implemented for {$sourceName}");
-        return 0;
+
+        return ['new' => 0, 'seen' => 0];
     }
 
     private function parseDate(\SimpleXMLElement $item): ?string

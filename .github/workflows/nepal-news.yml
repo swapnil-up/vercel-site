@@ -1,14 +1,23 @@
-name: Nepal News Cron
+name: Nepal News Weekly
+
+# The only job that spends Groq tokens, run once a week. It pulls in the
+# daily scrape artifacts, imports them, selects ~60 distinct stories and
+# publishes the result to swapnil-up/nepal-news-data.
 
 on:
   schedule:
-    - cron: '30 0 * * *'  # 00:30 UTC = 06:15 NPT (after Groq daily reset)
+    - cron: '45 0 * * 0'  # Sunday 00:45 UTC = 06:30 NPT
   workflow_dispatch:
 
 jobs:
-  scrape-and-publish:
+  process-and-publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
+
+    # actions: read is needed to list and download the earlier scrape artifacts.
+    permissions:
+      actions: read
+      contents: read
 
     steps:
       - name: Checkout vercel-site
@@ -23,21 +32,58 @@ jobs:
       - name: Install dependencies
         run: composer install --no-dev --optimize-autoloader
 
+      - name: Download the week's scrapes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p queue
+
+          # The last week of daily scrapes. The current run is still in
+          # progress, so "success" only ever matches completed runs.
+          for id in $(gh api "repos/${{ github.repository }}/actions/workflows/nepal-scrape.yml/runs?per_page=8&status=success" --jq '.workflow_runs[].id'); do
+            gh run download "$id" -D "queue/scrape-$id" || true
+          done
+
+          # Whatever last week's run could not process.
+          backlog_id=$(gh api "repos/${{ github.repository }}/actions/workflows/nepal-news.yml/runs?per_page=1&status=success" --jq '.workflow_runs[0].id // empty')
+          if [ -n "$backlog_id" ]; then
+            gh run download "$backlog_id" -D "queue/backlog-$backlog_id" || true
+          fi
+
+          echo "Queue files: $(find queue -name '*.json' | wc -l)"
+
       - name: Setup SQLite
         run: touch /tmp/nepal_news.sqlite
 
       - name: Run migrations
         run: php artisan migrate --database=nepal_news --path=database/migrations_nepal_news --force
 
-      - name: Scrape RSS feeds
-        run: php artisan nepal:scrape
+      - name: Load the week's articles
+        run: |
+          find queue -name '*.json' -print0 | while IFS= read -r -d '' file; do
+            php artisan nepal:queue import "$file"
+          done
 
       - name: Process with Groq AI
-        run: php artisan nepal:process --limit=25
+        run: php artisan nepal:process --limit=60
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          # Override with a repository variable when the default model retires.
+          GROQ_MODEL: ${{ vars.GROQ_MODEL || 'llama-3.3-70b-versatile' }}
 
       - name: Publish to data repo
         run: php artisan nepal:publish
         env:
           GITHUB_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+
+      - name: Export the unprocessed backlog
+        if: always()
+        run: php artisan nepal:queue export /tmp/nepal-backlog.json --unprocessed --days=14
+
+      - name: Upload the backlog
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nepal-backlog-${{ github.run_id }}
+          path: /tmp/nepal-backlog.json
+          retention-days: 60

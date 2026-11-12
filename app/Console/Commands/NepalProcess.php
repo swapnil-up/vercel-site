@@ -2,46 +2,93 @@
 
 namespace App\Console\Commands;
 
+use App\Exceptions\GroqException;
 use App\Models\Article;
+use App\Services\NepalArticleSelector;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class NepalProcess extends Command
 {
-    protected $signature = 'nepal:process {--limit=50 : Max articles to process}';
+    protected $signature = 'nepal:process
+        {--limit=60 : Max articles to process in one run}
+        {--dry-run : Report the selection without calling Groq}';
 
-    protected $description = 'Process unprocessed articles with Groq AI (summarize, categorize, extract)';
+    protected $description = 'Select and process unprocessed articles with Groq AI (summarize, categorize, extract)';
 
     private string $groqApiKey;
-    private string $groqModel = 'groq/compound-mini';
+
+    private string $groqModel;
+
     private int $maxRetries = 3;
 
-    public function handle(): int
-    {
-        $this->groqApiKey = env('GROQ_API_KEY', '');
+    private int $throttleSeconds;
 
-        if ($this->groqApiKey === '') {
-            $this->error('GROQ_API_KEY not set. Add it to .env and config/services.php');
+    private int $totalTokens = 0;
+
+    public function handle(NepalArticleSelector $selector): int
+    {
+        $this->groqApiKey = (string) config('nepal.groq.key', '');
+        $this->groqModel = (string) config('nepal.groq.model', '');
+        $this->throttleSeconds = (int) config('nepal.groq.throttle_seconds', 2);
+
+        if ($this->groqApiKey === '' && ! $this->option('dry-run')) {
+            $this->error('GROQ_API_KEY not set.');
+
             return 1;
         }
 
-        $articles = Article::unprocessed()
+        $limit = max(1, (int) $this->option('limit'));
+
+        $candidates = Article::unprocessed()
             ->whereNotNull('body')
             ->where('body', '!=', '')
-            ->orderBy('published_at', 'desc')
-            ->limit($this->option('limit'))
             ->get();
 
-        if ($articles->isEmpty()) {
+        if ($candidates->isEmpty()) {
             $this->info('No unprocessed articles found.');
+
             return 0;
         }
 
-        $this->info("Processing {$articles->count()} articles with Groq AI...");
+        $selection = $selector->select($candidates, $limit);
+        $articles = $selection['selected'];
+
+        $this->info(sprintf(
+            'Selected %d of %d candidates (%d duplicates, %d filtered, %d over the cap).',
+            $articles->count(),
+            $selection['considered'],
+            $selection['duplicates'],
+            $selection['excluded'],
+            $selection['overflow'],
+        ));
+
+        if ($this->option('dry-run')) {
+            foreach ($articles as $article) {
+                $this->line("  · [{$article->source}] {$article->title}");
+            }
+
+            $this->info('Dry run: no tokens spent.');
+
+            return 0;
+        }
+
+        // Fail in seconds, not after a batch of doomed retries, if the model
+        // has been retired.
+        if (! $this->verifyModel()) {
+            return 1;
+        }
+
+        if ($articles->isEmpty()) {
+            $this->warn('Nothing left after selection.');
+
+            return 0;
+        }
 
         $processed = 0;
         $failed = 0;
+        $aborted = false;
 
         foreach ($articles as $article) {
             $success = false;
@@ -61,30 +108,34 @@ class NepalProcess extends Command
                     ]);
 
                     $this->info("  ✓ [{$article->source}] {$article->title}");
+                    $this->totalTokens += $result['tokens'];
                     $processed++;
                     $success = true;
 
-                    // Sleep 2s between successful calls to avoid rate limits
-                    sleep(2);
-                    break;
-                } catch (\RuntimeException $e) {
-                    $message = $e->getMessage();
-
-                    // Check for rate limit error and extract wait time
-                    if (str_contains($message, 'rate_limit_exceeded')) {
-                        $waitSeconds = $this->extractWaitTime($message);
-                        if ($attempt < $this->maxRetries) {
-                            $this->warn("  ⏳ Rate limited, waiting {$waitSeconds}s (attempt {$attempt}/{$this->maxRetries})...");
-                            sleep((int) ceil($waitSeconds));
-                            continue;
-                        }
+                    if ($this->throttleSeconds > 0) {
+                        sleep($this->throttleSeconds);
                     }
 
-                    $this->error("  ✗ {$article->title}: {$message}");
+                    break;
+                } catch (GroqException $e) {
+                    if ($e->retryable && $attempt < $this->maxRetries) {
+                        $wait = $e->retryAfter ?? 3.0;
+                        $this->warn("  ⏳ Transient error, waiting {$wait}s (attempt {$attempt}/{$this->maxRetries})...");
+                        sleep((int) ceil($wait));
+                        continue;
+                    }
+
+                    $this->error("  ✗ {$article->title}: {$e->getMessage()}");
                     Log::error("Nepal process failed for article {$article->id}", [
-                        'error' => $message,
+                        'error' => $e->getMessage(),
                         'attempt' => $attempt,
                     ]);
+
+                    if ($e->fatal) {
+                        $aborted = true;
+                    }
+
+                    break;
                 } catch (\Exception $e) {
                     $this->error("  ✗ {$article->title}: {$e->getMessage()}");
                     Log::error("Nepal process failed for article {$article->id}", [
@@ -97,12 +148,69 @@ class NepalProcess extends Command
             if (! $success) {
                 $failed++;
             }
+
+            if ($aborted) {
+                $this->error('Aborting: the Groq model or credentials are not usable.');
+                break;
+            }
         }
 
-        $this->info("Done: {$processed} processed, {$failed} failed");
+        $this->info("Done: {$processed} processed, {$failed} failed (~{$this->totalTokens} tokens).");
+
+        if ($processed === 0) {
+            $this->error('Nothing was processed.');
+
+            return 1;
+        }
+
         return 0;
     }
 
+    /**
+     * Confirm the key works and the configured model exists before spending tokens.
+     */
+    private function verifyModel(): bool
+    {
+        try {
+            $response = Http::timeout(20)
+                ->withToken($this->groqApiKey)
+                ->get((string) config('nepal.groq.models_endpoint'));
+        } catch (\Throwable $e) {
+            $this->error("Could not reach Groq: {$e->getMessage()}");
+
+            return false;
+        }
+
+        if ($response->status() === 401) {
+            $this->error('GROQ_API_KEY was rejected (HTTP 401).');
+
+            return false;
+        }
+
+        if (! $response->successful()) {
+            $this->error("Could not list Groq models: HTTP {$response->status()}.");
+
+            return false;
+        }
+
+        $ids = collect($response->json('data', []))->pluck('id')->filter()->values();
+
+        if (! $ids->contains($this->groqModel)) {
+            $this->error("Groq model '{$this->groqModel}' is not available to this key.");
+            $this->line('Available models: ' . $ids->take(15)->implode(', '));
+            $this->line('Set the GROQ_MODEL environment variable to one of these.');
+
+            return false;
+        }
+
+        $this->info("Groq model: {$this->groqModel}");
+
+        return true;
+    }
+
+    /**
+     * @return array{summary: ?string, category: string, sentiment: string, entities: array, keywords: array, importance_score: int, tokens: int}
+     */
     private function processArticle(Article $article): array
     {
         $body = mb_substr($article->body, 0, 2000);
@@ -112,7 +220,7 @@ class NepalProcess extends Command
                 'Authorization' => "Bearer {$this->groqApiKey}",
                 'Content-Type' => 'application/json',
             ])
-            ->post('https://api.groq.com/openai/v1/chat/completions', [
+            ->post((string) config('nepal.groq.endpoint'), [
                 'model' => $this->groqModel,
                 'messages' => [
                     [
@@ -141,19 +249,28 @@ PROMPT,
             ]);
 
         if (! $response->successful()) {
-            throw new \RuntimeException("Groq API error: HTTP {$response->status()} — {$response->body()}");
+            $status = $response->status();
+            $error = $response->body();
+
+            throw new GroqException(
+                "Groq API error: HTTP {$status} — {$error}",
+                status: $status,
+                retryable: $status === 429 || $status >= 500,
+                fatal: in_array($status, [401, 403, 404], true) || str_contains($error, 'model_not_found'),
+                retryAfter: $status === 429 ? $this->extractWaitTime($error) : null,
+            );
         }
 
         $content = $response->json('choices.0.message.content', '');
 
         if ($content === '') {
-            throw new \RuntimeException('Empty response from Groq');
+            throw new GroqException('Empty response from Groq', status: $response->status());
         }
 
         $result = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException("Invalid JSON: " . json_last_error_msg());
+            throw new GroqException('Invalid JSON: ' . json_last_error_msg(), status: $response->status());
         }
 
         return [
@@ -163,6 +280,7 @@ PROMPT,
             'entities' => $result['entities'] ?? [],
             'keywords' => $result['keywords'] ?? [],
             'importance_score' => max(1, min(10, (int) ($result['importance_score'] ?? 5))),
+            'tokens' => (int) $response->json('usage.total_tokens', 0),
         ];
     }
 

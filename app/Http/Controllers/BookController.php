@@ -107,6 +107,7 @@ class BookController extends Controller
                     ) ?: 'A book note by Swapnil Upadhyay'),
                 'url' => $bookUrl,
                 'image' => $hidden ? null : $book->cover_url,
+                'type' => 'article',
             ],
             'ldjson' => [
                 '@context' => 'https://schema.org',

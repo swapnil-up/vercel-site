@@ -264,7 +264,7 @@ const handleProseClick = (event) => {
 }
 
 .prose-content :deep(a) {
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
   text-decoration: none;
 }
 
@@ -337,7 +337,7 @@ const handleProseClick = (event) => {
 }
 
 .map-pill:hover {
-  border-color: var(--color-coral);
+  border-color: var(--color-coral-ink);
 }
 
 .linked-posts {

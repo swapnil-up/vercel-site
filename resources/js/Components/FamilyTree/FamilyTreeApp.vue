@@ -55,7 +55,7 @@ onUnmounted(() => {
       <div class="flex items-center gap-2">
         <h1 class="font-display text-lg font-bold text-ink">Family Tree</h1>
         <div class="relative group">
-          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-warm-border text-warm-muted text-xs cursor-help font-semibold hover:border-coral hover:text-coral transition-colors">?</span>
+          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-warm-border text-warm-muted text-xs cursor-help font-semibold hover:border-coral hover:text-coral-ink transition-colors">?</span>
           <div class="absolute left-0 top-full mt-1 w-56 bg-ink text-cream text-xs rounded-sm shadow-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
             <p class="font-semibold mb-1.5 text-cream/80 uppercase tracking-wider text-[10px]">Keyboard Shortcuts</p>
             <div class="space-y-1">
@@ -126,7 +126,7 @@ onUnmounted(() => {
           type="file"
           accept=".json"
           @change="handleImportFile"
-          class="w-full mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:bg-coral file:text-white hover:file:bg-coral/80 file:cursor-pointer"
+          class="w-full mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:bg-coral file:text-ink hover:file:bg-coral/80 file:cursor-pointer"
         />
         <div class="flex justify-end">
           <button

@@ -581,7 +581,7 @@ onUnmounted(() => {
         <button @mousedown.stop @click="openLinkPicker(contextMenu.personId, 'sibling')" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Add Sibling</button>
         <div class="border-t border-warm-border my-1"></div>
         <button @mousedown.stop @click="store.state.selectedId = contextMenu.personId; closeContextMenu()" class="w-full text-left px-3 py-1.5 hover:bg-cream transition-colors">Edit</button>
-        <button @mousedown.stop @click="deleteWithConfirm(contextMenu.personId)" class="w-full text-left px-3 py-1.5 text-coral hover:bg-coral/5 transition-colors">Delete</button>
+        <button @mousedown.stop @click="deleteWithConfirm(contextMenu.personId)" class="w-full text-left px-3 py-1.5 text-coral-deep hover:bg-coral/5 transition-colors">Delete</button>
       </template>
       <template v-else>
         <div class="px-3 py-1.5 border-b border-warm-border">

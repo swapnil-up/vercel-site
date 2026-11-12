@@ -130,6 +130,51 @@ php artisan koreader:import [path] [--dir=<path>] [--match=<text>] [--limit=<n>]
 - **`--stats-only`**: Rewrites only the `stats` key of notes that already exist — title, cover, tags, slug and body are left as they are. Notes are found by frontmatter slug or title first, so a hand-renamed file still refreshes. Use after new page data is pulled from the Kindle, then run `content:import --source=books`
 - **Flow**: download DB → `koreader:import --limit=4 --status=finished` → fill in notes → `content:import --source=books`
 
+### Nepal News Pipeline (weekly)
+Two workflows, split so Groq tokens are only spent once a week. Scraping is
+free but each RSS feed only exposes the last day or two, so scraping stays
+daily; only the AI step is weekly.
+
+- `.github/workflows/nepal-scrape.yml` — daily. Migrates a throwaway SQLite,
+  runs `nepal:scrape`, and uploads the day's articles as a JSON artifact
+  (`nepal:queue export`). Fails the job when all feeds return nothing.
+- `.github/workflows/nepal-news.yml` — Sundays. Downloads the last 8 scrape
+  artifacts plus last week's backlog, imports them, selects ~60 distinct
+  stories, runs `nepal:process`, publishes, then re-exports whatever is still
+  unprocessed (max 14 days old) as the next backlog.
+
+```bash
+# Daily (workflow does this)
+php artisan nepal:scrape
+php artisan nepal:queue export /tmp/nepal-queue.json
+
+# Weekly (workflow does this)
+php artisan nepal:queue import /tmp/nepal-queue.json   # one file per day
+php artisan nepal:process --limit=60
+php artisan nepal:publish
+php artisan nepal:queue export /tmp/nepal-backlog.json --unprocessed --days=14
+```
+
+- **Selection**: `App\Services\NepalArticleSelector` drops filtered titles
+  (horoscope, photo galleries), collapses near-identical headlines across
+  outlets (Jaccard on significant title tokens, threshold in
+  `config/nepal.php`), then caps by recency. `nepal:process --dry-run` prints
+  the selection without spending tokens — use it to tune `--limit`.
+- **Model**: `GROQ_MODEL` env (default `llama-3.3-70b-versatile`), read from
+  `config/nepal.php`. `nepal:process` lists the models the key can use and
+  aborts before spending anything if the configured id is gone. Set a repo
+  variable `GROQ_MODEL` to override the workflow default.
+- **Failure is loud**: `nepal:scrape` fails on zero articles, `nepal:process`
+  fails when nothing was processed, and `nepal:publish` fails when there is
+  nothing to publish. Only 401/404 model errors abort the batch; 429/5xx are
+  retried.
+- **Archive**: `nepal:publish` merges into the existing `index.json` instead of
+  rebuilding it, so past weeks survive (cap in `config/nepal.php`,
+  `publish.index_cap`). The site paginates at 30/page.
+- **Tests**: `php artisan test --filter=NepalNewsPipelineTest` covers
+  selection, queue round-trips, the model probe, fatal-error abort, and the
+  index merge.
+
 ### Database Seeding
 ```bash
 # Old content seeder (deprecated - seeds articles/thoughts/connections tables)
@@ -153,7 +198,9 @@ npm run build
 - SQLite at `database/database.sqlite`
 - Tables:
   - `posts` - Primary article table (use this)
-  - `articles` - Old articles table (legacy)
+  - `articles` - Old articles table (legacy). The Nepal News pipeline has an
+    unrelated `articles` table on a separate `nepal_news` connection
+    (`NEPAL_NEWS_DB`, default `/tmp/nepal_news.sqlite`)
   - `thoughts` - Graph thoughts (includes imported posts)
   - `connections` - Graph connections (auto-created from wikilinks)
   - `quotes` - Random quotes

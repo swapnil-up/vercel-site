@@ -59,11 +59,17 @@
   --color-cream: #FCF9F2;
   --color-ink: #1C1C1E;
   --color-coral: #FF5A3D;
+  /* Darker coral for small text on light surfaces (4.77:1 on cream). */
+  --color-coral-ink: #C4432B;
+  /* Even darker, for coral text sitting on a coral-tinted background. */
+  --color-coral-deep: #B23A22;
   --color-sky: #2B59C3;
   --color-mustard: #F4B942;
   --color-mint: #06D6A0;
   --color-warm-border: #EAE2D6;
-  --color-warm-muted: #8B8076;
+  --color-warm-muted: #6F655C;
+  /* Muted text on ink/dark panels, where the light-surface token would fail. */
+  --color-warm-muted-on-dark: #B0A898;
   --color-warm-surface: #FFFFFF;
 }
 
@@ -71,11 +77,15 @@
   --color-cream: #121214;
   --color-ink: #E8E6E3;
   --color-coral: #FF5A3D;
+  /* The darkened coral fails on the dark surface, so revert to the brand tone. */
+  --color-coral-ink: #FF5A3D;
+  --color-coral-deep: #FF5A3D;
   --color-sky: #5B8DEF;
   --color-mustard: #F4B942;
   --color-mint: #06D6A0;
   --color-warm-border: #3A3A3E;
   --color-warm-muted: #B0A898;
+  --color-warm-muted-on-dark: #B0A898;
   --color-warm-surface: #18181B;
 }
 
@@ -148,8 +158,14 @@ body {
   color: var(--color-ink);
 }
 
+/* Slide in without fading: a fading body briefly fails contrast checks. */
 .article-content > * {
-  animation: fadeSlideUp 0.5s ease both;
+  animation: slideUp 0.5s ease both;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(12px); }
+  to { transform: translateY(0); }
 }
 
 .article-content > *:nth-child(1) { animation-delay: 0.02s; }
@@ -186,7 +202,7 @@ body {
   line-height: 0.85;
   margin-right: 0.15em;
   margin-top: 0.05em;
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
 }
 
 /* Headings */
@@ -222,7 +238,7 @@ body {
 
 /* Links */
 .article-content a {
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
   text-decoration: none;
   background-image: linear-gradient(currentColor, currentColor);
   background-position: 0% 100%;
@@ -240,7 +256,8 @@ body {
 /* Inline Code */
 .article-content code {
   background-color: #FF5A3D15;
-  color: var(--color-coral);
+  /* Darker than the link coral so it clears 4.5:1 on the tinted background. */
+  color: var(--color-coral-deep);
   padding: 0.15em 0.5em;
   border-radius: 3px;
   font-size: 0.85em;
@@ -650,7 +667,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
 }
 
 .dj-h1 {
@@ -724,7 +741,7 @@ body {
   font-family: var(--font-display);
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
   text-decoration: none;
   border-bottom: 2px solid transparent;
   transition: border-color 0.15s ease, color 0.15s ease;
@@ -765,7 +782,7 @@ body {
   border: 1.5px solid color-mix(in srgb, var(--color-coral) 30%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-coral) 12%, transparent);
-  color: var(--color-coral);
+  color: var(--color-coral-deep);
   font-family: var(--font-display);
   font-size: 0.7rem;
   font-weight: 700;
@@ -834,7 +851,7 @@ body {
 }
 
 .dj-post__link:hover .dj-post__title {
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
 }
 
 .dj-post__desc {
@@ -863,7 +880,7 @@ body {
   font-family: var(--font-display);
   font-size: 1.8rem;
   font-weight: 800;
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
 }
 
 .dj-flag-list {
@@ -974,7 +991,7 @@ body {
   top: 12px;
   right: 12px;
   font-size: 0.95rem;
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
 }
 
 .dj-note {
@@ -1022,7 +1039,7 @@ body {
 }
 
 .dj-social:hover {
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
 }
 
 @media (max-width: 520px) {

@@ -340,7 +340,7 @@ class ImportContent extends Command
             return null;
         }
 
-        $content = trim($document->body()) ?: 'No content yet.';
+        $rawContent = trim($document->body()) ?: 'No content yet.';
 
         $title = $frontmatter['title']
             ?? Str::of($filename)
@@ -367,7 +367,7 @@ class ImportContent extends Command
         ))));
 
         $publishedDate = $frontmatter['date']
-            ?? $this->extractDateFromContent($content)
+            ?? $this->extractDateFromContent($rawContent)
             ?? now()->toDateString();
 
         return [
@@ -377,7 +377,7 @@ class ImportContent extends Command
             'prefix' => $source['prefix'],
             'slug' => $slug,
             'title' => $title,
-            'content' => $content,
+            'content' => $this->stripDocumentHeader($rawContent),
             'description' => $frontmatter['description'] ?? null,
             'tags' => $tags,
             'series' => $frontmatter['series'] ?? null,
@@ -716,6 +716,33 @@ class ImportContent extends Command
         }
 
         $this->info("Pruned {$count} orphan book(s).");
+    }
+
+    /**
+     * Drop the document title and authored date stamp that some notes carry at
+     * the top of the body. Both are already stored as post metadata: leaving
+     * them rendered a duplicate <h1> and a stray "Date:" paragraph that the
+     * article drop cap turned into a giant initial.
+     */
+    private function stripDocumentHeader(string $content): string
+    {
+        $content = preg_replace('/\A\s*#\s+[^\n]*(?:\n+|$)/', '', $content) ?? $content;
+
+        $content = preg_replace(
+            '/\A\s*Date:\s*\d{4}-\d{2}-\d{2}[^\n]*(?:\n+|$)/i',
+            '',
+            $content,
+            1,
+            $strippedDate
+        ) ?? $content;
+
+        if ($strippedDate > 0) {
+            $content = preg_replace('/\A\s*---\s*(?:\n+|$)/', '', $content) ?? $content;
+        }
+
+        $content = trim($content);
+
+        return $content !== '' ? $content : 'No content yet.';
     }
 
     private function extractDateFromContent(string $content): ?string

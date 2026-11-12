@@ -44,6 +44,7 @@ class HandleInertiaRequests extends Middleware
                 'description' => $this->getPageDescription($request),
                 'url' => $request->url(),
                 'image' => $this->getPageImage($request),
+                'type' => $this->getPageType($request),
             ],
         ]);
     }
@@ -64,9 +65,19 @@ class HandleInertiaRequests extends Middleware
             'books.show' => $this->getBookTitle($request),
             'graph' => 'Knowledge Graph - Swapnil Upadhyay',
             'about' => 'About - Swapnil Upadhyay',
+            'nepal-news.index' => 'Nepal News - Swapnil Upadhyay',
+            'tracker' => 'Tracker - Swapnil Upadhyay',
+            'now' => 'Now - Swapnil Upadhyay',
         ];
 
         return $titles[$routeName] ?? 'Swapnil Upadhyay';
+    }
+
+    protected function getPageType(Request $request): string
+    {
+        return in_array($request->route()?->getName(), ['posts.show', 'books.show', 'nepal-news.show'], true)
+            ? 'article'
+            : 'website';
     }
 
     /**
@@ -84,6 +95,9 @@ class HandleInertiaRequests extends Middleware
             'books.show' => $this->getBookDescription($request),
             'graph' => 'An interconnected web of thoughts, ideas, and concepts',
             'about' => 'Learn more about Swapnil Upadhyay',
+            'nepal-news.index' => 'A daily, sentiment-tagged reading list of news from Nepal',
+            'tracker' => 'Personal achievements by Swapnil Upadhyay',
+            'now' => 'What Swapnil Upadhyay is currently focused on',
         ];
 
         return $descriptions[$routeName] ?? 'Personal website and blog';
@@ -115,7 +129,7 @@ class HandleInertiaRequests extends Middleware
         $post = Post::where('slug', $slug)->first();
 
         return $post
-            ? ($post->description ?? substr(strip_tags($post->content), 0, 160))
+            ? ($post->description ?: Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags($post->content)) ?? ''), 160))
             : 'Read this article on Swapnil Upadhyay\'s blog';
     }
 

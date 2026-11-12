@@ -110,10 +110,6 @@ const shownChapters = computed(() => (props.enabled ? chapters : chapters.slice(
       Skip the walk <span aria-hidden="true">↓</span>
     </a>
 
-    <p v-if="props.enabled && activeIndex === 0" class="hero__cue" aria-hidden="true">
-      Scroll, swipe or press ↓ — Blobby will lead the way
-    </p>
-
     <ChapterRail
       v-if="props.enabled"
       :chapters="chapters"
@@ -251,34 +247,6 @@ const shownChapters = computed(() => (props.enabled ? chapters : chapters.slice(
   outline-offset: 2px;
 }
 
-.hero__cue {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(110px, 17vh, 160px);
-  z-index: 8;
-  margin: 0;
-  translate: -50% 0;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(20, 14, 24, 0.42);
-  color: #fff8f0;
-  font-size: 0.76rem;
-  letter-spacing: 0.04em;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  animation: hero-cue-float 2.8s ease-in-out infinite;
-}
-
-@keyframes hero-cue-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
 @media (max-width: 720px) {
   .hero__panel {
     justify-content: center;
@@ -295,12 +263,6 @@ const shownChapters = computed(() => (props.enabled ? chapters : chapters.slice(
     display: none;
   }
 
-  .hero__cue {
-    bottom: 150px;
-    font-size: 0.7rem;
-    text-align: center;
-    max-width: 240px;
-  }
 }
 
 /* Static / reduced-motion: the hero simply sits in the flow */
@@ -340,8 +302,7 @@ const shownChapters = computed(() => (props.enabled ? chapters : chapters.slice(
 
 @media (prefers-reduced-motion: reduce) {
   .hero__landmark,
-  .hero__panel,
-  .hero__cue {
+  .hero__panel {
     transition: none;
     animation: none;
   }

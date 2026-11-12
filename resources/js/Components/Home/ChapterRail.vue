@@ -21,7 +21,6 @@ defineEmits(['select'])
           class="rail__btn"
           :class="{ 'is-active': index === active, 'is-done': index < active }"
           :aria-current="index === active ? 'step' : undefined"
-          :aria-label="`Chapter ${index + 1}: ${chapter.label} — ${chapter.sub}`"
           @click="$emit('select', index)"
         >
           <span class="rail__num" aria-hidden="true">{{ String(index + 1).padStart(2, '0') }}</span>
@@ -91,7 +90,7 @@ defineEmits(['select'])
   color: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: color 0.15s ease;
 }
 
 .rail__btn:hover,
@@ -138,17 +137,17 @@ defineEmits(['select'])
 }
 
 .rail__btn.is-done .rail__num {
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
 }
 
 .rail__btn.is-active {
   background: var(--color-coral);
-  color: #fff8f0;
+  color: var(--color-ink);
 }
 
 .rail__btn.is-active .rail__num,
 .rail__btn.is-active .rail__sub {
-  color: color-mix(in srgb, #fff8f0 78%, transparent);
+  color: var(--color-ink);
 }
 
 @media (max-width: 720px) {

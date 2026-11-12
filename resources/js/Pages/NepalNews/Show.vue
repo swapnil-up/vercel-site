@@ -17,10 +17,10 @@ const categoryConfig = {
 }
 
 const sentimentConfig = {
-  positive: { label: 'Good News', icon: '↑', accent: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
-  negative: { label: 'Concerning', icon: '↓', accent: 'text-rose-600 dark:text-rose-400', dot: 'bg-rose-500' },
-  mixed: { label: 'Mixed', icon: '↕', accent: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-500' },
-  neutral: { label: 'Neutral', icon: '→', accent: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400' },
+  positive: { label: 'Good News', icon: '↑', accent: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' },
+  negative: { label: 'Concerning', icon: '↓', accent: 'text-rose-700 dark:text-rose-400', dot: 'bg-rose-500' },
+  mixed: { label: 'Mixed', icon: '↕', accent: 'text-amber-700 dark:text-amber-400', dot: 'bg-amber-500' },
+  neutral: { label: 'Neutral', icon: '→', accent: 'text-slate-600 dark:text-slate-400', dot: 'bg-slate-400' },
 }
 
 const entityTypeIcons = {
@@ -62,7 +62,7 @@ function importanceDots(score) {
     <nav class="mb-8">
       <Link
         href="/nepal-news"
-        class="inline-flex items-center gap-1.5 text-sm text-warm-muted hover:text-coral transition-colors duration-200 font-medium group"
+        class="inline-flex items-center gap-1.5 text-sm text-warm-muted hover:text-coral-ink transition-colors duration-200 font-medium group"
       >
         <span class="inline-block transition-transform duration-200 group-hover:-translate-x-0.5">←</span>
         Back to Nepal News
@@ -109,7 +109,7 @@ function importanceDots(score) {
           :href="article.source_url"
           target="_blank"
           rel="noopener"
-          class="inline-flex items-center gap-1.5 text-sm text-coral hover:text-coral/70 font-semibold transition-colors duration-200 group"
+          class="inline-flex items-center gap-1.5 text-sm text-coral-ink hover:text-coral-ink/70 font-semibold transition-colors duration-200 group"
         >
           Read original at {{ article.source }}
           <span class="inline-block transition-transform duration-200 group-hover:translate-x-0.5">→</span>
@@ -123,7 +123,7 @@ function importanceDots(score) {
       <div v-if="article.summary" class="relative mb-10">
         <div class="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-coral to-coral/30"></div>
         <div class="pl-6">
-          <h2 class="text-[11px] font-bold text-coral uppercase tracking-widest mb-2.5">AI Summary</h2>
+          <h2 class="text-[11px] font-bold text-coral-ink uppercase tracking-widest mb-2.5">AI Summary</h2>
           <p class="text-ink text-lg leading-relaxed font-body">
             {{ article.summary }}
           </p>
@@ -185,7 +185,7 @@ function importanceDots(score) {
           <span
             v-for="keyword in article.keywords_json"
             :key="keyword"
-            class="text-sm px-3 py-1 rounded-lg bg-coral/8 text-coral font-semibold ring-1 ring-coral/15"
+            class="text-sm px-3 py-1 rounded-lg bg-coral/8 text-coral-deep font-semibold ring-1 ring-coral/15"
           >
             {{ keyword }}
           </span>

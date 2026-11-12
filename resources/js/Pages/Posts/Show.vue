@@ -33,13 +33,13 @@ onUnmounted(() => {
 
     <article class="max-w-4xl mx-auto px-6 py-12">
       <div class="flex items-center justify-between gap-4 mb-4">
-        <Link href="/posts" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral transition-colors group">
+        <Link href="/posts" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral-ink transition-colors group">
           <span class="group-hover:-translate-x-1 transition-transform">←</span>
           Back to posts
         </Link>
         <Link
           :href="`/graph?node=${post.slug}`"
-          class="inline-flex items-center gap-2 text-sm font-medium text-coral hover:text-ink transition-colors"
+          class="inline-flex items-center gap-2 text-sm font-medium text-coral-ink hover:text-ink transition-colors"
         >
           Open in graph
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -72,7 +72,7 @@ onUnmounted(() => {
             v-for="tag in post.tags"
             :key="tag"
             :href="`/posts/tag/${tag}`"
-            class="text-sm px-3 py-1 bg-coral text-white rounded hover:bg-coral/80 transition-colors"
+            class="text-sm px-3 py-1 bg-coral text-ink rounded hover:bg-coral/80 transition-colors"
           >
             {{ tag }}
           </Link>
@@ -91,7 +91,7 @@ onUnmounted(() => {
             <Link
               v-else
               :href="`/posts/${p.slug}`"
-              class="hover:text-coral transition-colors text-sm"
+              class="hover:text-coral-ink transition-colors text-sm"
             >
               {{ idx + 1 }}. {{ p.title }}
             </Link>

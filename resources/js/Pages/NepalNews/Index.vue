@@ -37,10 +37,10 @@ const categoryIcons = {
 }
 
 const sentimentConfig = {
-  positive: { label: 'Good News', icon: '↑', accent: 'text-emerald-600 dark:text-emerald-400', ring: 'ring-emerald-500/20', dot: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 ring-1 ring-emerald-500/20' },
-  negative: { label: 'Concerning', icon: '↓', accent: 'text-rose-600 dark:text-rose-400', ring: 'ring-rose-500/20', dot: 'bg-rose-500', pill: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 ring-1 ring-rose-500/20' },
-  mixed: { label: 'Mixed', icon: '↕', accent: 'text-amber-600 dark:text-amber-400', ring: 'ring-amber-500/20', dot: 'bg-amber-500', pill: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 ring-1 ring-amber-500/20' },
-  neutral: { label: 'Neutral', icon: '→', accent: 'text-slate-500 dark:text-slate-400', ring: 'ring-slate-500/20', dot: 'bg-slate-400', pill: 'bg-slate-50 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300 ring-1 ring-slate-500/20' },
+  positive: { label: 'Good News', icon: '↑', accent: 'text-emerald-700 dark:text-emerald-400', ring: 'ring-emerald-500/20', dot: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 ring-1 ring-emerald-500/20' },
+  negative: { label: 'Concerning', icon: '↓', accent: 'text-rose-700 dark:text-rose-400', ring: 'ring-rose-500/20', dot: 'bg-rose-500', pill: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 ring-1 ring-rose-500/20' },
+  mixed: { label: 'Mixed', icon: '↕', accent: 'text-amber-700 dark:text-amber-400', ring: 'ring-amber-500/20', dot: 'bg-amber-500', pill: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 ring-1 ring-amber-500/20' },
+  neutral: { label: 'Neutral', icon: '→', accent: 'text-slate-600 dark:text-slate-400', ring: 'ring-slate-500/20', dot: 'bg-slate-400', pill: 'bg-slate-50 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300 ring-1 ring-slate-500/20' },
 }
 
 const allArticles = computed(() => props.articles.data || [])
@@ -214,6 +214,7 @@ function importanceDots(score) {
 
       <select
         v-model="selectedCategory"
+        aria-label="Filter by topic"
         @change="applyFilters"
         class="text-xs bg-warm-surface ring-1 ring-warm-border rounded-full px-3.5 py-1.5 text-warm-muted font-medium focus:outline-none focus:ring-2 focus:ring-coral/30 transition-all cursor-pointer appearance-none pr-7 bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%238B8076%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
       >
@@ -225,6 +226,7 @@ function importanceDots(score) {
 
       <select
         v-model="selectedSource"
+        aria-label="Filter by source"
         @change="applyFilters"
         class="text-xs bg-warm-surface ring-1 ring-warm-border rounded-full px-3.5 py-1.5 text-warm-muted font-medium focus:outline-none focus:ring-2 focus:ring-coral/30 transition-all cursor-pointer appearance-none pr-7 bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%238B8076%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
       >
@@ -237,7 +239,7 @@ function importanceDots(score) {
       <button
         v-if="hasActiveFilters"
         @click="clearFilters"
-        class="text-xs text-coral hover:text-coral/70 font-semibold transition-colors px-2 py-1.5"
+        class="text-xs text-coral-ink hover:text-coral-ink/70 font-semibold transition-colors px-2 py-1.5"
       >
         ✕ Clear
       </button>
@@ -273,7 +275,7 @@ function importanceDots(score) {
         <h2 class="font-display text-3xl sm:text-4xl font-extrabold text-ink leading-tight mb-4 tracking-tight">
           <Link
             :href="`/nepal-news/${featuredArticle.slug}`"
-            class="hover:text-coral transition-colors duration-200"
+            class="hover:text-coral-ink transition-colors duration-200"
           >
             {{ featuredArticle.title }}
           </Link>
@@ -288,7 +290,7 @@ function importanceDots(score) {
             <span class="text-xs text-warm-muted font-medium">{{ featuredArticle.source }}</span>
             <Link
               :href="`/nepal-news/${featuredArticle.slug}`"
-              class="text-xs font-semibold text-coral hover:text-coral/70 transition-colors"
+              class="text-xs font-semibold text-coral-ink hover:text-coral-ink/70 transition-colors"
             >
               Read more →
             </Link>
@@ -340,13 +342,13 @@ function importanceDots(score) {
                 <span class="text-[11px] font-semibold text-warm-muted uppercase tracking-wider">
                   {{ categoryIcons[article.category] || '📋' }} {{ categoryLabels[article.category] || article.category }}
                 </span>
-                <time class="text-[11px] text-warm-muted/60 tabular-nums">{{ formatDate(article.published_at) }}</time>
+                <time class="text-[11px] text-warm-muted tabular-nums">{{ formatDate(article.published_at) }}</time>
               </div>
 
               <h3 class="font-display text-base font-bold text-ink mb-2 leading-snug flex-none">
                 <Link
                   :href="`/nepal-news/${article.slug}`"
-                  class="hover:text-coral transition-colors duration-200"
+                  class="hover:text-coral-ink transition-colors duration-200"
                 >
                   {{ article.title }}
                 </Link>
@@ -358,7 +360,7 @@ function importanceDots(score) {
               <div v-else class="flex-1"></div>
 
               <div class="flex items-center justify-between pt-3 border-t border-warm-border/60">
-                <span class="text-[11px] text-warm-muted/60 font-medium">{{ article.source }}</span>
+                <span class="text-[11px] text-warm-muted font-medium">{{ article.source }}</span>
                 <div class="flex items-center gap-1">
                   <div
                     v-for="(filled, i) in importanceDots(article.importance_score)"
@@ -412,7 +414,7 @@ function importanceDots(score) {
               <h3 class="font-display text-base font-bold text-ink mb-2 leading-snug flex-none">
                 <Link
                   :href="`/nepal-news/${article.slug}`"
-                  class="hover:text-coral transition-colors duration-200"
+                  class="hover:text-coral-ink transition-colors duration-200"
                 >
                   {{ article.title }}
                 </Link>
@@ -424,7 +426,7 @@ function importanceDots(score) {
               <div v-else class="flex-1"></div>
 
               <div class="flex items-center justify-between pt-3 border-t border-warm-border/60">
-                <span class="text-[11px] text-warm-muted/60 font-medium">{{ article.source }}</span>
+                <span class="text-[11px] text-warm-muted font-medium">{{ article.source }}</span>
                 <div class="flex items-center gap-1">
                   <div
                     v-for="(filled, i) in importanceDots(article.importance_score)"

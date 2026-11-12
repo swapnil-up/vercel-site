@@ -23,7 +23,7 @@
     <meta property="og:description" content="{{ $page['props']['meta']['description'] ?? 'Personal website and blog' }}">
     <meta property="og:url" content="{{ $page['props']['meta']['url'] ?? url()->current() }}">
     <meta property="og:image" content="{{ $page['props']['meta']['image'] ?? asset('images/og-image.jpg') }}">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{{ $page['props']['meta']['type'] ?? 'website' }}">
 
     {{-- Twitter Cards --}}
     <meta name="twitter:card" content="summary_large_image">

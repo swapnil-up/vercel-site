@@ -223,7 +223,7 @@ watch(open, (value) => {
 }
 
 .cmenu__row.is-active {
-  border-color: var(--color-coral);
+  border-color: var(--color-coral-ink);
 }
 
 .cmenu__jump {
@@ -248,7 +248,7 @@ watch(open, (value) => {
   font-family: var(--font-display);
   font-size: 0.8rem;
   font-weight: 800;
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
 }
 
 .cmenu__text {

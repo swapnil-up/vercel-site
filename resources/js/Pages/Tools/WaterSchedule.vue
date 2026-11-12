@@ -184,7 +184,7 @@ const isToday = (z) => dayFilter.value && (z.days || []).includes(dayFilter.valu
           <button
             v-if="dayFilter"
             type="button"
-            class="text-warm-muted hover:text-coral text-lg leading-none"
+            class="text-warm-muted hover:text-coral-ink text-lg leading-none"
             aria-label="Clear day"
             @click="dayFilter = null"
           >
@@ -272,7 +272,7 @@ const isToday = (z) => dayFilter.value && (z.days || []).includes(dayFilter.valu
 
                 <span
                   v-if="notableFlags(z).length"
-                  class="font-mono text-[10px] uppercase tracking-wide text-coral border border-coral/40 rounded px-1.5 py-0.5 self-start"
+                  class="font-mono text-[10px] uppercase tracking-wide text-coral-ink border border-coral/40 rounded px-1.5 py-0.5 self-start"
                   :title="notableFlags(z).join(', ')"
                 >
                   verify
@@ -285,7 +285,7 @@ const isToday = (z) => dayFilter.value && (z.days || []).includes(dayFilter.valu
 
       <p class="mt-12 font-mono text-[11px] text-warm-muted">
         Source:
-        <a :href="'https://kukl.org.np/downloads/water-distribution-schedule'" class="text-coral hover:underline">
+        <a :href="'https://kukl.org.np/downloads/water-distribution-schedule'" class="text-coral-ink underline hover:no-underline">
           kukl.org.np
         </a>
         · schedules may change; confirm with your branch office.

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Book;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class BookControllerTest extends TestCase
@@ -196,6 +197,8 @@ class BookControllerTest extends TestCase
             ->assertStatus(404)
             ->assertDontSee('Secret Book');
 
+        Http::fake(['*/index.json' => Http::response(['articles' => []])]);
+
         $this->get('/sitemap.xml')
             ->assertStatus(200)
             ->assertDontSee('/books/'.$hidden->id)
@@ -204,6 +207,8 @@ class BookControllerTest extends TestCase
 
     public function test_hidden_books_are_excluded_from_sitemap(): void
     {
+        Http::fake(['*/index.json' => Http::response(['articles' => []])]);
+
         Book::factory()->create(['slug' => 'visible-book']);
         Book::factory()->hidden()->create(['slug' => 'secret-book']);
 

@@ -5,7 +5,7 @@ import { Link } from '@inertiajs/vue3';
 <template>
  <article class="max-w-6xl mx-auto px-6 py-12">
  <header class="mb-10">
- <Link href="/" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral transition-colors mb-6">
+ <Link href="/" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral-ink transition-colors mb-6">
  ← Home
  </Link>
  <h1 class="font-display text-5xl font-bold text-ink mb-2">
@@ -28,7 +28,7 @@ import { Link } from '@inertiajs/vue3';
  This is my digital garden where I share thoughts on software, career growth, productivity, and whatever else catches my curiosity.
  </p>
  <div class="flex flex-wrap gap-4 mb-6">
- <span class="inline-flex items-center gap-2 bg-coral text-white px-3 py-1 rounded text-sm font-medium">
+ <span class="inline-flex items-center gap-2 bg-coral text-ink px-3 py-1 rounded text-sm font-medium">
  Vue 3
  </span>
  <span class="inline-flex items-center gap-2 bg-sky text-white px-3 py-1 rounded text-sm font-medium">
@@ -37,13 +37,13 @@ import { Link } from '@inertiajs/vue3';
  <span class="inline-flex items-center gap-2 bg-mustard text-ink px-3 py-1 rounded text-sm font-medium">
  Inertia
  </span>
- <span class="inline-flex items-center gap-2 bg-mint text-white px-3 py-1 rounded text-sm font-medium">
+ <span class="inline-flex items-center gap-2 bg-mint text-ink px-3 py-1 rounded text-sm font-medium">
  Tailwind 4
  </span>
  </div>
  <div class="space-y-3">
  <p class="flex items-start gap-2 text-warm-muted">
- <span class="flex-shrink-0 w-4 h-4 bg-coral/20 text-coral flex items-center justify-center text-sm font-medium rounded">📍</span>
+ <span class="flex-shrink-0 w-4 h-4 bg-coral/20 text-coral-deep flex items-center justify-center text-sm font-medium rounded">📍</span>
  <span>Based in Kathmandu, Nepal</span>
  </p>
  <p class="flex items-start gap-2 text-warm-muted">
@@ -78,7 +78,7 @@ import { Link } from '@inertiajs/vue3';
  Built with the VILT stack (Vue 3 + Laravel + Inertia + Tailwind 4), deployed serverless on Vercel with SQLite. The graph visualization uses D3.js, and yes, there's a Tamagotchi on the homepage because joy matters.
  </p>
  
- <Link href="/now" class="inline-flex items-center gap-2 bg-ink dark:bg-[#1C1C1E] text-white px-4 py-2 font-display font-bold text-sm hover:bg-coral transition-colors rounded-sm">
+ <Link href="/now" class="inline-flex items-center gap-2 bg-ink dark:bg-[#1C1C1E] text-white px-4 py-2 font-display font-bold text-sm hover:bg-coral-ink transition-colors rounded-sm">
  See what I'm doing now →
  </Link>
  </div>

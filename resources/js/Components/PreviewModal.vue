@@ -11,7 +11,7 @@ const emit = defineEmits(['close', 'print'])
       <div class="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-warm-border bg-cream rounded-sm rounded-b-none">
         <h3 class="font-display text-sm sm:text-lg font-bold text-ink truncate">Document Preview</h3>
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button @click="emit('print')" class="px-3 sm:px-4 py-2 sm:py-1.5 bg-coral text-white text-xs sm:text-sm rounded-sm hover:bg-coral/80 transition-colors flex items-center gap-1.5">
+          <button @click="emit('print')" class="px-3 sm:px-4 py-2 sm:py-1.5 bg-coral text-ink text-xs sm:text-sm rounded-sm hover:bg-coral/80 transition-colors flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
             <span class="hidden xs:inline">Print /</span> PDF
           </button>

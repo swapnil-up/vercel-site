@@ -1,0 +1,48 @@
+name: Nepal News Scrape
+
+# Scraping is free, so it runs daily to capture the whole week's window.
+# The RSS feeds only expose the last day or two, so a weekly scrape would
+# miss most of the week. The weekly workflow (nepal-news.yml) does the
+# token-spending part once a week from the artifacts this job uploads.
+
+on:
+  schedule:
+    - cron: '15 0 * * *'  # 00:15 UTC = 06:00 NPT
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout vercel-site
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: simplexml, mbstring, dom
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Setup SQLite
+        run: touch /tmp/nepal_news.sqlite
+
+      - name: Run migrations
+        run: php artisan migrate --database=nepal_news --path=database/migrations_nepal_news --force
+
+      - name: Scrape RSS feeds
+        run: php artisan nepal:scrape
+
+      - name: Export the day's queue
+        run: php artisan nepal:queue export /tmp/nepal-queue.json
+
+      - name: Upload the queue
+        uses: actions/upload-artifact@v4
+        with:
+          name: nepal-scrape-${{ github.run_id }}
+          path: /tmp/nepal-queue.json
+          retention-days: 30

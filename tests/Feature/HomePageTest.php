@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Connection;
 use App\Models\Post;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -56,6 +57,29 @@ class HomePageTest extends TestCase
                 ->has('graphStats')
                 ->has('meta')
             );
+    }
+
+    public function test_home_graph_stats_match_the_graph_page_counts(): void
+    {
+        $a = Post::factory()->create(['slug' => 'a-note']);
+        $b = Post::factory()->create(['slug' => 'b-note']);
+
+        Connection::create(['from_id' => $a->slug, 'to_id' => $b->slug, 'type' => 'mentions', 'weight' => 1]);
+        Connection::create(['from_id' => $b->slug, 'to_id' => $a->slug, 'type' => 'mentions', 'weight' => 1]);
+        // Dangling link: endpoint has no node, should not be counted.
+        Connection::create(['from_id' => $a->slug, 'to_id' => 'missing-note', 'type' => 'mentions', 'weight' => 1]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('graphStats.notes', 2)
+                ->where('graphStats.connections', 1)
+            );
+
+        $this->getJson('/data/graph')
+            ->assertOk()
+            ->assertJsonPath('stats.notes', 2)
+            ->assertJsonPath('stats.links', 1);
     }
 
     public function test_home_excludes_drafts(): void

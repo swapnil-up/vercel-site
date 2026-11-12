@@ -157,7 +157,7 @@ defineProps({
   font-family: var(--font-display);
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
   text-decoration: none;
   border-bottom: 2px solid transparent;
   transition: border-color 0.15s ease, color 0.15s ease;

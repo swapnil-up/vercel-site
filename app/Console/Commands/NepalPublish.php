@@ -11,18 +11,15 @@ class NepalPublish extends Command
 {
     protected $signature = 'nepal:publish';
 
-    protected $description = 'Publish processed articles to GitHub data repo via API';
-
-    private string $owner = 'swapnil-up';
-    private string $repo = 'nepal-news-data';
-    private string $branch = 'main';
+    protected $description = 'Publish processed articles to the GitHub data repo, merging the rolling index';
 
     public function handle(): int
     {
-        $token = env('GITHUB_TOKEN', '');
+        $token = (string) config('nepal.data_repo.token', '');
 
-        if (! $token) {
+        if ($token === '') {
             $this->error('GITHUB_TOKEN not set');
+
             return 1;
         }
 
@@ -31,18 +28,17 @@ class NepalPublish extends Command
             ->get();
 
         if ($articles->isEmpty()) {
-            $this->info('No processed articles to publish.');
-            return 0;
+            $this->error('No processed articles to publish.');
+
+            return 1;
         }
 
-        // Build index
-        $index = [];
         $files = [];
+        $fresh = [];
 
         foreach ($articles as $article) {
             $slug = $this->slugify($article);
-            $filename = "{$slug}.md";
-            $path = "articles/{$filename}";
+            $path = "articles/{$slug}.md";
 
             $frontmatter = [
                 'id' => $article->id,
@@ -58,10 +54,9 @@ class NepalPublish extends Command
                 'summary' => $article->summary,
             ];
 
-            $content = $this->buildFrontmatter($frontmatter) . "\n\n" . ($article->body ?? '');
-            $files[$path] = $content;
+            $files[$path] = $this->buildFrontmatter($frontmatter) . "\n\n" . ($article->body ?? '');
 
-            $index[] = [
+            $fresh[] = [
                 'id' => $article->id,
                 'source' => $article->source,
                 'title' => $article->title,
@@ -76,21 +71,20 @@ class NepalPublish extends Command
             ];
         }
 
-        // Add index.json
-        $indexData = [
+        // The index is the site's archive, so it is merged with what is already
+        // published rather than rebuilt from this run's batch alone.
+        $index = array_slice($this->mergeIndex($fresh), 0, max(1, (int) config('nepal.publish.index_cap', 300)));
+
+        $files['index.json'] = json_encode([
             'articles' => $index,
             'count' => count($index),
             'last_updated' => now()->toIso8601String(),
-        ];
-        $files['index.json'] = json_encode($indexData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-        // Upload each file
         $uploaded = 0;
 
         foreach ($files as $path => $content) {
-            $success = $this->uploadFile($path, $content, $token);
-
-            if ($success) {
+            if ($this->uploadFile($path, $content, $token)) {
                 $this->info("  ✓ {$path}");
                 $uploaded++;
             } else {
@@ -101,13 +95,82 @@ class NepalPublish extends Command
             usleep(100_000);
         }
 
-        $this->info("Published {$uploaded}/" . count($files) . " files to GitHub.");
-        return 0;
+        $this->info(sprintf(
+            'Published %d/%d files (%d new, %d in index).',
+            $uploaded,
+            count($files),
+            $articles->count(),
+            count($index),
+        ));
+
+        return $uploaded === count($files) ? 0 : 1;
+    }
+
+    /**
+     * Merge this run's entries into the published index, newest first.
+     *
+     * @param  array<int, array<string, mixed>>  $fresh
+     * @return array<int, array<string, mixed>>
+     */
+    private function mergeIndex(array $fresh): array
+    {
+        $bySlug = [];
+
+        foreach ($this->fetchExistingIndex() as $entry) {
+            if (isset($entry['slug'])) {
+                $bySlug[$entry['slug']] = $entry;
+            }
+        }
+
+        foreach ($fresh as $entry) {
+            $bySlug[$entry['slug']] = $entry;
+        }
+
+        $merged = array_values($bySlug);
+
+        usort($merged, fn ($a, $b) => ($b['published_at'] ?? '') <=> ($a['published_at'] ?? ''));
+
+        return $merged;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function fetchExistingIndex(): array
+    {
+        try {
+            $response = Http::timeout(15)->get($this->rawIndexUrl());
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        if (! $response->successful()) {
+            return [];
+        }
+
+        $articles = $response->json('articles', []);
+
+        return is_array($articles) ? $articles : [];
+    }
+
+    private function rawIndexUrl(): string
+    {
+        return sprintf(
+            'https://raw.githubusercontent.com/%s/%s/%s/index.json',
+            config('nepal.data_repo.owner'),
+            config('nepal.data_repo.repo'),
+            config('nepal.data_repo.branch'),
+        );
     }
 
     private function uploadFile(string $path, string $content, string $token): bool
     {
-        $apiUrl = "https://api.github.com/repos/{$this->owner}/{$this->repo}/contents/{$path}";
+        $apiUrl = sprintf(
+            'https://api.github.com/repos/%s/%s/contents/%s',
+            config('nepal.data_repo.owner'),
+            config('nepal.data_repo.repo'),
+            $path,
+        );
 
         // Get existing file SHA (needed for updates)
         $sha = null;
@@ -124,7 +187,7 @@ class NepalPublish extends Command
         $payload = [
             'message' => 'Update ' . basename($path),
             'content' => base64_encode($content),
-            'branch' => $this->branch,
+            'branch' => config('nepal.data_repo.branch'),
             'committer' => [
                 'name' => 'github-actions[bot]',
                 'email' => '41898282+github-actions[bot]@users.noreply.github.com',
@@ -160,9 +223,9 @@ class NepalPublish extends Command
                 $lines[] = "{$key}:";
                 foreach ($value as $item) {
                     if (is_array($item)) {
-                        $lines[] = "  - " . json_encode($item);
+                        $lines[] = '  - ' . json_encode($item);
                     } else {
-                        $lines[] = "  - " . $this->yamlValue($item);
+                        $lines[] = '  - ' . $this->yamlValue($item);
                     }
                 }
             } else {
@@ -177,9 +240,15 @@ class NepalPublish extends Command
 
     private function yamlValue(mixed $value): string
     {
-        if ($value === null) return 'null';
-        if (is_bool($value)) return $value ? 'true' : 'false';
-        if (is_numeric($value)) return (string) $value;
+        if ($value === null) {
+            return 'null';
+        }
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+        if (is_numeric($value)) {
+            return (string) $value;
+        }
 
         $str = (string) $value;
         if (in_array(strtolower($str), ['true', 'false', 'null', 'yes', 'no']) || str_contains($str, ':')) {

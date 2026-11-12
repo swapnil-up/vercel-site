@@ -40,7 +40,7 @@ function clear() {
       <p class="text-warm-muted">
         Thoughts on code, career, and productivity
       </p>
-      <p v-if="selectedTag" class="mt-2 inline-block bg-coral text-white px-3 py-1 rounded text-sm font-medium">
+      <p v-if="selectedTag" class="mt-2 inline-block bg-coral text-ink px-3 py-1 rounded text-sm font-medium">
         Tagged: {{ selectedTag }}
       </p>
     </header>
@@ -61,7 +61,7 @@ function clear() {
             <span class="w-2 h-2 rounded-full bg-coral" aria-hidden="true"></span>
             <span class="text-[0.65rem] font-bold uppercase tracking-wider text-warm-muted">Map</span>
           </div>
-          <h3 class="font-display text-lg font-bold text-ink group-hover:text-coral transition-colors">{{ map.title }}</h3>
+          <h3 class="font-display text-lg font-bold text-ink group-hover:text-coral-ink transition-colors">{{ map.title }}</h3>
           <p v-if="map.description" class="mt-1 text-sm text-warm-muted leading-relaxed">{{ map.description }}</p>
         </Link>
       </div>
@@ -104,13 +104,13 @@ function clear() {
             v-for="tag in post.tags"
             :key="tag"
             :href="`/posts/tag/${tag}`"
-            class="text-xs px-2 py-0.5 bg-coral text-white rounded hover:bg-coral/80 transition-colors"
+            class="text-xs px-2 py-0.5 bg-coral text-ink rounded hover:bg-coral/80 transition-colors"
           >
             {{ tag }}
           </Link>
         </div>
         <h2 class="font-display text-2xl font-bold text-ink mb-2">
-          <Link :href="`/posts/${post.slug}`" class="hover:text-coral transition-colors">
+          <Link :href="`/posts/${post.slug}`" class="hover:text-coral-ink transition-colors">
             {{ post.title }}
           </Link>
         </h2>

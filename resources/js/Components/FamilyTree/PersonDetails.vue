@@ -149,7 +149,7 @@ function selectPerson(id) {
         <h3 class="text-xs font-bold text-warm-muted uppercase tracking-wider mb-2">Parents</h3>
         <div v-if="parents.length === 0" class="text-sm text-warm-muted">None listed</div>
         <div v-for="p in parents" :key="p.id">
-          <button @click="selectPerson(p.id)" class="text-sm text-coral hover:underline">{{ p.name }}</button>
+          <button @click="selectPerson(p.id)" class="text-sm text-coral-ink hover:underline">{{ p.name }}</button>
         </div>
       </div>
 
@@ -157,7 +157,7 @@ function selectPerson(id) {
         <h3 class="text-xs font-bold text-warm-muted uppercase tracking-wider mb-2">Children</h3>
         <div v-if="children.length === 0" class="text-sm text-warm-muted">None listed</div>
         <div v-for="c in children" :key="c.id">
-          <button @click="selectPerson(c.id)" class="text-sm text-coral hover:underline">{{ c.name }}</button>
+          <button @click="selectPerson(c.id)" class="text-sm text-coral-ink hover:underline">{{ c.name }}</button>
         </div>
       </div>
 
@@ -165,7 +165,7 @@ function selectPerson(id) {
         <h3 class="text-xs font-bold text-warm-muted uppercase tracking-wider mb-2">Siblings</h3>
         <div v-if="siblings.length === 0" class="text-sm text-warm-muted">None listed</div>
         <div v-for="s in siblings" :key="s.id">
-          <button @click="selectPerson(s.id)" class="text-sm text-coral hover:underline">{{ s.name }}</button>
+          <button @click="selectPerson(s.id)" class="text-sm text-coral-ink hover:underline">{{ s.name }}</button>
         </div>
       </div>
 
@@ -173,7 +173,7 @@ function selectPerson(id) {
         <h3 class="text-xs font-bold text-warm-muted uppercase tracking-wider mb-2">Spouses</h3>
         <div v-if="spouses.length === 0" class="text-sm text-warm-muted">None listed</div>
         <div v-for="s in spouses" :key="s.id">
-          <button @click="selectPerson(s.id)" class="text-sm text-coral hover:underline">{{ s.name }}</button>
+          <button @click="selectPerson(s.id)" class="text-sm text-coral-ink hover:underline">{{ s.name }}</button>
         </div>
       </div>
     </div>
@@ -206,7 +206,7 @@ function selectPerson(id) {
         </button>
         <button
           @click="deleteSelected"
-          class="w-full px-4 py-2 bg-coral text-white rounded-sm hover:bg-coral/80 transition-colors text-sm"
+          class="w-full px-4 py-2 bg-coral text-ink rounded-sm hover:bg-coral/80 transition-colors text-sm"
         >
           Delete Person
         </button>

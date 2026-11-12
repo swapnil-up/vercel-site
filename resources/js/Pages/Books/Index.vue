@@ -96,7 +96,7 @@ function initials(book) {
 <template>
   <div class="max-w-6xl mx-auto px-6 py-12">
     <header class="mb-10">
-      <p class="text-xs font-bold uppercase tracking-[0.2em] text-coral mb-3">Reading log</p>
+      <p class="text-xs font-bold uppercase tracking-[0.2em] text-coral-ink mb-3">Reading log</p>
       <h1 class="font-display text-5xl md:text-6xl font-bold text-ink mb-3 tracking-tighter">
         Books
       </h1>
@@ -151,7 +151,7 @@ function initials(book) {
         :key="tag"
         class="px-2.5 py-1 text-xs font-medium rounded-full border transition-colors"
         :class="query === tag
-          ? 'bg-coral text-white border-coral'
+          ? 'bg-coral text-ink border-coral'
           : 'bg-warm-surface text-ink border-warm-border hover:border-coral'"
         @click="query = query === tag ? '' : tag"
       >
@@ -199,7 +199,7 @@ function initials(book) {
 
         <div class="min-w-0 flex-1">
           <div class="flex items-start justify-between gap-2 mb-1">
-            <h2 class="font-display text-lg font-bold text-ink leading-tight group-hover:text-coral transition-colors">
+            <h2 class="font-display text-lg font-bold text-ink leading-tight group-hover:text-coral-ink transition-colors">
               {{ book.title }}
             </h2>
             <span class="shrink-0 text-[0.6rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border" :class="statusStyles[book.status] || statusStyles.finished">
@@ -219,7 +219,7 @@ function initials(book) {
             <span
               v-for="tag in (book.tags || []).slice(0, 3)"
               :key="tag"
-              class="text-[0.65rem] px-2 py-0.5 bg-coral/10 text-coral rounded-full"
+              class="text-[0.65rem] px-2 py-0.5 bg-coral/10 text-coral-deep rounded-full"
             >
               {{ tag }}
             </span>

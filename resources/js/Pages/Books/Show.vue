@@ -337,7 +337,7 @@ const initials = computed(() => (props.book?.title || '?')
 <template>
   <div class="bg-cream min-h-screen">
     <article class="max-w-5xl mx-auto px-6 py-12">
-      <Link href="/books" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral transition-colors group mb-10">
+      <Link href="/books" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral-ink transition-colors group mb-10">
         <span class="group-hover:-translate-x-1 transition-transform">←</span>
         Back to books
       </Link>
@@ -396,7 +396,7 @@ const initials = computed(() => (props.book?.title || '?')
               <span
                 v-for="tag in book.tags"
                 :key="tag"
-                class="text-xs px-2.5 py-1 bg-coral/10 text-coral rounded-full"
+                class="text-xs px-2.5 py-1 bg-coral/10 text-coral-deep rounded-full"
               >
                 {{ tag }}
               </span>
@@ -434,7 +434,7 @@ const initials = computed(() => (props.book?.title || '?')
               <span
                 v-for="item in highlights"
                 :key="item"
-                class="text-[0.65rem] px-2 py-0.5 bg-coral/10 text-coral rounded-full"
+                class="text-[0.65rem] px-2 py-0.5 bg-coral/10 text-coral-deep rounded-full"
               >
                 {{ item }}
               </span>

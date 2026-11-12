@@ -24,7 +24,7 @@ onMounted(() => {
   <div class="bg-cream min-h-screen">
     <article class="max-w-4xl mx-auto px-6 py-12">
       <header class="mb-10">
-        <Link href="/" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral transition-colors mb-4 group">
+        <Link href="/" class="inline-flex items-center gap-2 text-warm-muted hover:text-coral-ink transition-colors mb-4 group">
           <span class="group-hover:-translate-x-1 transition-transform">←</span>
           Home
         </Link>
