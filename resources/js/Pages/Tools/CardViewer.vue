@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import CardBlobby from '@/Components/Blobby/CardBlobby.vue'
 import {
   SEPARATOR_OPTIONS,
   createDefaultImportConfig,
@@ -52,6 +53,7 @@ const jumpValue = ref('')
 const fileInput = ref(null)
 const jumpInput = ref(null)
 const cardButton = ref(null)
+const cardBlobby = ref(null)
 const statesButton = ref(null)
 const statePanelBody = ref(null)
 
@@ -585,7 +587,11 @@ const applyImport = () => {
 }
 
 const flip = () => {
-  if (hasDeck.value && currentCard.value) isFlipped.value = !isFlipped.value
+  if (!hasDeck.value || !currentCard.value) return
+
+  const revealingAnswer = !isFlipped.value
+  isFlipped.value = !isFlipped.value
+  if (revealingAnswer) cardBlobby.value?.acknowledge({ announce: false })
 }
 
 const go = (amount) => {
@@ -720,17 +726,25 @@ const gradeCurrent = (rating) => {
     return
   }
 
+  const now = Date.now()
+  const wasComplete = cramComplete.value
+
   cramState.value = gradeCard(
     cramState.value,
     cramCurrentId.value,
     rating,
-    Date.now()
+    now
   )
   cramCurrentId.value = null
   isFlipped.value = false
-  currentTime.value = Date.now()
+  currentTime.value = now
+  cardBlobby.value?.recordReview(rating)
   selectNextDueCard()
   persistDeck()
+
+  if (!wasComplete && cramComplete.value) {
+    cardBlobby.value?.celebrate()
+  }
 }
 
 const handleKeydown = (event) => {
@@ -743,6 +757,10 @@ const handleKeydown = (event) => {
   }
 
   if (!hasDeck.value || event.metaKey || event.ctrlKey || event.altKey) return
+
+  // Blobby is an interactive button. Let its own keyboard handler own
+  // Enter/Space instead of also flipping or grading the card behind it.
+  if (event.target?.closest?.('.card-blobby')) return
 
   const key = event.key.toLowerCase()
   const targetTag = event.target?.tagName
@@ -1009,6 +1027,8 @@ onUnmounted(() => {
           compactStatePanel && statePanelOpen ? 'true' : undefined
         "
       >
+      <CardBlobby ref="cardBlobby" :compact="statePanelOpen" />
+
       <section
         v-if="!hasDeck"
         class="empty-state"
@@ -1597,6 +1617,7 @@ header {
 }
 
 main {
+  position: relative;
   display: grid;
   min-width: 0;
   min-height: 0;

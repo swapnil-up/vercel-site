@@ -1,28 +1,33 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import * as THREE from 'three'
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import BlobbyCanvas from './Blobby/BlobbyCanvas.vue'
+import { useBlobbyPet } from '@/Composables/useBlobbyPet.js'
+import { getBlobbyMood } from '@/Utils/blobbyPet.js'
 
 // ─── Pet State ───────────────────────────────────────────────
-const pet = ref({
-  name: 'Blobby',
-  hunger: 80,
-  boredom: 60,
-  love: 70,
-  age: 0,
-  lastSeen: Date.now()
-})
+const {
+  pet,
+  clock,
+  markEngaged,
+  setDecayPaused,
+  adjustStats,
+} = useBlobbyPet()
 
 const animation = ref('idle')
+const animationId = ref(0)
 const actionMessage = ref('')
 const showActionMessage = ref(false)
-const isHoveringPet = ref(false)
 const clickEffects = ref([])
 const isSleeping = ref(false)
 const expression = ref('😊')
 const lastClickTime = ref(0)
-const decayInterval = ref(null)
+const blobbyCanvas = ref(null)
 let clickEffectId = 0
+
+const setAnimation = (action) => {
+  animation.value = action
+  animationId.value += 1
+}
 
 // ─── Game State ──────────────────────────────────────────────
 const showGame = ref(false)
@@ -68,29 +73,29 @@ const reactionInterval = ref(null)
 // ─── Stats ───────────────────────────────────────────────────
 const stats = computed(() => [
   { label: 'HUNGER', value: pet.value.hunger, icon: '🍖', color: pet.value.hunger < 30 ? '#ff6b6b' : '#ffd93d' },
-  { label: 'BOREDOM', value: pet.value.boredom, icon: '🎨', color: pet.value.boredom < 30 ? '#ff6b6b' : '#74c0fc' },
+  { label: 'BOREDOM', value: pet.value.boredom, icon: '🎨', color: pet.value.boredom > 70 ? '#ff6b6b' : pet.value.boredom > 40 ? '#ffd93d' : '#74c0fc' },
   { label: 'LOVE', value: pet.value.love, icon: '💕', color: pet.value.love < 30 ? '#ff6b6b' : '#ff6b9d' },
 ])
 
+const overallWellbeing = computed(() =>
+  Math.round(
+    (pet.value.hunger + pet.value.love + (100 - pet.value.boredom)) / 3
+  )
+)
+
 // ─── Mood ────────────────────────────────────────────────────
-const petMood = computed(() => {
-  const { hunger, boredom, love } = pet.value
-  if (hunger < 20) return 'sick'
-  if (hunger < 40) return 'hungry'
-  if (boredom < 20) return 'angry'
-  if (boredom < 40) return 'bored'
-  if (love < 20) return 'crying'
-  if (love < 40) return 'lonely'
-  if (isSleeping.value) return 'sleepy'
-  if (hunger > 80 && boredom > 80 && love > 80) return 'excited'
-  if (hunger > 60 && boredom > 60 && love > 60) return 'happy'
-  return 'content'
-})
+const petMood = computed(() =>
+  getBlobbyMood(pet.value, {
+    now: clock.value,
+    sleeping: isSleeping.value,
+  })
+)
 
 const petMessage = computed(() => {
   const messages = {
     sick: 'My tummy hurts...', hungry: 'Getting hungry...',
-    angry: 'SO BORED I could cry!', bored: 'Nothing to do...',
+    dejected: 'Is anyone still studying with me?',
+    bored: 'Nothing to do...', curious: 'What are we learning next?',
     crying: 'Why does nobody love me?', lonely: 'Come play with me...',
     sleepy: 'ZZZ... so tired...', excited: 'This is the best day EVER!',
     happy: 'Life is good!', content: 'Just vibing~'
@@ -98,441 +103,9 @@ const petMessage = computed(() => {
   return messages[petMood.value] || '...?'
 })
 
-const moodColors = {
-  excited: { body: 0xffe082, emissive: 0xffb300, intensity: 0.3 },
-  happy: { body: 0xf8bbd0, emissive: 0xff6b9d, intensity: 0.2 },
-  content: { body: 0xc5b3e6, emissive: 0x7480fc, intensity: 0.15 },
-  sick: { body: 0xaed581, emissive: 0x558b2f, intensity: 0.22 },
-  hungry: { body: 0xffcc80, emissive: 0xef6c00, intensity: 0.2 },
-  angry: { body: 0xef9a9a, emissive: 0xd32f2f, intensity: 0.4 },
-  bored: { body: 0xb0bec5, emissive: 0x546e7a, intensity: 0.1 },
-  crying: { body: 0x90caf9, emissive: 0x1e88e5, intensity: 0.28 },
-  lonely: { body: 0xce93d8, emissive: 0x8e24aa, intensity: 0.2 },
-  sleepy: { body: 0xb39ddb, emissive: 0x5e35b1, intensity: 0.15 }
-}
-
-// ─── Three.js ────────────────────────────────────────────────
-const canvasContainer = ref(null)
-let scene, camera, renderer, petMesh, petMaterial, clock
-let ambientLight, pointLight, rimLight
-let animationFrameId
-let time = 0
-let lastFrameTime = 0
-const basePositions = ref(null)
-
-// Face
-let leftEye, rightEye, mouthMesh = null, mouthType = null, mouthMaterial
-const eyeBase = { lx: -0.34, rx: 0.34, y: 0.1, z: 0.88 }
-const eyeOffset = { x: 0, y: 0 }
-let blinkT = 0
-let nextBlink = 1.5 + Math.random() * 3
-const BLINK_DUR = 0.13
-
-// Tech tuft
-let antennaGroup, antennaTip
-
-// Cursor tracking (eye contact)
-const pointerNDC = { x: 0, y: 0 }
-let pointerActive = false
-let onCanvasPointerMove, onCanvasPointerLeave
-
-const moodFace = () => {
-  if (isSleeping.value) return 'flat'
-  if (animation.value === 'eating') return 'o'
-  if (animation.value === 'confused') return 'flat'
-  switch (petMood.value) {
-    case 'excited': case 'happy': return 'cat'
-    case 'angry': return 'frown'
-    case 'crying': case 'sick': return 'wavy'
-    case 'bored': case 'lonely': case 'sleepy': return 'flat'
-    case 'hungry': return 'o'
-    default: return 'smile'
-  }
-}
-
-const buildMouthGeometry = (type) => {
-  const y = -0.13, z = 1.015
-  const v = (x, yy) => new THREE.Vector3(x, yy, z)
-  const chain = (pts) => new THREE.CatmullRomCurve3(pts.map(([x, yy]) => v(x, yy)))
-  switch (type) {
-    case 'cat':
-      return new THREE.TubeGeometry(chain([
-        [-0.17, y + 0.03], [-0.085, y - 0.05], [0, y + 0.015], [0.085, y - 0.05], [0.17, y + 0.03]
-      ]), 36, 0.022, 8, false)
-    case 'flat':
-      return new THREE.TubeGeometry(chain([
-        [-0.13, y], [0, y - 0.005], [0.13, y]
-      ]), 16, 0.022, 8, false)
-    case 'frown':
-      return new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(
-        v(-0.16, y - 0.05), v(0, y + 0.07), v(0.16, y - 0.05)
-      ), 24, 0.022, 8, false)
-    case 'wavy':
-      return new THREE.TubeGeometry(chain([
-        [-0.16, y - 0.02], [-0.08, y + 0.05], [0, y - 0.02], [0.08, y + 0.05], [0.16, y - 0.02]
-      ]), 36, 0.02, 8, false)
-    case 'o':
-      return new THREE.TorusGeometry(0.05, 0.018, 8, 20)
-    default:
-      return new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(
-        v(-0.16, y + 0.03), v(0, y - 0.1), v(0.16, y + 0.03)
-      ), 24, 0.022, 8, false)
-  }
-}
-
-const setMouth = (type) => {
-  if (!petMesh || type === mouthType) return
-  mouthType = type
-  if (mouthMesh) {
-    petMesh.remove(mouthMesh)
-    mouthMesh.geometry.dispose()
-  }
-  mouthMesh = new THREE.Mesh(buildMouthGeometry(type), mouthMaterial)
-  if (type === 'o') mouthMesh.position.set(0, -0.15, 1.02)
-  petMesh.add(mouthMesh)
-}
-
-const bakeGumdrop = (geometry) => {
-  const welded = mergeVertices(geometry)
-  const pos = welded.attributes.position
-  for (let i = 0; i < pos.count; i++) {
-    let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i)
-    const t = Math.min(1, Math.max(0, (y + 1) / 2))
-    const width = 1.12 - 0.42 * t * t
-    x *= width
-    z *= width
-    if (y < -0.65) y = -0.65 + (y + 0.65) * 0.35
-    pos.setXYZ(i, x, y, z)
-  }
-  welded.computeVertexNormals()
-  return welded
-}
-
-const initThree = () => {
-  if (!canvasContainer.value) return
-
-  scene = new THREE.Scene()
-  clock = new THREE.Clock()
-
-  camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100)
-  camera.position.set(0, 0.5, 4.5)
-  camera.lookAt(0, 0, 0)
-
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.setClearColor(0x000000, 0)
-  renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap
-  renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.toneMappingExposure = 1.2
-
-  const container = canvasContainer.value
-  const size = Math.min(container.clientWidth, container.clientHeight)
-  renderer.setSize(size, size)
-  container.appendChild(renderer.domElement)
-
-  ambientLight = new THREE.AmbientLight(0x606090, 1.4)
-  scene.add(ambientLight)
-
-  pointLight = new THREE.PointLight(0xffd93d, 45, 10)
-  pointLight.position.set(2, 3, 3)
-  pointLight.castShadow = true
-  pointLight.shadow.normalBias = 0.04
-  scene.add(pointLight)
-
-  rimLight = new THREE.PointLight(0xff6b9d, 18, 8)
-  rimLight.position.set(-2, 1, -2)
-  scene.add(rimLight)
-
-  const fillLight = new THREE.PointLight(0x74c0fc, 10, 8)
-  fillLight.position.set(-1, -2, 2)
-  scene.add(fillLight)
-
-  // Pet body — gumdrop silhouette, candy-gloss jelly
-  petMaterial = new THREE.MeshPhysicalMaterial({
-    color: 0xc5b3e6, emissive: 0x7480fc, emissiveIntensity: 0.15,
-    roughness: 0.32, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.18
-  })
-  petMesh = new THREE.Mesh(bakeGumdrop(new THREE.IcosahedronGeometry(1, 4)), petMaterial)
-  petMesh.castShadow = true
-  petMesh.receiveShadow = true
-  scene.add(petMesh)
-
-  // Eyes — big glossy bulbs, low and wide, two sparkles each
-  const bulbMaterial = new THREE.MeshPhysicalMaterial({
-    color: 0x241f2b, roughness: 0.08, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05
-  })
-  const sparkleMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff })
-  const makeEye = (x) => {
-    const eye = new THREE.Group()
-    eye.add(new THREE.Mesh(new THREE.SphereGeometry(0.185, 24, 24), bulbMaterial))
-    const big = new THREE.Mesh(new THREE.SphereGeometry(0.068, 12, 12), sparkleMaterial)
-    big.position.set(0.055, 0.06, 0.15)
-    eye.add(big)
-    const small = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), sparkleMaterial)
-    small.position.set(-0.05, -0.055, 0.16)
-    eye.add(small)
-    eye.position.set(x, eyeBase.y, eyeBase.z)
-    petMesh.add(eye)
-    return eye
-  }
-  leftEye = makeEye(eyeBase.lx)
-  rightEye = makeEye(eyeBase.rx)
-
-  // Mouth (shape swaps with mood via setMouth)
-  mouthMaterial = new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.3 })
-
-  // Cheeks
-  const cheekGeometry = new THREE.SphereGeometry(0.1, 12, 12)
-  const cheekMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffb3c6, emissive: 0xff85a2, emissiveIntensity: 0.3,
-    transparent: true, opacity: 0.6
-  })
-  const leftCheek = new THREE.Mesh(cheekGeometry, cheekMaterial)
-  leftCheek.position.set(-0.48, -0.14, 0.88)
-  leftCheek.scale.set(1, 0.6, 0.4)
-  leftCheek.name = 'leftCheek'
-  petMesh.add(leftCheek)
-
-  const rightCheek = new THREE.Mesh(cheekGeometry, cheekMaterial)
-  rightCheek.position.set(0.48, -0.14, 0.88)
-  rightCheek.scale.set(1, 0.6, 0.4)
-  rightCheek.name = 'rightCheek'
-  petMesh.add(rightCheek)
-
-  // Tech tuft — little antenna with a mood-colored LED tip
-  antennaGroup = new THREE.Group()
-  const antennaCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 0.88, 0.05),
-    new THREE.Vector3(0.05, 1.1, 0.02),
-    new THREE.Vector3(0.14, 1.28, -0.05)
-  ])
-  antennaGroup.add(new THREE.Mesh(
-    new THREE.TubeGeometry(antennaCurve, 20, 0.028, 8, false),
-    new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.4 })
-  ))
-  antennaTip = new THREE.Mesh(
-    new THREE.SphereGeometry(0.075, 16, 16),
-    new THREE.MeshStandardMaterial({ color: 0xffd93d, emissive: 0xffd93d, emissiveIntensity: 1.4, roughness: 0.3 })
-  )
-  antennaTip.position.set(0.15, 1.33, -0.06)
-  antennaGroup.add(antennaTip)
-  petMesh.add(antennaGroup)
-
-  // Ground + grid
-  const groundGeometry = new THREE.PlaneGeometry(12, 12, 24, 24)
-  const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.9, metalness: 0.1 })
-  const ground = new THREE.Mesh(groundGeometry, groundMaterial)
-  ground.rotation.x = -Math.PI / 2
-  ground.position.y = -1.02
-  ground.receiveShadow = true
-  scene.add(ground)
-
-  const gridHelper = new THREE.GridHelper(12, 24, 0x333355, 0x222244)
-  gridHelper.position.y = -1.01
-  scene.add(gridHelper)
-
-  // Eye contact — glance toward the cursor
-  onCanvasPointerMove = (e) => {
-    const rect = renderer.domElement.getBoundingClientRect()
-    pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-    pointerNDC.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1)
-    pointerActive = true
-  }
-  onCanvasPointerLeave = () => { pointerActive = false }
-  renderer.domElement.addEventListener('pointermove', onCanvasPointerMove)
-  renderer.domElement.addEventListener('pointerleave', onCanvasPointerLeave)
-
-  createAmbientParticles()
-  setMouth(moodFace())
-  animate()
-}
-
-const createAmbientParticles = () => {
-  const count = 50
-  const geometry = new THREE.BufferGeometry()
-  const positions = new Float32Array(count * 3)
-  const colors = new Float32Array(count * 3)
-  const palette = [new THREE.Color(0xff6b9d), new THREE.Color(0x74c0fc), new THREE.Color(0xffd93d), new THREE.Color(0xb8a9c9)]
-
-  for (let i = 0; i < count; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 8
-    positions[i * 3 + 1] = Math.random() * 5 - 1
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 8
-    const c = palette[Math.floor(Math.random() * palette.length)]
-    colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b
-  }
-
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-  const material = new THREE.PointsMaterial({ size: 0.04, vertexColors: true, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending })
-  const particles = new THREE.Points(geometry, material)
-  particles.name = 'ambientParticles'
-  scene.add(particles)
-}
-
-const deformPet = () => {
-  if (!petMesh || !basePositions.value) return
-  const positions = petMesh.geometry.attributes.position
-  const tv = clock.getElapsedTime()
-
-  for (let i = 0; i < positions.count; i++) {
-    const bx = basePositions.value[i * 3]
-    const by = basePositions.value[i * 3 + 1]
-    const bz = basePositions.value[i * 3 + 2]
-
-    let noise = Math.sin(bx * 3 + tv * 1.5) * 0.04 + Math.cos(by * 2.5 + tv * 1.2) * 0.03 + Math.sin(bz * 2.8 + tv * 1.8) * 0.03
-    const mood = petMood.value
-    if (mood === 'excited' || mood === 'happy') noise += Math.sin(tv * 6 + i * 0.1) * 0.03
-    else if (mood === 'angry') noise += Math.sin(tv * 10 + i * 0.2) * 0.05
-    else if (mood === 'sick' || mood === 'sad') noise += Math.sin(tv * 0.5 + i * 0.05) * 0.02
-    else if (mood === 'sleepy') noise += Math.sin(tv * 0.3 + i * 0.02) * 0.015
-
-    const breathe = Math.sin(tv * 2) * 0.02
-    const len = Math.sqrt(bx * bx + by * by + bz * bz)
-    if (len > 0) {
-      // dampen wobble on the front so the face stays readable
-      const front = Math.max(0, bz)
-      const atten = 1 - 0.7 * front * front
-      const scale = 1 + (noise + breathe) * atten
-      positions.array[i * 3] = bx * scale
-      positions.array[i * 3 + 1] = by * scale
-      positions.array[i * 3 + 2] = bz * scale
-    }
-  }
-  positions.needsUpdate = true
-  petMesh.geometry.computeVertexNormals()
-}
-
-const animate = () => {
-  animationFrameId = requestAnimationFrame(animate)
-  time = clock.getElapsedTime()
-  const dt = Math.min(0.05, time - lastFrameTime)
-  lastFrameTime = time
-
-  if (petMesh) {
-    const mood = petMood.value
-    const BASE_Y = -0.18
-    petMesh.position.y = BASE_Y + Math.sin(time * 1.2) * 0.06
-
-    if (animation.value === 'idle') {
-      petMesh.rotation.y = Math.sin(time * 0.5) * 0.1
-      petMesh.rotation.z = Math.sin(time * 0.8) * 0.02
-    }
-
-    let scaleDriven = false
-    if (mood === 'excited' || animation.value === 'excited') {
-      // squash-and-stretch hop: squashed on landing, stretched mid-air
-      const hop = Math.abs(Math.sin(time * 4))
-      petMesh.position.y = BASE_Y + hop * 0.3
-      petMesh.rotation.y = Math.sin(time * 3) * 0.3
-      petMesh.rotation.z = 0
-      const stretch = 1 + (hop - 0.45) * 0.24
-      petMesh.scale.set(1 / Math.sqrt(stretch), stretch, 1 / Math.sqrt(stretch))
-      scaleDriven = true
-    } else if (mood === 'happy' || animation.value === 'love') {
-      petMesh.rotation.z = Math.sin(time * 2) * 0.08
-    } else if (mood === 'angry') {
-      petMesh.rotation.z = Math.sin(time * 8) * 0.05
-      petMesh.position.x = Math.sin(time * 12) * 0.02
-      const puff = 1.05 + Math.sin(time * 10) * 0.02
-      petMesh.scale.set(puff, 1 / puff, puff)
-      scaleDriven = true
-    } else if (mood === 'sleepy' || isSleeping.value) {
-      petMesh.position.y = BASE_Y + Math.sin(time * 0.6) * 0.03
-      petMesh.rotation.z = 0.15
-    } else if (animation.value === 'eating') {
-      const s = Math.abs(Math.sin(time * 9))
-      petMesh.scale.set(1 + s * 0.07, 1 - s * 0.13, 1 + s * 0.07)
-      scaleDriven = true
-    }
-
-    if (animation.value === 'idle' && !scaleDriven) {
-      petMesh.scale.x += (1 - petMesh.scale.x) * 0.1
-      petMesh.scale.y += (1 - petMesh.scale.y) * 0.1
-      petMesh.scale.z += (1 - petMesh.scale.z) * 0.1
-      petMesh.position.x += (0 - petMesh.position.x) * 0.1
-    }
-
-    deformPet()
-
-    // Blink — random timer, or eyes shut tight while sleeping
-    blinkT += dt
-    let closed = 0
-    if (isSleeping.value) {
-      closed = 1
-    } else if (blinkT >= nextBlink) {
-      const phase = (blinkT - nextBlink) / BLINK_DUR
-      if (phase >= 1) {
-        blinkT = 0
-        nextBlink = 1.8 + Math.random() * 3.5
-      } else {
-        closed = Math.sin(phase * Math.PI)
-      }
-    }
-
-    // Eye contact — glance toward the cursor
-    const lookX = pointerActive && !isSleeping.value ? pointerNDC.x : 0
-    const lookY = pointerActive && !isSleeping.value ? pointerNDC.y : 0
-    eyeOffset.x += (lookX * 0.045 - eyeOffset.x) * 0.06
-    eyeOffset.y += (lookY * 0.03 - eyeOffset.y) * 0.06
-
-    if (leftEye && rightEye) {
-      const applyEye = (eye, bx) => {
-        eye.scale.set(1 - closed * 0.08, 1 - closed * 0.9, 1)
-        eye.position.set(
-          bx + eyeOffset.x,
-          eyeBase.y + eyeOffset.y - closed * 0.03,
-          eyeBase.z
-        )
-      }
-      applyEye(leftEye, eyeBase.lx)
-      applyEye(rightEye, eyeBase.rx)
-    }
-
-    // Tech tuft — lazy sway + mood-colored LED pulse
-    if (antennaGroup) {
-      antennaGroup.rotation.z = Math.sin(time * 1.2) * 0.1
-      antennaGroup.rotation.x = Math.sin(time * 1.6 + 1) * 0.06
-    }
-    if (antennaTip) {
-      const colors = moodColors[mood] || moodColors.content
-      antennaTip.material.emissive.lerp(new THREE.Color(colors.emissive), 0.05)
-      antennaTip.material.emissiveIntensity = 0.7 + Math.sin(time * 2.4) * 0.35
-    }
-
-    const colors = moodColors[mood] || moodColors.content
-    petMaterial.color.lerp(new THREE.Color(colors.body), 0.05)
-    petMaterial.emissive.lerp(new THREE.Color(colors.emissive), 0.05)
-    petMaterial.emissiveIntensity += (colors.intensity - petMaterial.emissiveIntensity) * 0.05
-
-    const particles = scene.getObjectByName('ambientParticles')
-    if (particles) {
-      const pos = particles.geometry.attributes.position
-      for (let i = 0; i < pos.count; i++) {
-        pos.array[i * 3 + 1] += Math.sin(time + i) * 0.002
-        if (pos.array[i * 3 + 1] > 4) pos.array[i * 3 + 1] = -1
-      }
-      pos.needsUpdate = true
-      particles.rotation.y = time * 0.02
-    }
-
-    const leftCheek = petMesh.getObjectByName('leftCheek')
-    const rightCheek = petMesh.getObjectByName('rightCheek')
-    if (leftCheek && rightCheek) {
-      const glowing = ['happy', 'excited', 'content'].includes(mood) && !isSleeping.value
-      const opacity = isSleeping.value ? 0 : glowing ? 0.65 + Math.sin(time * 2) * 0.2 : 0.35
-      leftCheek.material.opacity = opacity
-      rightCheek.material.opacity = opacity
-    }
-
-    pointLight.color.lerp(new THREE.Color(
-      mood === 'angry' ? 0xff6b6b : mood === 'excited' ? 0xffd93d : mood === 'sick' ? 0x7cb342 : 0xffd93d
-    ), 0.02)
-  }
-
-  renderer.render(scene, camera)
-}
+// ─── Three.js Renderer ─────────────────────────────────────────
+// The creature itself lives in BlobbyCanvas so the full pet and the
+// compact card companion share exactly the same character.
 
 // ─── Interactions ────────────────────────────────────────────
 const showMessage = (msg) => {
@@ -557,86 +130,61 @@ const spawnClickEffect = (x, y, type) => {
 }
 
 const spawnBurstParticles = (color, count = 20) => {
-  if (!scene) return
-  const geometry = new THREE.BufferGeometry()
-  const positions = new Float32Array(count * 3)
-  const velocities = []
-  for (let i = 0; i < count; i++) {
-    positions[i * 3] = petMesh ? petMesh.position.x : 0
-    positions[i * 3 + 1] = petMesh ? petMesh.position.y : 0
-    positions[i * 3 + 2] = 0
-    velocities.push({ x: (Math.random() - 0.5) * 0.15, y: Math.random() * 0.12 + 0.05, z: (Math.random() - 0.5) * 0.1 })
-  }
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  const material = new THREE.PointsMaterial({ color: new THREE.Color(color), size: 0.08, transparent: true, opacity: 1, blending: THREE.AdditiveBlending })
-  const burst = new THREE.Points(geometry, material)
-  burst.name = 'burstParticles'
-  scene.add(burst)
-  let frame = 0
-  const tick = () => {
-    frame++
-    const pos = burst.geometry.attributes.position
-    for (let i = 0; i < count; i++) {
-      pos.array[i * 3] += velocities[i].x; pos.array[i * 3 + 1] += velocities[i].y; pos.array[i * 3 + 2] += velocities[i].z
-      velocities[i].y -= 0.003
-    }
-    pos.needsUpdate = true
-    material.opacity = Math.max(0, 1 - frame / 40)
-    if (frame < 40) requestAnimationFrame(tick)
-    else { scene.remove(burst); geometry.dispose(); material.dispose() }
-  }
-  tick()
+  blobbyCanvas.value?.spawnBurst(color, count)
 }
 
-const handlePetClick = (event) => {
+const handlePetClick = ({ x, y }) => {
   const now = Date.now()
   if (now - lastClickTime.value < 300) return
   lastClickTime.value = now
 
-  const rect = event.currentTarget.getBoundingClientRect()
-  const x = event.clientX - rect.left
-  const y = event.clientY - rect.top
   const roll = Math.random()
   if (roll < 0.4) {
-    animation.value = 'love'; spawnBurstParticles(0xff6b9d); spawnClickEffect(x, y, 'love')
-    pet.value.love = Math.min(100, pet.value.love + 5); showMessage('Squee!')
+    setAnimation('love')
+    spawnBurstParticles(0xff6b9d)
+    spawnClickEffect(x, y, 'love')
+    adjustStats({ love: 5 })
+    showMessage('Squee!')
   } else if (roll < 0.7) {
-    animation.value = 'excited'; spawnBurstParticles(0xffd93d); spawnClickEffect(x, y, 'play')
-    pet.value.boredom = Math.max(0, pet.value.boredom - 5); showMessage('Wheee!')
+    setAnimation('excited')
+    spawnBurstParticles(0xffd93d)
+    spawnClickEffect(x, y, 'play')
+    adjustStats({ boredom: -5 })
+    showMessage('Wheee!')
   } else {
-    animation.value = 'confused'; spawnClickEffect(x, y, 'default'); showMessage('?')
+    setAnimation('confused')
+    spawnClickEffect(x, y, 'default')
+    markEngaged()
+    showMessage('?')
   }
-  setTimeout(() => animation.value = 'idle', 800)
-  saveProgress()
+  setTimeout(() => setAnimation('idle'), 800)
 }
-
-const handlePetHover = () => {
-  isHoveringPet.value = true
-  blinkT = nextBlink // little acknowledging blink
-}
-const handlePetLeave = () => { isHoveringPet.value = false }
 
 const feed = () => {
-  animation.value = 'eating'; spawnBurstParticles(0xffa94d)
-  setTimeout(() => animation.value = 'idle', 1500)
-  pet.value.hunger = Math.min(100, pet.value.hunger + 25)
-  pet.value.love = Math.min(100, pet.value.love + 5)
-  showMessage('Yummy!'); saveProgress()
+  setAnimation('eating')
+  spawnBurstParticles(0xffa94d)
+  setTimeout(() => setAnimation('idle'), 1500)
+  adjustStats({ hunger: 25, love: 5 })
+  showMessage('Yummy!')
 }
 
 const petAction = () => {
-  animation.value = 'love'; spawnBurstParticles(0xff6b9d)
-  setTimeout(() => animation.value = 'idle', 1500)
-  pet.value.love = Math.min(100, pet.value.love + 20)
-  pet.value.hunger = Math.max(0, pet.value.hunger - 5)
-  showMessage('I love you!'); saveProgress()
+  setAnimation('love')
+  spawnBurstParticles(0xff6b9d)
+  setTimeout(() => setAnimation('idle'), 1500)
+  adjustStats({ love: 20, hunger: -5 })
+  showMessage('I love you!')
 }
 
 const toggleSleep = () => {
   isSleeping.value = !isSleeping.value
-  if (isSleeping.value) { showMessage('Zzz...') }
-  else { showMessage('Good morning!'); pet.value.love = Math.min(100, pet.value.love + 5) }
-  saveProgress()
+  setDecayPaused(isSleeping.value)
+  if (isSleeping.value) {
+    showMessage('Zzz...')
+  } else {
+    showMessage('Good morning!')
+    adjustStats({ love: 5 })
+  }
 }
 
 // ─── Game: RPS (Best of 3) ──────────────────────────────────
@@ -658,7 +206,7 @@ const playRPS = (choice) => {
   rpsResult.value = null
 
   // Pet "thinks" for a moment
-  animation.value = 'confused'
+  setAnimation('confused')
   setTimeout(() => {
     const petChoice = rpsChoices[Math.floor(Math.random() * 3)]
     rpsPetChoice.value = petChoice.id
@@ -668,15 +216,15 @@ const playRPS = (choice) => {
     if (playerObj.beats === petChoice.id) {
       rpsResult.value = 'win'
       rpsScore.value.player++
-      animation.value = 'excited'
+      setAnimation('excited')
       spawnBurstParticles(0xffd93d)
     } else if (petChoice.beats === choice) {
       rpsResult.value = 'lose'
       rpsScore.value.pet++
-      animation.value = 'happy'
+      setAnimation('love')
     } else {
       rpsResult.value = 'tie'
-      animation.value = 'idle'
+      setAnimation('idle')
     }
 
     // Check series
@@ -684,21 +232,21 @@ const playRPS = (choice) => {
       rpsSeriesOver.value = true
       if (rpsScore.value.player > rpsScore.value.pet) {
         gameMessage.value = `YOU WIN THE SERIES ${rpsScore.value.player}—${rpsScore.value.pet}!`
-        pet.value.boredom = Math.max(0, pet.value.boredom - 25)
+        adjustStats({ boredom: -25 })
         spawnBurstParticles(0x4ade80)
       } else if (rpsScore.value.pet > rpsScore.value.player) {
         gameMessage.value = `Blobby wins ${rpsScore.value.pet}—${rpsScore.value.player}!`
-        pet.value.boredom = Math.min(100, pet.value.boredom + 10)
-        pet.value.love = Math.min(100, pet.value.love + 10)
+        adjustStats({ boredom: 10, love: 10 })
       } else {
         gameMessage.value = `Series tied ${rpsScore.value.player}—${rpsScore.value.pet}!`
-        pet.value.boredom = Math.min(100, pet.value.boredom + 5)
+        adjustStats({ boredom: 5 })
       }
       gameResult.value = 'done'
+    } else {
+      markEngaged()
     }
 
-    setTimeout(() => { animation.value = 'idle'; rpsAnimating.value = false }, 1000)
-    saveProgress()
+    setTimeout(() => { setAnimation('idle'); rpsAnimating.value = false }, 1000)
   }, 600)
 }
 
@@ -744,18 +292,18 @@ const submitGuess = (num) => {
     guessLocked.value = true
     gameMessage.value = `${num} is correct! Got it in ${guessAttempts.value} try${guessAttempts.value > 1 ? 'ies' : 'y'}!`
     gameResult.value = 'done'
-    animation.value = 'excited'
+    setAnimation('excited')
     spawnBurstParticles(0x4ade80)
-    pet.value.boredom = Math.max(0, pet.value.boredom - 20)
-    setTimeout(() => animation.value = 'idle', 1500)
+    adjustStats({ boredom: -20 })
+    setTimeout(() => setAnimation('idle'), 1500)
   } else if (guessAttempts.value >= guessMaxAttempts) {
     guessLocked.value = true
     gameMessage.value = `Out of tries! It was ${guessSecret.value}.`
     gameResult.value = 'done'
-    pet.value.boredom = Math.min(100, pet.value.boredom + 10)
-    pet.value.love = Math.min(100, pet.value.love + 5)
+    adjustStats({ boredom: 10, love: 5 })
+  } else {
+    markEngaged()
   }
-  saveProgress()
 }
 
 // ─── Game: Memory ────────────────────────────────────────────
@@ -814,10 +362,10 @@ const flipMemoryCard = (index) => {
           memoryBestScore.value = score
           gameMessage.value += ' NEW BEST!'
         }
-        animation.value = 'excited'
+        setAnimation('excited')
         spawnBurstParticles(0x4ade80, 30)
-        pet.value.boredom = Math.max(0, pet.value.boredom - 30)
-        setTimeout(() => animation.value = 'idle', 1500)
+        adjustStats({ boredom: -30 })
+        setTimeout(() => setAnimation('idle'), 1500)
       }
     } else {
       // No match — flip back
@@ -828,7 +376,7 @@ const flipMemoryCard = (index) => {
         memoryLocked.value = false
       }, 800)
     }
-    saveProgress()
+    markEngaged()
   }
 }
 
@@ -855,8 +403,7 @@ const clickReaction = () => {
     reactionTime.value = 0
     gameMessage.value = 'Too early! Wait for green.'
     gameResult.value = 'done'
-    pet.value.boredom = Math.min(100, pet.value.boredom + 5)
-    saveProgress()
+    adjustStats({ boredom: 5 })
   } else if (reactionState.value === 'ready') {
     reactionTime.value = Math.round(performance.now() - reactionStartTime.value)
     reactionState.value = 'result'
@@ -866,11 +413,10 @@ const clickReaction = () => {
       gameMessage.value += ' NEW BEST!'
     }
     gameResult.value = 'done'
-    animation.value = 'excited'
+    setAnimation('excited')
     spawnBurstParticles(0x74c0fc, 15)
-    pet.value.boredom = Math.max(0, pet.value.boredom - 15)
-    setTimeout(() => animation.value = 'idle', 1000)
-    saveProgress()
+    adjustStats({ boredom: -15 })
+    setTimeout(() => setAnimation('idle'), 1000)
   }
 }
 
@@ -899,103 +445,46 @@ const handleKeyUp = (e) => {
 }
 
 // ─── Persistence ─────────────────────────────────────────────
-const saveProgress = () => {
-  localStorage.setItem('site_blobbyPet', JSON.stringify({ ...pet.value, lastSeen: Date.now() }))
-}
-
-const loadProgress = () => {
-  const saved = localStorage.getItem('site_blobbyPet')
-  if (saved) {
-    const data = JSON.parse(saved)
-    pet.value = { ...pet.value, ...data }
-    const timePassed = Math.floor((Date.now() - data.lastSeen) / 60000)
-    pet.value.hunger = Math.max(0, pet.value.hunger - timePassed * 2)
-    pet.value.boredom = Math.min(100, pet.value.boredom + timePassed)
-    pet.value.love = Math.max(0, pet.value.love - timePassed)
+const loadBestScores = () => {
+  try {
+    const bestMemory = localStorage.getItem('site_blobbyMemoryBest')
+    if (bestMemory) memoryBestScore.value = parseInt(bestMemory, 10)
+    const bestReaction = localStorage.getItem('site_blobbyReactionBest')
+    if (bestReaction) reactionBest.value = parseInt(bestReaction, 10)
+  } catch {
+    // A blocked or corrupted score store should never break the pet.
   }
-  const bestMemory = localStorage.getItem('site_blobbyMemoryBest')
-  if (bestMemory) memoryBestScore.value = parseInt(bestMemory)
-  const bestReaction = localStorage.getItem('site_blobbyReactionBest')
-  if (bestReaction) reactionBest.value = parseInt(bestReaction)
-}
-
-const startDecay = () => {
-  decayInterval.value = setInterval(() => {
-    if (!isSleeping.value) {
-      pet.value.hunger = Math.max(0, pet.value.hunger - 1)
-      pet.value.boredom = Math.min(100, pet.value.boredom + 1)
-      pet.value.love = Math.max(0, pet.value.love - 1)
-    } else {
-      pet.value.love = Math.min(100, pet.value.love + 0.5)
-    }
-    pet.value.age++
-    saveProgress()
-  }, 60000)
-}
-
-const handleResize = () => {
-  if (!canvasContainer.value || !renderer || !camera) return
-  const size = Math.min(canvasContainer.value.clientWidth, canvasContainer.value.clientHeight)
-  renderer.setSize(size, size)
-  camera.aspect = 1
-  camera.updateProjectionMatrix()
 }
 
 // ─── Lifecycle ───────────────────────────────────────────────
 watch(petMood, (newMood) => {
   const map = {
-    excited: '😆', happy: '😊', content: '🙂', neutral: '😐', thinking: '🤔',
-    confused: '😕', surprised: '😲', sleepy: '😴', sad: '😢', lonely: '🥺',
-    bored: '😒', hungry: '😋', angry: '😠', sick: '🤢', crying: '😭'
+    excited: '😆', happy: '😊', content: '🙂', curious: '🤔',
+    confused: '😕', sleepy: '😴', dejected: '😢', lonely: '🥺',
+    bored: '😒', hungry: '😋', sick: '🤢', crying: '😭'
   }
   expression.value = map[newMood] || '😊'
 })
 
-watch([petMood, animation, isSleeping], () => setMouth(moodFace()))
+watch(memoryBestScore, (value) => {
+  if (!value) return
+  try { localStorage.setItem('site_blobbyMemoryBest', value) } catch { /* storage can be unavailable */ }
+})
+watch(reactionBest, (value) => {
+  if (!value) return
+  try { localStorage.setItem('site_blobbyReactionBest', value) } catch { /* storage can be unavailable */ }
+})
 
-watch(memoryBestScore, (v) => { if (v) localStorage.setItem('site_blobbyMemoryBest', v) })
-watch(reactionBest, (v) => { if (v) localStorage.setItem('site_blobbyReactionBest', v) })
-
-onMounted(async () => {
-  loadProgress(); startDecay()
+onMounted(() => {
+  loadBestScores()
   window.addEventListener('keyup', handleKeyUp)
-  window.addEventListener('resize', handleResize)
   expression.value = '😊'
-  await nextTick()
-  initThree()
-  if (petMesh) {
-    basePositions.value = new Float32Array(petMesh.geometry.attributes.position.array)
-  }
 })
 
 onUnmounted(() => {
-  if (decayInterval.value) clearInterval(decayInterval.value)
-  if (animationFrameId) cancelAnimationFrame(animationFrameId)
   clearTimeout(reactionTimeout.value)
   window.removeEventListener('keyup', handleKeyUp)
-  window.removeEventListener('resize', handleResize)
-  if (renderer) {
-    if (onCanvasPointerMove) renderer.domElement.removeEventListener('pointermove', onCanvasPointerMove)
-    if (onCanvasPointerLeave) renderer.domElement.removeEventListener('pointerleave', onCanvasPointerLeave)
-  }
-  if (scene) {
-    scene.traverse((obj) => {
-      if (obj.geometry) obj.geometry.dispose()
-      if (obj.material) {
-        const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
-        mats.forEach((m) => {
-          Object.values(m).forEach((v) => { if (v && v.isTexture) v.dispose() })
-          m.dispose()
-        })
-      }
-    })
-  }
-  if (renderer) {
-    renderer.dispose()
-    if (canvasContainer.value && renderer.domElement.parentNode === canvasContainer.value) {
-      canvasContainer.value.removeChild(renderer.domElement)
-    }
-  }
+  setDecayPaused(false)
 })
 </script>
 
@@ -1027,8 +516,19 @@ onUnmounted(() => {
         <!-- Pet viewport -->
         <div class="lg:col-span-2">
           <div class="pet-viewport relative rounded-lg overflow-hidden border border-[#222] bg-[#0d0d22]" style="aspect-ratio:4/3;">
-            <div ref="canvasContainer" class="absolute inset-0 cursor-pointer flex items-center justify-center"
-                 @click="handlePetClick" @mouseenter="handlePetHover" @mouseleave="handlePetLeave"></div>
+            <div class="absolute inset-0">
+              <BlobbyCanvas
+                ref="blobbyCanvas"
+                class="h-full w-full cursor-pointer"
+                :mood="petMood"
+                :action="animation"
+                :action-id="animationId"
+                :sleeping="isSleeping"
+                :interactive="true"
+                :show-environment="true"
+                @interact="handlePetClick"
+              />
+            </div>
 
             <div v-for="effect in clickEffects" :key="effect.id"
               class="click-effect absolute pointer-events-none z-20"
@@ -1090,8 +590,8 @@ onUnmounted(() => {
               <div class="flex items-center justify-between">
                 <span class="font-mono text-xs text-[#555]">OVERALL</span>
                 <span class="font-mono text-lg font-bold"
-                  :style="{ color: Math.round((pet.hunger+pet.boredom+pet.love)/3) > 60 ? '#4ade80' : Math.round((pet.hunger+pet.boredom+pet.love)/3) > 30 ? '#ffd93d' : '#ff6b6b' }">
-                  {{ Math.round((pet.hunger+pet.boredom+pet.love)/3) }}%
+                  :style="{ color: overallWellbeing > 60 ? '#4ade80' : overallWellbeing > 30 ? '#ffd93d' : '#ff6b6b' }">
+                  {{ overallWellbeing }}%
                 </span>
               </div>
             </div>
@@ -1130,7 +630,7 @@ onUnmounted(() => {
             <ul class="space-y-2">
               <li class="font-mono text-xs text-[#555] flex items-start gap-2"><span class="text-[#ff6b9d]">›</span><span>Stats decay over time — check in often</span></li>
               <li class="font-mono text-xs text-[#555] flex items-start gap-2"><span class="text-[#ff6b9d]">›</span><span>Sleep restores love slowly</span></li>
-              <li class="font-mono text-xs text-[#555] flex items-start gap-2"><span class="text-[#ff6b9d]">›</span><span>Win games = less bored, Lose = Blobby happy</span></li>
+              <li class="font-mono text-xs text-[#555] flex items-start gap-2"><span class="text-[#ff6b9d]">›</span><span>Winning games makes Blobby less bored</span></li>
             </ul>
           </div>
         </div>
