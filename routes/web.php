@@ -33,7 +33,7 @@ Route::get('/now', fn() => inertia('Now', [
 Route::get('/tools', fn() => inertia('Tools/Index', [
     'meta' => [
         'title' => 'Tools — Swapnil Upadhyay',
-        'description' => 'Interactive tools and experiments by Swapnil Upadhyay — virtual pet, clicker game, sketch tool, bill splitter, and more.',
+        'description' => 'Interactive tools and experiments by Swapnil Upadhyay — virtual pet, clicker game, sketch tool, card viewer, bill splitter, and more.',
     ],
 ]));
 
@@ -60,6 +60,13 @@ Route::get('/tools/sketch', fn() => inertia('Tools/Sketch', [
         'title' => 'Sketch — Tools — Swapnil Upadhyay',
     ],
 ]));
+
+Route::get('/tools/cards', fn() => inertia('Tools/CardViewer', [
+    'meta' => [
+        'title' => 'Card Viewer — Tools — Swapnil Upadhyay',
+        'description' => 'Open any Anki CSV deck and flip through its cards in your browser.',
+    ],
+]))->name('tools.cards');
 
 Route::get('/tools/whisper', fn() => inertia('Tools/Whisper', [
     'meta' => [
