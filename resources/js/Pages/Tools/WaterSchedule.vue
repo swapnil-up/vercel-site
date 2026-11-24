@@ -15,7 +15,7 @@ const dayFilter = ref(null)
 const loading = ref(true)
 const error = ref(null)
 
-const DATA_URL = '/water/schedule.json'
+const DATA_URL = 'https://raw.githubusercontent.com/swapnil-up/kagaj/main/datasets/water/schedule.json'
 
 onMounted(async () => {
   try {
