@@ -1,0 +1,30 @@
+{
+  "assignments": [
+    {"day":"Mon","duty":"Cleaning","person":"Ravi"},
+    {"day":"Mon","duty":"Gate","person":"Sita"},
+    {"day":"Mon","duty":"Events","person":"Hari"},
+    {"day":"Tue","duty":"Cleaning","person":"Mina"},
+    {"day":"Tue","duty":"Gate","person":"Kiran"},
+    {"day":"Tue","duty":"Events","person":"Priya"},
+    {"day":"Wed","duty":"Cleaning","person":"Asha"},
+    {"day":"Wed","duty":"Gate","person":"Arun"},
+    {"day":"Wed","duty":"Events","person":"Deepa"},
+    {"day":"Thu","duty":"Cleaning","person":"Vikram"},
+    {"day":"Thu","duty":"Gate","person":"Leela"},
+    {"day":"Thu","duty":"Events","person":"Mohan"},
+    {"day":"Fri","duty":"Cleaning","person":"Nina"},
+    {"day":"Fri","duty":"Gate","person":"Raj"},
+    {"day":"Fri","duty":"Events","person":"Zara"},
+    {"day":"Sat","duty":"Cleaning","person":"Sita"},
+    {"day":"Sat","duty":"Gate","person":"Asha"},
+    {"day":"Sat","duty":"Events","person":"Ravi"},
+    {"day":"Sun","duty":"Cleaning","person":"Kiran"},
+    {"day":"Sun","duty":"Gate","person":"Mina"},
+    {"day":"Sun","duty":"Events","person":"Arun"}
+  ],
+  "workloadSummary": {
+    "Asha":2,"Ravi":2,"Sita":2,"Hari":1,"Mina":2,
+    "Kiran":2,"Priya":1,"Arun":2,"Deepa":1,"Vikram":1,
+    "Leela":1,"Mohan":1,"Nina":1,"Raj":1,"Zara":1
+  }
+}

@@ -80,6 +80,34 @@ Route::get('/tools/bill-splitter', fn() => inertia('Tools/BillSplitter', [
     ],
 ]));
 
+Route::get('/tools/duty-roster', fn() => inertia('Tools/DutyRoster', [
+    'meta' => [
+        'title' => 'Duty Roster — Tools — Swapnil Upadhyay',
+        'description' => 'Generate a fair weekly duty roster with unavailable days and export as a shareable image.',
+    ],
+]))->name('tools.duty-roster');
+
+Route::get('/tools/vdc-municipality', fn() => inertia('Tools/VDC_Municipality', [
+    'meta' => [
+        'title' => 'VDC → Municipality Lookup — Tools — Swapnil Upadhyay',
+        'description' => 'Convert old VDC/ward addresses to the new federal structure (2017 restructuring) with bilingual output.',
+    ],
+]))->name('tools.vdc-municipality');
+
+Route::get('/tools/booklet-imposition', fn() => inertia('Tools/BookletImposition', [
+    'meta' => [
+        'title' => 'Booklet Imposition (2-up) — Tools — Swapnil Upadhyay',
+        'description' => 'Upload a PDF and generate a print-ready 2-up booklet layout for saddle-stitch binding.',
+    ],
+]))->name('tools.booklet-imposition');
+
+Route::get('/tools/nepse-wacc', fn() => inertia('Tools/NepseWacc', [
+    'meta' => [
+        'title' => 'NEPSE WACC Calculator — Tools — Swapnil Upadhyay',
+        'description' => 'Calculate weighted average acquisition cost for NEPSE holdings with bonuses, rights, and fee breakdown.',
+    ],
+]))->name('tools.nepse-wacc');
+
 Route::get('/tools/rota-minutes', RotaMinutesController::class)->name('rota-minutes');
 
 Route::get('/tools/water-schedule', fn() => inertia('Tools/WaterSchedule', [

@@ -1,0 +1,318 @@
+{
+  "version": "2017-restructuring-sample",
+  "districts": [
+    {
+      "district_en": "Kathmandu",
+      "district_ne": "काठमाडौं",
+      "province": 3,
+      "vdcMappings": [
+        {
+          "oldVdc_en": "Dhapasi",
+          "oldVdc_ne": "धापासी",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Budhanilkantha",
+          "newLocalLevel_ne": "बुढानिलकण्ठ",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9 }
+        },
+        {
+          "oldVdc_en": "Tokha",
+          "oldVdc_ne": "टोखा",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+          "newLocalLevel_en": "Tokha",
+          "newLocalLevel_ne": "टोखा",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "11": 11 }
+        },
+        {
+          "oldVdc_en": "Kapan",
+          "oldVdc_ne": "कपन",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Budhanilkantha",
+          "newLocalLevel_ne": "बुढानिलकण्ठ",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 10, "2": 11, "3": 12, "4": 13, "5": 14, "6": 15, "7": 16, "8": 17, "9": 18 }
+        },
+        {
+          "oldVdc_en": "Gokarneshwor",
+          "oldVdc_ne": "गोकार्णेश्वर",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Gokarneshwor",
+          "newLocalLevel_ne": "गोकार्णेश्वर",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9 }
+        },
+        {
+          "oldVdc_en": "Sankhu",
+          "oldVdc_ne": "संखु",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8],
+          "newLocalLevel_en": "Shankharapur",
+          "newLocalLevel_ne": "शंखरापुर",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8 }
+        }
+      ]
+    },
+    {
+      "district_en": "Lalitpur",
+      "district_ne": "ललितपुर",
+      "province": 3,
+      "vdcMappings": [
+        {
+          "oldVdc_en": "Lubhu",
+          "oldVdc_ne": "लुभु",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Mahalaxmi",
+          "newLocalLevel_ne": "महालक्ष्मी",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9 }
+        },
+        {
+          "oldVdc_en": "Bungamati",
+          "oldVdc_ne": "बुंगमती",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Lalitpur",
+          "newLocalLevel_ne": "ललितपुर",
+          "newLocalLevelType": "Metropolitan",
+          "wardMap": { "1": 16, "2": 17, "3": 18, "4": 19, "5": 20, "6": 21, "7": 22, "8": 23, "9": 24 }
+        },
+        {
+          "oldVdc_en": "Khokana",
+          "oldVdc_ne": "खोकना",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7],
+          "newLocalLevel_en": "Lalitpur",
+          "newLocalLevel_ne": "ललितपुर",
+          "newLocalLevelType": "Metropolitan",
+          "wardMap": { "1": 25, "2": 26, "3": 27, "4": 28, "5": 29, "6": 30, "7": 31 }
+        },
+        {
+          "oldVdc_en": "Sainbu",
+          "oldVdc_ne": "सैँबु",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Mahalaxmi",
+          "newLocalLevel_ne": "महालक्ष्मी",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 10, "2": 11, "3": 12, "4": 13, "5": 14, "6": 15, "7": 16, "8": 17, "9": 18 }
+        }
+      ]
+    },
+    {
+      "district_en": "Bhaktapur",
+      "district_ne": "भक्तपुर",
+      "province": 3,
+      "vdcMappings": [
+        {
+          "oldVdc_en": "Changunarayan",
+          "oldVdc_ne": "चाँगुनारायण",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Changunarayan",
+          "newLocalLevel_ne": "चाँगुनारायण",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9 }
+        },
+        {
+          "oldVdc_en": "Duwakot",
+          "oldVdc_ne": "दुवाकोट",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8],
+          "newLocalLevel_en": "Suryabinayak",
+          "newLocalLevel_ne": "सूर्यविनायक",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8 }
+        },
+        {
+          "oldVdc_en": "Nangkhel",
+          "oldVdc_ne": "नाङखेल",
+          "oldWards": [1, 2, 3, 4, 5, 6],
+          "newLocalLevel_en": "Bhaktapur",
+          "newLocalLevel_ne": "भक्तपुर",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6 }
+        }
+      ]
+    },
+    {
+      "district_en": "Kavrepalanchok",
+      "district_ne": "काभ्रेपलाञ्चोक",
+      "province": 3,
+      "vdcMappings": [
+        {
+          "oldVdc_en": "Banepa",
+          "oldVdc_ne": "बनेपा",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+          "newLocalLevel_en": "Banepa",
+          "newLocalLevel_ne": "बनेपा",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "11": 11 }
+        },
+        {
+          "oldVdc_en": "Dhulikhel",
+          "oldVdc_ne": "धुलिखेल",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Dhulikhel",
+          "newLocalLevel_ne": "धुलिखेल",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9 }
+        },
+        {
+          "oldVdc_en": "Panauti",
+          "oldVdc_ne": "पनौती",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+          "newLocalLevel_en": "Panauti",
+          "newLocalLevel_ne": "पनौती",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "11": 11 }
+        }
+      ]
+    },
+    {
+      "district_en": "Dolakha",
+      "district_ne": "दोलखा",
+      "province": 3,
+      "vdcMappings": [
+        {
+          "oldVdc_en": "Jiri",
+          "oldVdc_ne": "जिरी",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Jiri",
+          "newLocalLevel_ne": "जिरी",
+          "newLocalLevelType": "RuralMunicipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9 }
+        },
+        {
+          "oldVdc_en": "Charikot",
+          "oldVdc_ne": "चारिकोट",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Bhimeshwor",
+          "newLocalLevel_ne": "भिमेश्वर",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9 }
+        }
+      ]
+    },
+    {
+      "district_en": "Sindhupalchok",
+      "district_ne": "सिन्धुपाल्चोक",
+      "province": 3,
+      "vdcMappings": [
+        {
+          "oldVdc_en": "Chautara",
+          "oldVdc_ne": "चौतारा",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+          "newLocalLevel_en": "Chautara Sangachokgadhi",
+          "newLocalLevel_ne": "चौतारा सङ्गाचोकगढी",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9 }
+        },
+        {
+          "oldVdc_en": "Melamchi",
+          "oldVdc_ne": "मेलम्ची",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+          "newLocalLevel_en": "Melamchi",
+          "newLocalLevel_ne": "मेलम्ची",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "11": 11 }
+        }
+      ]
+    },
+    {
+      "district_en": "Morang",
+      "district_ne": "मोरङ",
+      "province": 1,
+      "vdcMappings": [
+        {
+          "oldVdc_en": "Biratnagar",
+          "oldVdc_ne": "बिराटनगर",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+          "newLocalLevel_en": "Biratnagar",
+          "newLocalLevel_ne": "बिराटनगर",
+          "newLocalLevelType": "Metropolitan",
+          "wardMap": {}
+        },
+        {
+          "oldVdc_en": "Urlabari",
+          "oldVdc_ne": "उरलाबारी",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+          "newLocalLevel_en": "Urlabari",
+          "newLocalLevel_ne": "उरलाबारी",
+          "newLocalLevelType": "Municipality",
+          "wardMap": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "11": 11 }
+        }
+      ]
+    },
+    {
+      "district_en": "Sunsari",
+      "district_ne": "सुनसरी",
+      "province": 1,
+      "vdcMappings": [
+        {
+          "oldVdc_en": "Dharan",
+          "oldVdc_ne": "धरान",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+          "newLocalLevel_en": "Dharan",
+          "newLocalLevel_ne": "धरान",
+          "newLocalLevelType": "SubMetropolitan",
+          "wardMap": {}
+        },
+        {
+          "oldVdc_en": "Itahari",
+          "oldVdc_ne": "इटहरी",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+          "newLocalLevel_en": "Itahari",
+          "newLocalLevel_ne": "इटहरी",
+          "newLocalLevelType": "SubMetropolitan",
+          "wardMap": {}
+        }
+      ]
+    },
+    {
+      "district_en": "Kaski",
+      "district_ne": "कास्की",
+      "province": 4,
+      "vdcMappings": [
+        {
+          "oldVdc_en": "Pokhara",
+          "oldVdc_ne": "पोखरा",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33],
+          "newLocalLevel_en": "Pokhara",
+          "newLocalLevel_ne": "पोखरा",
+          "newLocalLevelType": "Metropolitan",
+          "wardMap": {}
+        },
+        {
+          "oldVdc_en": "Lekhnath",
+          "oldVdc_ne": "लेखनाथ",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+          "newLocalLevel_en": "Pokhara",
+          "newLocalLevel_ne": "पोखरा",
+          "newLocalLevelType": "Metropolitan",
+          "wardMap": {}
+        }
+      ]
+    },
+    {
+      "district_en": "Rupandehi",
+      "district_ne": "रुपन्देही",
+      "province": 5,
+      "vdcMappings": [
+        {
+          "oldVdc_en": "Butwal",
+          "oldVdc_ne": "बुटवल",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32],
+          "newLocalLevel_en": "Butwal",
+          "newLocalLevel_ne": "बुटवल",
+          "newLocalLevelType": "SubMetropolitan",
+          "wardMap": {}
+        },
+        {
+          "oldVdc_en": "Siddharthanagar",
+          "oldVdc_ne": "सिद्धार्थनगर",
+          "oldWards": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
+          "newLocalLevel_en": "Siddharthanagar",
+          "newLocalLevel_ne": "सिद्धार्थनगर",
+          "newLocalLevelType": "Municipality",
+          "wardMap": {}
+        }
+      ]
+    }
+  ]
+}
