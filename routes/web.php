@@ -164,3 +164,26 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 Route::get('/nepal-news', [NepalNewsController::class, 'index'])->name('nepal-news.index');
 Route::get('/nepal-news/api', [NepalNewsController::class, 'api'])->name('nepal-news.api');
 Route::get('/nepal-news/{slug}', [NepalNewsController::class, 'show'])->name('nepal-news.show');
+
+// Kagaj RAG
+Route::get('/kagaj', fn() => inertia('Kagaj/Index', [
+    'meta' => [
+        'title' => 'Kagaj Datasets — Swapnil Upadhyay',
+        'description' => 'Open, structured data extracted from Nepali government PDFs. Parliament, water, crime, OAG audits, labour migration, and .gov.np infrastructure.',
+    ],
+]))->name('kagaj.index');
+
+Route::get('/kagaj/{id}', fn($id) => inertia('Kagaj/Dataset', [
+    'id' => $id,
+    'meta' => [
+        'title' => "$id — Kagaj Datasets — Swapnil Upadhyay",
+        'description' => "Explore the $id dataset from Kagaj.",
+    ],
+]))->where('id', '.*')->name('kagaj.dataset');
+
+Route::get('/kagaj/chat', fn() => inertia('Kagaj/Chat', [
+    'meta' => [
+        'title' => 'Kagaj Chat — Swapnil Upadhyay',
+        'description' => 'Ask questions across Nepali government datasets.',
+    ],
+]))->name('kagaj.chat');

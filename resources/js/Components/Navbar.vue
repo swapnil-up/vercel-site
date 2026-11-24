@@ -23,6 +23,7 @@ const links = [
   { href: '/posts', label: 'Writing' },
   { href: '/books', label: 'Books' },
   { href: '/graph', label: 'Graph' },
+  { href: '/kagaj', label: 'Kagaj' },
   { href: '/tools', label: 'Tools' },
   { href: '/now', label: 'Now' },
   { href: '/about', label: 'About' },
