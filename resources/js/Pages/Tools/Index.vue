@@ -10,6 +10,7 @@ const tools = [
   { name: 'Whisper', path: '/tools/whisper', description: 'Voice transcription' },
   { name: 'EMOM Timer', path: '/timer', description: 'Interval timer for workouts' },
   { name: 'RanTim', path: '/tools/rantim', description: 'Random timer' },
+  { name: 'Team Randomizer', path: '/tools/team-randomizer', description: 'Split 3 clubs into 3 mixed teams (Himalaya, Indus, Siam) with equal representation' },
   { name: 'Bill Splitter', path: '/tools/bill-splitter', description: 'Split bills with friends' },
   { name: 'Duty Roster', path: '/tools/duty-roster', description: 'Fair weekly schedule with unavailable days — export as image' },
   { name: 'VDC → Municipality', path: '/tools/vdc-municipality', description: 'Convert old VDC/ward addresses to new federal structure (bilingual)' },

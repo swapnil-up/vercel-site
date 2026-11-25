@@ -129,6 +129,13 @@ Route::get('/tools/rantim', fn() => inertia('Tools/RanTim', [
     ],
 ]));
 
+Route::get('/tools/team-randomizer', fn() => inertia('Tools/TeamRandomizer', [
+    'meta' => [
+        'title' => 'Team Randomizer — Tools — Swapnil Upadhyay',
+        'description' => 'Randomly assign participants from 3 clubs into 3 mixed teams (Himalaya, Indus, Siam) with equal representation. Perfect for cross-cultural quiz events.',
+    ],
+]))->name('tools.team-randomizer');
+
 Route::get('/tools/particle-life', fn() => inertia('Tools/ParticleLife', [
     'meta' => [
         'title' => 'Particle Life — Tools — Swapnil Upadhyay',
