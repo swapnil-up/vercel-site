@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  createDeckFilename,
   createDefaultImportConfig,
   createDefaultMapping,
   createIdentityOrder,
   createShuffledOrder,
   detectSeparator,
+  escapeDelimitedField,
   getColumnCount,
   isValidColumnMapping,
   isValidOrder,
@@ -16,6 +18,9 @@ import {
   parseDelimitedRows,
   parseDeckWithConfig,
   parsePipeFields,
+  reconcileOrder,
+  sanitizeSavedCards,
+  serializeCards,
 } from './cardViewer.js'
 
 describe('parsePipeFields', () => {
@@ -282,5 +287,116 @@ describe('normalizeDeckState', () => {
 
   it('clamps a negative saved position', () => {
     expect(normalizeDeckState({ pos: -4 }, 3).position).toBe(0)
+  })
+})
+
+describe('reconcileOrder', () => {
+  it('keeps the surviving sequence and appends new indices', () => {
+    expect(reconcileOrder([2, 0, 1], 4)).toEqual([2, 0, 1, 3])
+  })
+
+  it('drops invalid and duplicate indices', () => {
+    expect(reconcileOrder([0, 0, 7, 2], 3)).toEqual([0, 2, 1])
+  })
+
+  it('builds an identity order when nothing is usable', () => {
+    expect(reconcileOrder(null, 3)).toEqual([0, 1, 2])
+    expect(reconcileOrder([], 0)).toEqual([])
+  })
+})
+
+describe('sanitizeSavedCards', () => {
+  it('coerces saved cards into card objects', () => {
+    expect(
+      sanitizeSavedCards([{ question: 'Q', answer: 'A', extra: 4 }])
+    ).toEqual([{ question: 'Q', answer: 'A', extra: '' }])
+  })
+
+  it('rejects cards with non-string question or answer', () => {
+    expect(sanitizeSavedCards([{ question: 'Q' }])).toBeNull()
+  })
+
+  it('rejects malformed payloads', () => {
+    expect(sanitizeSavedCards(undefined)).toBeNull()
+    expect(sanitizeSavedCards('cards')).toBeNull()
+    expect(sanitizeSavedCards([null])).toBeNull()
+  })
+
+  it('accepts an intentionally emptied deck', () => {
+    expect(sanitizeSavedCards([])).toEqual([])
+  })
+})
+
+describe('serializeCards', () => {
+  const cards = [
+    { question: 'What is a monad?', answer: 'A composable context', extra: '' },
+    { question: 'Why, though?', answer: 'Because "reasons"', extra: 'line one\nline two' },
+  ]
+
+  it('quotes fields that contain the separator, quotes, or newlines', () => {
+    expect(escapeDelimitedField('plain', ',')).toBe('plain')
+    expect(escapeDelimitedField('a,b', ',')).toBe('"a,b"')
+    expect(escapeDelimitedField('say "hi"', ',')).toBe('"say ""hi"""')
+    expect(escapeDelimitedField('one\ntwo', ',')).toBe('"one\ntwo"')
+    expect(escapeDelimitedField('a|b', '|')).toBe('"a|b"')
+  })
+
+  it('writes comma CSV without a header by default', () => {
+    expect(serializeCards([cards[0]])).toBe(
+      'What is a monad?,A composable context,\n'
+    )
+  })
+
+  it('writes a header when asked', () => {
+    expect(serializeCards([cards[0]], { includeHeader: true })).toBe(
+      'question,answer,extra\nWhat is a monad?,A composable context,\n'
+    )
+  })
+
+  it('skips cards with a blank question', () => {
+    expect(
+      serializeCards([{ question: '  ', answer: 'orphan', extra: '' }])
+    ).toBe('')
+  })
+
+  it('round-trips through the deck parser', () => {
+    const text = serializeCards(cards, { includeHeader: true })
+    const parsed = parseDeckWithConfig(text, {
+      separator: ',',
+      questionColumn: 0,
+      answerColumn: 1,
+      extraColumns: [2],
+      skipHeader: true,
+    })
+
+    expect(parsed.cards).toEqual(cards)
+  })
+
+  it('round-trips pipe output without a header', () => {
+    const text = serializeCards(cards, { separator: '|' })
+    const parsed = parseDeckWithConfig(text, {
+      separator: '|',
+      questionColumn: 0,
+      answerColumn: 1,
+      extraColumns: [2],
+      skipHeader: false,
+    })
+
+    expect(text).toBe(
+      'What is a monad?|A composable context|\nWhy, though?|"Because ""reasons"""|"line one\nline two"\n'
+    )
+    expect(parsed.cards).toEqual(cards)
+  })
+})
+
+describe('createDeckFilename', () => {
+  it('sanitises the deck name and picks an extension', () => {
+    expect(createDeckFilename('My Deck.csv', ',')).toBe('My-Deck.csv')
+    expect(createDeckFilename('anki export.txt', '|')).toBe('anki-export.txt')
+  })
+
+  it('falls back to a safe default name', () => {
+    expect(createDeckFilename('', ',')).toBe('deck.csv')
+    expect(createDeckFilename(null, '|')).toBe('deck.txt')
   })
 })

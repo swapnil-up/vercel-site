@@ -501,3 +501,112 @@ export const normalizeDeckState = (state, cardCount) => {
     shuffled: Boolean(state?.shuffled) && validOrder,
   }
 }
+
+export const reconcileOrder = (order, cardCount) => {
+  const count = Math.max(Number(cardCount) || 0, 0)
+  const seen = new Set()
+  const reconciled = []
+
+  for (const index of Array.isArray(order) ? order : []) {
+    if (
+      Number.isInteger(index) &&
+      index >= 0 &&
+      index < count &&
+      !seen.has(index)
+    ) {
+      seen.add(index)
+      reconciled.push(index)
+    }
+  }
+
+  for (let index = 0; index < count; index += 1) {
+    if (!seen.has(index)) reconciled.push(index)
+  }
+
+  return reconciled
+}
+
+export const sanitizeSavedCards = (value) => {
+  if (!Array.isArray(value)) return null
+
+  const cards = []
+
+  for (const card of value) {
+    if (!card || typeof card !== 'object') return null
+    if (typeof card.question !== 'string' || typeof card.answer !== 'string') {
+      return null
+    }
+
+    cards.push({
+      question: card.question,
+      answer: card.answer,
+      extra: typeof card.extra === 'string' ? card.extra : '',
+    })
+  }
+
+  return cards
+}
+
+export const escapeDelimitedField = (value, separator = ',') => {
+  const text = value === null || value === undefined ? '' : String(value)
+
+  if (typeof separator !== 'string' || separator.length !== 1) return text
+
+  const needsQuotes =
+    text.includes(separator) ||
+    text.includes('"') ||
+    text.includes('\n') ||
+    text.includes('\r')
+
+  if (!needsQuotes) return text
+  return `"${text.replace(/"/g, '""')}"`
+}
+
+export const serializeCards = (
+  cards,
+  { separator = ',', includeHeader = false } = {}
+) => {
+  if (!Array.isArray(cards)) return ''
+
+  const lines = []
+
+  if (includeHeader) {
+    lines.push(
+      ['question', 'answer', 'extra']
+        .map((field) => escapeDelimitedField(field, separator))
+        .join(separator)
+    )
+  }
+
+  for (const card of cards) {
+    if (!card || typeof card !== 'object') continue
+
+    const question = String(card.question ?? '').trim()
+    if (!question) continue
+
+    lines.push(
+      [question, card.answer ?? '', card.extra ?? '']
+        .map((field) => escapeDelimitedField(String(field).trim(), separator))
+        .join(separator)
+    )
+  }
+
+  return lines.length ? `${lines.join('\n')}\n` : ''
+}
+
+const EXPORT_EXTENSIONS = {
+  ',': '.csv',
+  '\t': '.tsv',
+}
+
+export const createDeckFilename = (deckName, separator = ',') => {
+  const base =
+    String(deckName ?? '')
+      .replace(/\.[^./\\]+$/, '')
+      .trim()
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/^[-.]+|[-.]+$/g, '')
+      .slice(0, 80) || 'deck'
+
+  return `${base}${EXPORT_EXTENSIONS[separator] ?? '.txt'}`
+}

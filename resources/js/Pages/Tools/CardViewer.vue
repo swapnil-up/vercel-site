@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import CardBlobby from '@/Components/Blobby/CardBlobby.vue'
 import {
   SEPARATOR_OPTIONS,
+  createDeckFilename,
   createDefaultImportConfig,
   createDefaultMapping,
   createIdentityOrder,
@@ -15,6 +16,9 @@ import {
   parseAnkiMetadata,
   parseDelimitedRows,
   parseDeckWithConfig,
+  reconcileOrder,
+  sanitizeSavedCards,
+  serializeCards,
 } from '@/Utils/cardViewer.js'
 import {
   CRAM_RATINGS,
@@ -29,9 +33,21 @@ import {
   normalizeCramState,
 } from '@/Utils/cardCram.js'
 
-const STORAGE_KEY = 'card-viewer:v3'
-const LEGACY_STORAGE_KEYS = ['card-viewer:v2', 'card-viewer:v1']
-const REVIEW_MODES = { BROWSE: 'browse', CRAM: 'cram' }
+const STORAGE_KEY = 'card-viewer:v4'
+const LEGACY_STORAGE_KEYS = ['card-viewer:v3', 'card-viewer:v2', 'card-viewer:v1']
+const REVIEW_MODES = { BROWSE: 'browse', CRAM: 'cram', EDIT: 'edit' }
+const EXPORT_FORMATS = [
+  {
+    value: ',',
+    label: 'Comma CSV',
+    hint: '.csv · opens in spreadsheets',
+  },
+  {
+    value: '|',
+    label: 'Pipe',
+    hint: '.txt · matches this tool and anki-smith',
+  },
+]
 const CRAM_STAGE_LABELS = {
   [CRAM_STAGES.NEW]: 'New',
   [CRAM_STAGES.LEARNING]: 'Learning',
@@ -40,6 +56,7 @@ const CRAM_STAGE_LABELS = {
 }
 
 const cards = ref([])
+const baseCards = ref([])
 const order = ref([])
 const position = ref(0)
 const isFlipped = ref(false)
@@ -56,6 +73,7 @@ const cardButton = ref(null)
 const cardBlobby = ref(null)
 const statesButton = ref(null)
 const statePanelBody = ref(null)
+const editorList = ref(null)
 
 const reviewMode = ref(REVIEW_MODES.BROWSE)
 const cramState = ref(null)
@@ -63,6 +81,13 @@ const cramCurrentId = ref(null)
 const currentTime = ref(Date.now())
 const statePanelOpen = ref(false)
 const compactStatePanel = ref(false)
+
+const exportOpen = ref(false)
+const exportFormat = ref(',')
+const exportIncludeHeader = ref(true)
+const exportDialog = ref(null)
+const exportTrigger = ref(null)
+const clipboardMessageExport = ref('')
 
 const importPanelOpen = ref(false)
 const sourceDraft = ref('')
@@ -82,6 +107,42 @@ const importConfig = ref({ ...defaultImportConfig })
 
 const hasDeck = computed(() => cards.value.length > 0)
 const isCramMode = computed(() => reviewMode.value === REVIEW_MODES.CRAM)
+const isEditMode = computed(() => reviewMode.value === REVIEW_MODES.EDIT)
+const hasEdits = computed(() => {
+  if (cards.value.length !== baseCards.value.length) return true
+
+  return cards.value.some((card, index) => {
+    const base = baseCards.value[index]
+    return (
+      !base ||
+      base.question !== card.question ||
+      base.answer !== card.answer ||
+      base.extra !== card.extra
+    )
+  })
+})
+const invalidCardCount = computed(
+  () => cards.value.filter((card) => !String(card.question ?? '').trim()).length
+)
+const exportableCards = computed(() =>
+  cards.value.filter((card) => String(card.question ?? '').trim())
+)
+const exportSkippedCount = computed(
+  () => cards.value.length - exportableCards.value.length
+)
+const exportText = computed(() =>
+  serializeCards(exportableCards.value, {
+    separator: exportFormat.value,
+    includeHeader: exportIncludeHeader.value,
+  })
+)
+const exportPreview = computed(() =>
+  exportText.value.replace(/\n$/, '').split('\n').slice(0, 6).join('\n')
+)
+const exportFilename = computed(() =>
+  createDeckFilename(deckName.value, exportFormat.value)
+)
+const exportHasContent = computed(() => exportText.value.length > 0)
 const currentCramState = computed(() => {
   if (!cramState.value || cramCurrentId.value === null) return null
   return (
@@ -95,6 +156,12 @@ const currentCard = computed(() => {
 
   const cardIndex = order.value[position.value]
   return cardIndex === undefined ? null : cards.value[cardIndex]
+})
+const currentCardId = computed(() => {
+  if (isCramMode.value) return cramCurrentId.value
+
+  const cardIndex = order.value[position.value]
+  return cardIndex === undefined ? null : cardIndex
 })
 const cardNumber = computed(() => {
   if (!hasDeck.value) return ''
@@ -215,13 +282,13 @@ const goodActionLabel = computed(() =>
 )
 
 const persistDeck = () => {
-  if (!hasDeck.value || !deckText.value) return false
+  if (!deckText.value) return false
 
   try {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        version: 3,
+        version: 4,
         text: deckText.value,
         name: deckName.value,
         pos: position.value,
@@ -231,6 +298,7 @@ const persistDeck = () => {
         importConfig: appliedImportConfig.value,
         cram: cramState.value,
         cramCurrentId: cramCurrentId.value,
+        cards: cards.value,
       })
     )
     storageWarning.value = ''
@@ -289,9 +357,12 @@ const loadDeck = (text, name, savedState = null) => {
     return false
   }
 
-  const restoredState = normalizeDeckState(savedState, parsed.cards.length)
+  const savedCards = sanitizeSavedCards(savedState?.cards)
+  const liveCards = savedCards && savedCards.length ? savedCards : parsed.cards
+  const restoredState = normalizeDeckState(savedState, liveCards.length)
 
-  cards.value = parsed.cards
+  baseCards.value = parsed.cards.map((card) => ({ ...card }))
+  cards.value = liveCards.map((card) => ({ ...card }))
   deckText.value = text
   deckName.value = name || 'restored deck'
   appliedImportConfig.value = { ...parsed.config }
@@ -299,12 +370,11 @@ const loadDeck = (text, name, savedState = null) => {
   order.value = restoredState.order
   position.value = restoredState.position
   isShuffled.value = restoredState.shuffled
-  reviewMode.value =
-    savedState?.mode === REVIEW_MODES.CRAM
-      ? REVIEW_MODES.CRAM
-      : REVIEW_MODES.BROWSE
+  reviewMode.value = Object.values(REVIEW_MODES).includes(savedState?.mode)
+    ? savedState.mode
+    : REVIEW_MODES.BROWSE
   cramState.value = savedState?.cram
-    ? normalizeCramState(savedState.cram, parsed.cards.length)
+    ? normalizeCramState(savedState.cram, liveCards.length)
     : null
   const savedCurrentId = Number(savedState?.cramCurrentId)
   cramCurrentId.value = Number.isInteger(savedCurrentId) ? savedCurrentId : null
@@ -315,7 +385,7 @@ const loadDeck = (text, name, savedState = null) => {
 
   if (isCramMode.value) {
     if (!cramState.value) {
-      cramState.value = createCramState(parsed.cards.length)
+      cramState.value = createCramState(liveCards.length)
     }
     ensureCramCard()
   }
@@ -586,12 +656,149 @@ const applyImport = () => {
   if (loaded) closeImportPanel()
 }
 
+const syncDeckToCardCount = () => {
+  order.value = reconcileOrder(order.value, cards.value.length)
+  position.value = Math.min(position.value, Math.max(cards.value.length - 1, 0))
+  isFlipped.value = false
+
+  if (cramState.value) {
+    cramState.value = createCramState(cards.value.length)
+    cramCurrentId.value = null
+    if (isCramMode.value) ensureCramCard()
+  }
+}
+
+const persistCardEdits = () => {
+  persistDeck()
+}
+
+let editPersistTimer = null
+
+const schedulePersistCardEdits = () => {
+  if (editPersistTimer) window.clearTimeout(editPersistTimer)
+
+  editPersistTimer = window.setTimeout(() => {
+    editPersistTimer = null
+    persistDeck()
+  }, 400)
+}
+
+const addCard = async () => {
+  cards.value.push({ question: '', answer: '', extra: '' })
+  syncDeckToCardCount()
+  persistDeck()
+  await nextTick()
+
+  const fields = editorList.value?.querySelectorAll('.editor-question')
+  fields?.[fields.length - 1]?.focus()
+}
+
+const removeCard = (index) => {
+  if (index < 0 || index >= cards.value.length) return
+
+  cards.value.splice(index, 1)
+  order.value = order.value
+    .filter((cardIndex) => cardIndex !== index)
+    .map((cardIndex) => (cardIndex > index ? cardIndex - 1 : cardIndex))
+  syncDeckToCardCount()
+  persistDeck()
+}
+
+const resetEdits = () => {
+  cards.value = baseCards.value.map((card) => ({ ...card }))
+  syncDeckToCardCount()
+  persistDeck()
+}
+
+const rememberExportTrigger = () => {
+  const activeElement = document.activeElement
+  if (activeElement instanceof HTMLElement) exportTrigger.value = activeElement
+}
+
+const openExport = async () => {
+  if (!hasDeck.value) {
+    errorMessage.value = 'Load a deck before exporting it.'
+    return
+  }
+
+  rememberExportTrigger()
+  errorMessage.value = ''
+  clipboardMessageExport.value = ''
+  exportOpen.value = true
+  await nextTick()
+
+  const dialog = exportDialog.value
+  if (dialog && !dialog.open) dialog.showModal()
+  dialog?.querySelector('.export-primary')?.focus()
+}
+
+const closeExport = async () => {
+  const trigger = exportTrigger.value
+
+  if (exportDialog.value?.open) exportDialog.value.close()
+  exportOpen.value = false
+  clipboardMessageExport.value = ''
+  exportTrigger.value = null
+
+  await nextTick()
+  trigger?.focus()
+}
+
+const downloadExport = () => {
+  if (!exportHasContent.value) {
+    errorMessage.value = 'Nothing to export yet. Every card needs a question.'
+    return
+  }
+
+  const blob = new Blob([exportText.value], {
+    type:
+      exportFormat.value === ','
+        ? 'text/csv;charset=utf-8'
+        : 'text/plain;charset=utf-8',
+  })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = exportFilename.value
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+  closeExport()
+}
+
+const copyExport = async () => {
+  if (!exportHasContent.value) {
+    errorMessage.value = 'Nothing to export yet. Every card needs a question.'
+    return
+  }
+
+  clipboardMessageExport.value = ''
+
+  if (!navigator.clipboard?.writeText) {
+    clipboardMessageExport.value =
+      'Clipboard writing is unavailable here. Use download instead.'
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(exportText.value)
+    clipboardMessageExport.value = 'Copied the deck to the clipboard.'
+  } catch {
+    clipboardMessageExport.value =
+      'The clipboard was blocked. Use download instead.'
+  }
+}
+
 const flip = () => {
   if (!hasDeck.value || !currentCard.value) return
 
   const revealingAnswer = !isFlipped.value
   isFlipped.value = !isFlipped.value
-  if (revealingAnswer) cardBlobby.value?.acknowledge({ announce: false })
+  if (revealingAnswer) {
+    cardBlobby.value?.answer('flip', currentCardId.value)
+  }
 }
 
 const go = (amount) => {
@@ -728,6 +935,7 @@ const gradeCurrent = (rating) => {
 
   const now = Date.now()
   const wasComplete = cramComplete.value
+  const gradedCardId = cramCurrentId.value
 
   cramState.value = gradeCard(
     cramState.value,
@@ -738,7 +946,7 @@ const gradeCurrent = (rating) => {
   cramCurrentId.value = null
   isFlipped.value = false
   currentTime.value = now
-  cardBlobby.value?.recordReview(rating)
+  cardBlobby.value?.recordReview(rating, gradedCardId)
   selectNextDueCard()
   persistDeck()
 
@@ -748,10 +956,11 @@ const gradeCurrent = (rating) => {
 }
 
 const handleKeydown = (event) => {
-  if (importPanelOpen.value) {
+  if (importPanelOpen.value || exportOpen.value) {
     if (event.key === 'Escape') {
       event.preventDefault()
-      closeImportPanel()
+      if (importPanelOpen.value) closeImportPanel()
+      else closeExport()
     }
     return
   }
@@ -767,6 +976,14 @@ const handleKeydown = (event) => {
   const targetIsInStatePanel = Boolean(
     event.target?.closest?.('.state-panel')
   )
+
+  if (isEditMode.value) {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      switchMode(REVIEW_MODES.BROWSE)
+    }
+    return
+  }
 
   if (isCramMode.value && key === 'o') {
     event.preventDefault()
@@ -849,6 +1066,9 @@ const handleKeydown = (event) => {
     go(1)
   } else if (key === 's') {
     toggleShuffle()
+  } else if (key === 'e') {
+    event.preventDefault()
+    switchMode(REVIEW_MODES.EDIT)
   } else if (key === 'g') {
     event.preventDefault()
     openJump()
@@ -883,6 +1103,7 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
   compactStatePanelQuery?.removeEventListener('change', updateCompactStatePanel)
   if (clockTimer) window.clearInterval(clockTimer)
+  if (editPersistTimer) window.clearTimeout(editPersistTimer)
 })
 </script>
 
@@ -903,6 +1124,7 @@ onUnmounted(() => {
           <span class="file-name">{{ deckName }}</span>
           <span aria-hidden="true">·</span>
           <b>{{ cards.length }} cards</b>
+          <span v-if="hasEdits" class="edited-flag">edited</span>
         </template>
         <template v-else>
           <span>no deck loaded</span>
@@ -911,11 +1133,11 @@ onUnmounted(() => {
 
       <span class="spacer"></span>
 
-      <div v-if="hasDeck" class="mode-switch" role="group" aria-label="Review mode">
+      <div v-if="hasDeck" class="mode-switch" role="group" aria-label="Deck mode">
         <button
           type="button"
-          :class="{ active: !isCramMode }"
-          :aria-pressed="!isCramMode"
+          :class="{ active: !isCramMode && !isEditMode }"
+          :aria-pressed="!isCramMode && !isEditMode"
           @click="switchMode('browse')"
         >
           browse
@@ -928,9 +1150,18 @@ onUnmounted(() => {
         >
           cram
         </button>
+        <button
+          type="button"
+          :class="{ active: isEditMode }"
+          :aria-pressed="isEditMode"
+          title="Edit the deck (E)"
+          @click="switchMode('edit')"
+        >
+          edit
+        </button>
       </div>
 
-      <div v-if="hasDeck && !isCramMode" class="position-controls">
+      <div v-if="hasDeck && !isCramMode && !isEditMode" class="position-controls">
         <button
           v-if="!isJumpOpen"
           type="button"
@@ -956,7 +1187,7 @@ onUnmounted(() => {
       </div>
 
       <div
-        v-else-if="hasDeck"
+        v-else-if="hasDeck && isCramMode"
         class="cram-summary"
         role="status"
         aria-live="polite"
@@ -970,7 +1201,7 @@ onUnmounted(() => {
       </div>
 
       <button
-        v-if="hasDeck && !isCramMode"
+        v-if="hasDeck && !isCramMode && !isEditMode"
         type="button"
         class="tool-button"
         :class="{ active: isShuffled }"
@@ -1007,6 +1238,16 @@ onUnmounted(() => {
       </button>
 
       <button
+        v-if="hasDeck"
+        type="button"
+        class="tool-button"
+        title="Export the deck as a CSV"
+        @click="openExport"
+      >
+        export
+      </button>
+
+      <button
         type="button"
         class="tool-button"
         title="Paste a deck from the clipboard"
@@ -1027,7 +1268,7 @@ onUnmounted(() => {
           compactStatePanel && statePanelOpen ? 'true' : undefined
         "
       >
-      <CardBlobby ref="cardBlobby" :compact="statePanelOpen" />
+      <CardBlobby v-if="!isEditMode" ref="cardBlobby" :compact="statePanelOpen" />
 
       <section
         v-if="!hasDeck"
@@ -1054,6 +1295,107 @@ onUnmounted(() => {
         </div>
 
         <span class="empty-format">question | answer | extra · no header required</span>
+      </section>
+
+      <section v-else-if="isEditMode" class="editor" aria-label="Deck editor">
+        <header class="editor-toolbar">
+          <div class="editor-summary">
+            <span class="editor-kicker">edit deck</span>
+            <p>
+              <b>{{ cards.length }}</b>
+              {{ cards.length === 1 ? 'card' : 'cards' }}
+              <template v-if="invalidCardCount">
+                ·
+                <span class="editor-warning">
+                  {{ invalidCardCount }} need a question
+                </span>
+              </template>
+              <template v-else-if="hasEdits">· changes saved locally</template>
+            </p>
+          </div>
+
+          <div class="editor-actions">
+            <button type="button" :disabled="!hasEdits" @click="resetEdits">
+              reset
+            </button>
+            <button type="button" @click="addCard">+ add card</button>
+            <button type="button" class="primary" @click="openExport">
+              export
+            </button>
+          </div>
+        </header>
+
+        <div ref="editorList" class="editor-list">
+          <article
+            v-for="(card, index) in cards"
+            :key="index"
+            class="editor-card"
+            :class="{ invalid: !card.question.trim() }"
+          >
+            <div class="editor-card-head">
+              <span class="editor-index">
+                {{ String(index + 1).padStart(2, '0') }}
+              </span>
+              <span v-if="!card.question.trim()" class="editor-flag">
+                needs question
+              </span>
+              <button
+                type="button"
+                class="editor-delete"
+                :aria-label="`Delete card ${index + 1}`"
+                title="Delete card"
+                @click="removeCard(index)"
+              >
+                ×
+              </button>
+            </div>
+
+            <div class="editor-fields">
+              <label class="editor-field">
+                <span>question</span>
+                <textarea
+                  v-model="card.question"
+                  class="editor-question"
+                  rows="2"
+                  spellcheck="false"
+                  @input="schedulePersistCardEdits"
+                  @blur="persistCardEdits"
+                ></textarea>
+              </label>
+
+              <label class="editor-field">
+                <span>answer</span>
+                <textarea
+                  v-model="card.answer"
+                  rows="2"
+                  spellcheck="false"
+                  @input="schedulePersistCardEdits"
+                  @blur="persistCardEdits"
+                ></textarea>
+              </label>
+
+              <label class="editor-field editor-field-extra">
+                <span>extra / context</span>
+                <textarea
+                  v-model="card.extra"
+                  rows="2"
+                  spellcheck="false"
+                  @input="schedulePersistCardEdits"
+                  @blur="persistCardEdits"
+                ></textarea>
+              </label>
+            </div>
+          </article>
+
+          <p v-if="!cards.length" class="editor-empty">
+            This deck is empty.
+            <button type="button" @click="addCard">add a card</button>.
+          </p>
+        </div>
+
+        <p class="editor-footnote">
+          <kbd>Esc</kbd> back to browse · edits are saved in this browser only
+        </p>
       </section>
 
       <section v-else class="stage" aria-label="Flashcard deck">
@@ -1414,7 +1756,7 @@ onUnmounted(() => {
         </div>
 
         <footer class="import-footer">
-          <p>Changing the source or columns starts a fresh Cram session.</p>
+          <p>Changing the source or columns starts a fresh Cram session and discards edits.</p>
           <div>
             <button type="button" class="secondary" @click="closeImportPanel">Cancel</button>
             <button
@@ -1429,7 +1771,107 @@ onUnmounted(() => {
         </footer>
     </dialog>
 
-    <p v-if="errorMessage && !importPanelOpen" class="error-toast" role="alert">
+    <dialog
+      v-if="exportOpen"
+      ref="exportDialog"
+      class="import-dialog import-panel export-panel"
+      aria-modal="true"
+      aria-labelledby="export-title"
+      @cancel.prevent="closeExport"
+    >
+      <header class="import-header">
+        <div>
+          <span class="import-kicker">export deck</span>
+          <h2 id="export-title">Take these cards with you</h2>
+        </div>
+        <button type="button" aria-label="Close export" @click="closeExport">×</button>
+      </header>
+
+      <div class="import-body">
+        <div class="export-controls">
+          <fieldset class="export-formats">
+            <legend>Format</legend>
+            <label
+              v-for="option in EXPORT_FORMATS"
+              :key="option.value"
+              :class="{ active: exportFormat === option.value }"
+            >
+              <input
+                v-model="exportFormat"
+                type="radio"
+                name="export-format"
+                :value="option.value"
+              />
+              <span>{{ option.label }}</span>
+              <small>{{ option.hint }}</small>
+            </label>
+          </fieldset>
+
+          <label class="header-toggle export-header-toggle">
+            <input v-model="exportIncludeHeader" type="checkbox" />
+            <span>Include header row</span>
+          </label>
+        </div>
+
+        <div class="preview-block">
+          <div class="preview-heading">
+            <span>Preview</span>
+            <b>
+              {{ exportableCards.length }}
+              {{ exportableCards.length === 1 ? 'card' : 'cards' }}
+              <template v-if="exportSkippedCount">
+                · {{ exportSkippedCount }} skipped (blank question)
+              </template>
+            </b>
+          </div>
+          <pre v-if="exportPreview" class="export-preview">{{ exportPreview }}</pre>
+          <p v-else class="preview-empty">
+            No cards to export yet. Every card needs a question.
+          </p>
+        </div>
+
+        <p class="export-note">
+          Saves as <b>{{ exportFilename }}</b>
+        </p>
+
+        <p v-if="clipboardMessageExport" class="import-message" role="status">
+          {{ clipboardMessageExport }}
+        </p>
+
+        <p v-if="errorMessage" class="import-error" role="alert">
+          {{ errorMessage }}
+        </p>
+      </div>
+
+      <footer class="import-footer">
+        <p>Exports the edited deck, not the original file.</p>
+        <div>
+          <button type="button" class="secondary" @click="closeExport">Cancel</button>
+          <button
+            type="button"
+            class="secondary"
+            :disabled="!exportHasContent"
+            @click="copyExport"
+          >
+            Copy
+          </button>
+          <button
+            type="button"
+            class="primary export-primary"
+            :disabled="!exportHasContent"
+            @click="downloadExport"
+          >
+            Download
+          </button>
+        </div>
+      </footer>
+    </dialog>
+
+    <p
+      v-if="errorMessage && !importPanelOpen && !exportOpen"
+      class="error-toast"
+      role="alert"
+    >
       <span>{{ errorMessage }}</span>
       <button type="button" aria-label="Dismiss error" @click="errorMessage = ''">×</button>
     </p>
@@ -1531,6 +1973,16 @@ header {
   white-space: nowrap;
 }
 
+.edited-flag {
+  border: 1px solid rgb(226 169 79 / 45%);
+  border-radius: 2px;
+  padding: 2px 6px;
+  color: var(--amber);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+
 .spacer {
   flex: 1;
 }
@@ -1566,6 +2018,10 @@ header {
 .navigation button:focus-visible,
 .card:focus-visible,
 .empty-state:focus-visible,
+.editor-actions button:focus-visible,
+.editor-delete:focus-visible,
+.editor-empty button:focus-visible,
+.editor-field textarea:focus-visible,
 .error-toast button:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 3px;
@@ -2454,6 +2910,342 @@ main {
   font: inherit;
 }
 
+.editor {
+  display: flex;
+  align-self: stretch;
+  justify-self: center;
+  width: min(860px, 100%);
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #30323a;
+  padding-bottom: 14px;
+}
+
+.editor-kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--amber);
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.editor-summary p {
+  color: #918a7c;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.editor-summary b {
+  color: #d8d2c4;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.editor-warning {
+  color: #df9d8b;
+}
+
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.editor-actions button {
+  border: 1px solid #393b44;
+  border-radius: 3px;
+  padding: 8px 12px;
+  background: none;
+  color: #8d8779;
+  font-family: inherit;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.editor-actions button:hover:not(:disabled) {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.editor-actions button.primary {
+  border-color: var(--amber);
+  background: rgb(226 169 79 / 10%);
+  color: var(--amber);
+}
+
+.editor-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.editor-list {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 16px 2px 8px;
+  scrollbar-color: #41434c transparent;
+  scrollbar-width: thin;
+}
+
+.editor-card {
+  border: 1px solid #30323a;
+  border-radius: 3px;
+  padding: 11px 14px 14px;
+  background: rgb(255 255 255 / 1.2%);
+}
+
+.editor-card.invalid {
+  border-color: rgb(196 68 42 / 55%);
+  box-shadow: inset 2px 0 var(--accent);
+}
+
+.editor-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.editor-index {
+  color: var(--amber);
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+}
+
+.editor-flag {
+  color: #df9d8b;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.editor-delete {
+  margin-left: auto;
+  border: 1px solid #393b44;
+  border-radius: 2px;
+  padding: 0 7px;
+  background: none;
+  color: #918a7c;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.editor-delete:hover {
+  border-color: var(--accent);
+  color: #e18b75;
+}
+
+.editor-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.editor-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  color: #918a7c;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.editor-field-extra {
+  grid-column: 1 / -1;
+}
+
+.editor-field textarea {
+  width: 100%;
+  min-height: 58px;
+  resize: vertical;
+  border: 1px solid #33353d;
+  border-radius: 3px;
+  outline: none;
+  padding: 9px 11px;
+  background: #101116;
+  color: #d8d2c4;
+  font-family: 'DM Sans', ui-sans-serif, sans-serif;
+  font-size: 13px;
+  letter-spacing: normal;
+  line-height: 1.5;
+  text-transform: none;
+}
+
+.editor-field textarea:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 2px rgb(226 169 79 / 10%);
+}
+
+.editor-empty {
+  border: 1px dashed #393b44;
+  border-radius: 3px;
+  padding: 34px;
+  color: #918a7c;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 11px;
+  text-align: center;
+}
+
+.editor-empty button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--amber);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.editor-footnote {
+  padding-top: 12px;
+  color: #918a7c;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.editor-footnote kbd {
+  border: 1px solid #3a3c45;
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 1px 5px;
+  background: rgb(255 255 255 / 3%);
+  color: #aaa394;
+  font: inherit;
+}
+
+.export-panel {
+  width: min(760px, calc(100vw - 48px));
+}
+
+.export-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px 24px;
+}
+
+.export-formats {
+  display: flex;
+  min-width: min(420px, 100%);
+  flex: 1;
+  flex-direction: column;
+  gap: 9px;
+  border: 0;
+  padding: 0;
+}
+
+.export-formats legend {
+  margin-bottom: 3px;
+  color: #8d8779;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.export-formats label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 10px;
+  border: 1px solid #30323a;
+  border-radius: 3px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.export-formats label:hover {
+  border-color: #5a5c66;
+}
+
+.export-formats label.active {
+  border-color: var(--amber);
+  background: rgb(226 169 79 / 6%);
+}
+
+.export-formats input {
+  grid-row: 1 / 3;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--amber);
+}
+
+.export-formats span {
+  color: #d8d2c4;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.export-formats small {
+  color: #918a7c;
+  font-size: 9px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.export-header-toggle {
+  align-self: center;
+}
+
+.export-preview {
+  max-height: 210px;
+  overflow: auto;
+  border: 1px solid #30323a;
+  border-radius: 3px;
+  padding: 12px 14px;
+  background: #101116;
+  color: #b7b0a2;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.export-note {
+  margin-top: 12px;
+  color: #918a7c;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.export-note b {
+  color: #b7b0a2;
+  font-weight: 500;
+}
+
 .import-dialog {
   position: fixed;
   max-width: none;
@@ -2984,6 +3776,27 @@ main {
   .preview-block th,
   .preview-block td {
     max-width: 180px;
+  }
+
+  .editor-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-field-extra {
+    grid-column: auto;
+  }
+
+  .editor-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .export-panel {
+    width: calc(100vw - 20px);
+  }
+
+  .export-formats {
+    min-width: 100%;
   }
 }
 </style>

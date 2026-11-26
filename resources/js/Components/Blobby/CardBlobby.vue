@@ -1,6 +1,13 @@
 <script setup>
-import { computed, defineAsyncComponent, ref } from 'vue'
+import { computed, defineAsyncComponent, onUnmounted, ref } from 'vue'
 import { useBlobbyPet } from '@/Composables/useBlobbyPet.js'
+import {
+  CARD_BLOBBY_COOLDOWN_MS,
+  CARD_BLOBBY_MOODS,
+  answerCardBlobby,
+  createCardBlobbySession,
+  expireCardBlobbySession,
+} from '@/Utils/cardBlobbySession.js'
 
 const BlobbyCanvas = defineAsyncComponent(() => import('./BlobbyCanvas.vue'))
 
@@ -12,7 +19,6 @@ const props = defineProps({
 })
 
 const {
-  petMood,
   reaction,
   reactionId,
   reactionMessage,
@@ -24,38 +30,76 @@ const {
 
 const rendererReady = ref(false)
 const canvas = ref(null)
+const session = ref(createCardBlobbySession())
+let cooldownTimer = null
 
+const displayMood = computed(() => session.value.mood)
 const bubbleVisible = computed(() => Boolean(reactionMessage.value))
 const moodLabel = computed(() => {
   const labels = {
-    excited: 'Blobby is excited',
     happy: 'Blobby is happy',
+    excited: 'Blobby is excited',
     content: 'Blobby is content',
-    curious: 'Blobby is curious',
-    bored: 'Blobby is bored',
-    dejected: 'Blobby is dejected',
-    sleepy: 'Blobby is sleeping',
-    hungry: 'Blobby is hungry',
-    sick: 'Blobby feels sick',
-    lonely: 'Blobby is lonely',
-    crying: 'Blobby is crying',
   }
-  return labels[petMood.value] || 'Blobby is here'
+  return labels[displayMood.value] || 'Blobby is here'
 })
+
+const scheduleCooldown = (duration = CARD_BLOBBY_COOLDOWN_MS) => {
+  window.clearTimeout(cooldownTimer)
+  cooldownTimer = window.setTimeout(() => {
+    session.value = expireCardBlobbySession(session.value)
+    react('idle', '', 0)
+  }, duration)
+}
+
+const answer = (kind = 'good', cardId = null) => {
+  markEngaged()
+
+  const { session: nextSession, action, message } = answerCardBlobby(
+    session.value,
+    { kind, cardId }
+  )
+
+  session.value = nextSession
+  react(action, message, message ? 1_400 : 0)
+  scheduleCooldown()
+
+  return nextSession
+}
 
 const acknowledge = ({ announce = true } = {}) => {
   markEngaged()
+  session.value = {
+    ...session.value,
+    mood: CARD_BLOBBY_MOODS.HAPPY,
+  }
+  scheduleCooldown()
   if (announce) react('love', 'Still here. We can do this.', 900)
 }
 
-const handleReview = (rating) => {
-  recordReview(rating)
+const handleReview = (rating, cardId = null) => {
+  recordReview(rating, Date.now(), { announce: false })
+  return answer(rating === 'again' ? 'again' : 'good', cardId)
 }
+
+const handleCelebrate = () => {
+  celebrate()
+  session.value = {
+    ...session.value,
+    mood: CARD_BLOBBY_MOODS.EXCITED,
+  }
+  scheduleCooldown(6_000)
+}
+
+onUnmounted(() => {
+  window.clearTimeout(cooldownTimer)
+})
 
 defineExpose({
   acknowledge,
-  celebrate,
+  celebrate: handleCelebrate,
   recordReview: handleReview,
+  answer,
 })
 </script>
 
@@ -84,7 +128,7 @@ defineExpose({
         <BlobbyCanvas
           ref="canvas"
           class="h-full w-full"
-          :mood="petMood"
+          :mood="displayMood"
           :action="reaction"
           :action-id="reactionId"
           :compact="true"

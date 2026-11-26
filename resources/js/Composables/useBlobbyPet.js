@@ -71,13 +71,17 @@ const react = (action = 'idle', message = '', duration = 0) => {
   }
 }
 
-const recordReview = (rating, now = Date.now()) => {
+const recordReview = (
+  rating,
+  now = Date.now(),
+  { announce = true } = {}
+) => {
   pet.value = applyBlobbyReview(pet.value, rating, now)
   saveProgress(now)
 
-  if (rating === BLOBBY_REVIEW_RATINGS.GOOD) {
+  if (announce && rating === BLOBBY_REVIEW_RATINGS.GOOD) {
     react('excited', 'Yes! That one stuck.', 1_400)
-  } else if (rating === BLOBBY_REVIEW_RATINGS.AGAIN) {
+  } else if (announce && rating === BLOBBY_REVIEW_RATINGS.AGAIN) {
     react('confused', 'We can get this one next time.', 1_100)
   }
 
