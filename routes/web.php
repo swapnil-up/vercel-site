@@ -142,6 +142,13 @@ Route::get('/tools/particle-life', fn() => inertia('Tools/ParticleLife', [
     ],
 ]));
 
+Route::get('/tools/rotaract-report', fn() => inertia('Tools/RotaractReportForm', [
+    'meta' => [
+        'title' => 'Rotaract Report Form — Tools — Swapnil Upadhyay',
+        'description' => 'Fill in Rotaract project report data and export as JSON for the submission script.',
+    ],
+]))->name('tools.rotaract-report');
+
 Route::get('/tools/space-explorer', fn() => inertia('Tools/SpaceExplorer', [
     'meta' => [
         'title' => 'Space Explorer — Tools — Swapnil Upadhyay',

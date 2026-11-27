@@ -17,6 +17,7 @@ const tools = [
   { name: 'Booklet Imposition', path: '/tools/booklet-imposition', description: 'Generate print-ready 2-up booklet PDFs for saddle-stitch binding' },
   { name: 'NEPSE WACC', path: '/tools/nepse-wacc', description: 'Weighted average cost calculator for NEPSE holdings with fee breakdown' },
   { name: 'Rota Minutes', path: '/tools/rota-minutes', description: 'Generate meeting minutes PDFs – entirely in your browser' },
+  { name: 'Rotaract Report Form', path: '/tools/rotaract-report', description: 'Fill project report data and export JSON for the district portal submission script' },
   { name: 'Family Tree', path: '/tools/family-tree', description: 'Map your family tree visually' },
   { name: 'Particle Life', path: '/tools/particle-life', description: 'Emergent life from simple rules — 3D GPU simulation' },
   { name: 'Space Explorer', path: '/tools/space-explorer', description: 'Fly through the asteroid field — collect stars, dodge rocks' },
